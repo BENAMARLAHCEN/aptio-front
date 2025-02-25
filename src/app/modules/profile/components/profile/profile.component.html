@@ -1,0 +1,148 @@
+<div class="space-y-6">
+  <!-- Page Title -->
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-bold text-neutral-dark">My Profile</h1>
+    <a routerLink="/dashboard/profile/edit" class="btn btn-primary flex items-center">
+      <span class="material-icons-outlined mr-1">edit</span>
+      Edit Profile
+    </a>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="flex justify-center p-8">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="p-4 bg-red-100 border border-red-300 text-red-700 rounded-lg">
+    {{ errorMessage }}
+    <button (click)="loadUserProfile()" class="ml-2 text-primary hover:underline">Try Again</button>
+  </div>
+
+  <!-- Profile Content -->
+  <div *ngIf="user && !isLoading" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Left Column: Profile Card -->
+    <div class="lg:col-span-1">
+      <div class="bg-white rounded-card shadow-card p-6">
+        <div class="flex flex-col items-center">
+          <!-- Profile Photo -->
+          <div class="relative mb-4">
+            <div class="w-32 h-32 rounded-full overflow-hidden bg-neutral-light">
+              <img *ngIf="user.profilePhoto" [src]="user.profilePhoto" alt="Profile Photo" class="w-full h-full object-cover">
+              <div *ngIf="!user.profilePhoto" class="w-full h-full flex items-center justify-center bg-primary-light text-primary text-4xl font-bold">
+                {{ user.firstName[0] }}{{ user.lastName[0] }}
+              </div>
+            </div>
+          </div>
+
+          <!-- User Name and Info -->
+          <h2 class="text-xl font-bold text-neutral-dark">{{ getFullName() }}</h2>
+          <p class="text-neutral">{{ user.email }}</p>
+
+          <!-- Points Badge -->
+          <div class="mt-4 bg-primary-light text-primary px-4 py-2 rounded-full flex items-center">
+            <span class="material-icons-outlined mr-2">stars</span>
+            <span>{{ user.points }} Points</span>
+          </div>
+
+          <!-- Account Status -->
+          <div class="w-full mt-6 pt-4 border-t border-neutral-light">
+            <div class="flex justify-between items-center">
+              <span class="text-sm text-neutral">Account Status</span>
+              <span class="badge badge-success">Active</span>
+            </div>
+            <div class="flex justify-between items-center mt-2">
+              <span class="text-sm text-neutral">Member Since</span>
+              <span class="text-sm">January 15, 2025</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Details -->
+    <div class="lg:col-span-2">
+      <div class="bg-white rounded-card shadow-card p-6">
+        <h2 class="text-lg font-bold text-neutral-dark mb-4">Personal Information</h2>
+
+        <!-- Personal Info Sections -->
+        <div class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <p class="text-sm text-neutral">First Name</p>
+              <p class="font-medium">{{ user.firstName }}</p>
+            </div>
+            <div>
+              <p class="text-sm text-neutral">Last Name</p>
+              <p class="font-medium">{{ user.lastName }}</p>
+            </div>
+          </div>
+
+          <div>
+            <p class="text-sm text-neutral">Email Address</p>
+            <p class="font-medium">{{ user.email }}</p>
+          </div>
+
+          <div>
+            <p class="text-sm text-neutral">Phone Number</p>
+            <p class="font-medium">{{ user.phone || 'Not provided' }}</p>
+          </div>
+
+          <div>
+            <p class="text-sm text-neutral">Birthday</p>
+            <p class="font-medium">{{ formatDate(user.birthday) }}</p>
+          </div>
+
+          <div>
+            <p class="text-sm text-neutral">Address</p>
+            <p class="font-medium">{{ getFullAddress() || 'Not provided' }}</p>
+          </div>
+        </div>
+
+        <!-- Security Section -->
+        <h2 class="text-lg font-bold text-neutral-dark mt-8 mb-4">Security</h2>
+        <div class="flex justify-between items-center py-2 border-b border-neutral-light">
+          <div>
+            <p class="font-medium">Password</p>
+            <p class="text-sm text-neutral">Last changed 30 days ago</p>
+          </div>
+          <a routerLink="/dashboard/profile/edit" [queryParams]="{section: 'password'}" class="text-primary hover:underline">Change</a>
+        </div>
+
+        <div class="flex justify-between items-center py-2 border-b border-neutral-light">
+          <div>
+            <p class="font-medium">Two-Factor Authentication</p>
+            <p class="text-sm text-neutral">Not enabled</p>
+          </div>
+          <a href="#" class="text-primary hover:underline">Enable</a>
+        </div>
+
+        <!-- Preferences Section -->
+        <h2 class="text-lg font-bold text-neutral-dark mt-8 mb-4">Preferences</h2>
+        <div class="space-y-4">
+          <div class="flex justify-between items-center">
+            <div>
+              <p class="font-medium">Email Notifications</p>
+              <p class="text-sm text-neutral">Receive appointment reminders and updates</p>
+            </div>
+            <div class="relative">
+              <div class="w-10 h-5 bg-status-success rounded-full"></div>
+              <div class="absolute left-1 top-0.5 bg-white w-4 h-4 rounded-full transform translate-x-4"></div>
+            </div>
+          </div>
+
+          <div class="flex justify-between items-center">
+            <div>
+              <p class="font-medium">SMS Notifications</p>
+              <p class="text-sm text-neutral">Receive text message reminders</p>
+            </div>
+            <div class="relative">
+              <div class="w-10 h-5 bg-neutral-light rounded-full"></div>
+              <div class="absolute left-1 top-0.5 bg-white w-4 h-4 rounded-full"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

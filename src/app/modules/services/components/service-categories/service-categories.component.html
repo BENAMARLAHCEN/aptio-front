@@ -1,0 +1,212 @@
+<div class="space-y-6">
+  <!-- Page Title -->
+  <div class="flex items-center justify-between">
+    <div class="flex items-center space-x-2">
+      <button (click)="goBack()" class="text-neutral-dark hover:text-primary focus:outline-none">
+        <span class="material-icons-outlined">arrow_back</span>
+      </button>
+      <h1 class="text-2xl font-bold text-neutral-dark">Service Categories</h1>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="flex justify-center p-8">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="p-4 bg-red-100 border border-red-300 text-red-700 rounded-lg">
+    {{ errorMessage }}
+    <button (click)="loadCategories()" class="ml-2 text-primary hover:underline">Try Again</button>
+  </div>
+
+  <!-- Success Message -->
+  <div *ngIf="successMessage" class="p-4 bg-green-100 border border-green-300 text-green-700 rounded-lg">
+    {{ successMessage }}
+  </div>
+
+  <!-- Grid Layout -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <!-- Left Column: Category Form -->
+    <div class="md:col-span-1">
+      <div class="bg-white rounded-card shadow-card p-6">
+        <h2 class="text-lg font-medium text-neutral-dark mb-4">
+          {{ editingCategoryId ? 'Edit Category' : 'Add New Category' }}
+        </h2>
+
+        <form [formGroup]="categoryForm" (ngSubmit)="onSubmit()" class="space-y-4">
+          <!-- Name -->
+          <div>
+            <label for="name" class="block text-sm font-medium text-neutral-dark mb-1">
+              Category Name
+            </label>
+            <input
+              id="name"
+              type="text"
+              formControlName="name"
+              class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              [ngClass]="{'border-status-error': isFieldInvalid('name')}"
+            />
+            <p *ngIf="isFieldInvalid('name')" class="mt-1 text-sm text-status-error">
+              {{ getErrorMessage('name') }}
+            </p>
+          </div>
+
+          <!-- Description -->
+          <div>
+            <label for="description" class="block text-sm font-medium text-neutral-dark mb-1">
+              Description (Optional)
+            </label>
+            <textarea
+              id="description"
+              formControlName="description"
+              rows="3"
+              class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              [ngClass]="{'border-status-error': isFieldInvalid('description')}"
+            ></textarea>
+            <p *ngIf="isFieldInvalid('description')" class="mt-1 text-sm text-status-error">
+              {{ getErrorMessage('description') }}
+            </p>
+          </div>
+
+          <!-- Active Status -->
+          <div class="flex items-center">
+            <input
+              id="active"
+              type="checkbox"
+              formControlName="active"
+              class="h-4 w-4 text-primary focus:ring-primary border-neutral-light rounded"
+            />
+            <label for="active" class="ml-2 block text-sm text-neutral-dark">
+              Active
+            </label>
+          </div>
+
+          <!-- Submit Buttons -->
+          <div class="flex justify-end space-x-2 pt-4">
+            <button
+              *ngIf="editingCategoryId"
+              type="button"
+              (click)="cancelEdit()"
+              class="px-4 py-2 border border-neutral-light rounded-lg text-neutral-dark hover:bg-neutral-light"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="btn btn-primary"
+              [disabled]="categoryForm.invalid || isSubmitting"
+            >
+              <span class="flex items-center">
+                <span *ngIf="isSubmitting" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
+                {{ editingCategoryId ? 'Update' : 'Add' }} Category
+              </span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Right Column: Categories List -->
+    <div class="md:col-span-2">
+      <div class="bg-white rounded-card shadow-card overflow-hidden">
+        <!-- Categories Table -->
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-neutral-light">
+            <thead class="bg-neutral-light">
+            <tr>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-neutral-dark uppercase tracking-wider">
+                Name
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-neutral-dark uppercase tracking-wider">
+                Description
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-neutral-dark uppercase tracking-wider">
+                Services
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-neutral-dark uppercase tracking-wider">
+                Status
+              </th>
+              <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-neutral-dark uppercase tracking-wider">
+                Actions
+              </th>
+            </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-neutral-light">
+            <tr *ngFor="let category of categories">
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="font-medium text-neutral-dark">{{ category.name }}</div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="text-sm text-neutral-dark line-clamp-2">{{ category.description || 'No description' }}</div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <button
+                  *ngIf="category.servicesCount > 0"
+                  (click)="viewCategoryServices(category)"
+                  class="text-primary hover:underline">
+                  {{ category.servicesCount }} Service{{ category.servicesCount !== 1 ? 's' : '' }}
+                </button>
+                <span *ngIf="category.servicesCount === 0" class="text-neutral">
+                    No services
+                  </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                  <span class="px-2 py-1 text-xs font-medium rounded-full"
+                        [class.bg-green-100]="category.active"
+                        [class.text-green-800]="category.active"
+                        [class.bg-red-100]="!category.active"
+                        [class.text-red-800]="!category.active">
+                    {{ category.active ? 'Active' : 'Inactive' }}
+                  </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
+                <div class="flex items-center justify-end space-x-2">
+                  <!-- Toggle Status -->
+                  <button
+                    (click)="toggleCategoryStatus(category)"
+                    class="text-neutral-dark hover:text-primary focus:outline-none"
+                    title="{{ category.active ? 'Deactivate' : 'Activate' }}">
+                    <span class="material-icons-outlined text-sm">{{ category.active ? 'toggle_on' : 'toggle_off' }}</span>
+                  </button>
+
+                  <!-- Edit -->
+                  <button
+                    (click)="editCategory(category)"
+                    class="text-neutral-dark hover:text-primary focus:outline-none"
+                    title="Edit">
+                    <span class="material-icons-outlined text-sm">edit</span>
+                  </button>
+
+                  <!-- Delete -->
+                  <button
+                    (click)="deleteCategory(category)"
+                    class="text-neutral-dark hover:text-red-600 focus:outline-none"
+                    [class.opacity-50]="category.servicesCount > 0"
+                    [disabled]="category.servicesCount > 0"
+                    title="{{ category.servicesCount > 0 ? 'Cannot delete (has services)' : 'Delete' }}">
+                    <span class="material-icons-outlined text-sm">delete</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Empty State -->
+            <tr *ngIf="categories.length === 0 && !isLoading">
+              <td colspan="5" class="px-6 py-8 text-center">
+                <div class="flex flex-col items-center justify-center space-y-3">
+                  <span class="material-icons-outlined text-4xl text-neutral-light">category</span>
+                  <h3 class="text-lg font-medium text-neutral-dark">No categories found</h3>
+                  <p class="text-sm text-neutral">
+                    Create your first category to get started organizing your services
+                  </p>
+                </div>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

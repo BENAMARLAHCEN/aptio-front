@@ -1,0 +1,182 @@
+<div class="space-y-6">
+  <!-- Page Title -->
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-bold text-neutral-dark">
+      {{ isEditMode ? 'Edit Service' : 'New Service' }}
+    </h1>
+    <button
+      (click)="cancel()"
+      class="flex items-center px-4 py-2 border border-neutral-light rounded-lg text-neutral-dark hover:bg-neutral-light">
+      Cancel
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="flex justify-center p-8">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="p-4 bg-red-100 border border-red-300 text-red-700 rounded-lg">
+    {{ errorMessage }}
+    <button *ngIf="isEditMode" (click)="loadService(serviceId || '')" class="ml-2 text-primary hover:underline">Try Again</button>
+    <button *ngIf="!isEditMode" (click)="loadCategories()" class="ml-2 text-primary hover:underline">Try Again</button>
+  </div>
+
+  <!-- Success Message -->
+  <div *ngIf="successMessage" class="p-4 bg-green-100 border border-green-300 text-green-700 rounded-lg">
+    {{ successMessage }}
+  </div>
+
+  <!-- Service Form -->
+  <form *ngIf="!isLoading" [formGroup]="serviceForm" (ngSubmit)="onSubmit()" class="bg-white rounded-card shadow-card p-6">
+    <div class="space-y-6">
+      <!-- Name -->
+      <div>
+        <label for="name" class="block text-sm font-medium text-neutral-dark mb-1">
+          Service Name
+        </label>
+        <input
+          id="name"
+          type="text"
+          formControlName="name"
+          class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+          [ngClass]="{'border-status-error': isFieldInvalid('name')}"
+        />
+        <p *ngIf="isFieldInvalid('name')" class="mt-1 text-sm text-status-error">
+          {{ getErrorMessage('name') }}
+        </p>
+      </div>
+
+      <!-- Description -->
+      <div>
+        <label for="description" class="block text-sm font-medium text-neutral-dark mb-1">
+          Description
+        </label>
+        <textarea
+          id="description"
+          formControlName="description"
+          rows="4"
+          class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+          [ngClass]="{'border-status-error': isFieldInvalid('description')}"
+        ></textarea>
+        <p *ngIf="isFieldInvalid('description')" class="mt-1 text-sm text-status-error">
+          {{ getErrorMessage('description') }}
+        </p>
+      </div>
+
+      <!-- Duration and Price -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label for="duration" class="block text-sm font-medium text-neutral-dark mb-1">
+            Duration (minutes)
+          </label>
+          <input
+            id="duration"
+            type="number"
+            formControlName="duration"
+            class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+            [ngClass]="{'border-status-error': isFieldInvalid('duration')}"
+          />
+          <p *ngIf="isFieldInvalid('duration')" class="mt-1 text-sm text-status-error">
+            {{ getErrorMessage('duration') }}
+          </p>
+        </div>
+
+        <div>
+          <label for="price" class="block text-sm font-medium text-neutral-dark mb-1">
+            Price ($)
+          </label>
+          <input
+            id="price"
+            type="number"
+            step="0.01"
+            formControlName="price"
+            class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+            [ngClass]="{'border-status-error': isFieldInvalid('price')}"
+          />
+          <p *ngIf="isFieldInvalid('price')" class="mt-1 text-sm text-status-error">
+            {{ getErrorMessage('price') }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Category -->
+      <div>
+        <label for="category" class="block text-sm font-medium text-neutral-dark mb-1">
+          Category
+        </label>
+        <select
+          id="category"
+          formControlName="category"
+          class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+          [ngClass]="{'border-status-error': isFieldInvalid('category')}"
+        >
+          <option value="" disabled>Select a category</option>
+          <option *ngFor="let category of categories" [value]="category.name">
+            {{ category.name }}
+          </option>
+        </select>
+        <p *ngIf="isFieldInvalid('category')" class="mt-1 text-sm text-status-error">
+          {{ getErrorMessage('category') }}
+        </p>
+        <p class="mt-1 text-sm text-neutral">
+          <a routerLink="/dashboard/services/categories" class="text-primary hover:underline">
+            Manage categories
+          </a>
+        </p>
+      </div>
+
+      <!-- Image URL -->
+      <div>
+        <label for="imageUrl" class="block text-sm font-medium text-neutral-dark mb-1">
+          Image URL (Optional)
+        </label>
+        <input
+          id="imageUrl"
+          type="text"
+          formControlName="imageUrl"
+          class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+        />
+        <p class="mt-1 text-sm text-neutral">
+          Provide a URL to an image for this service. Will be displayed in listings and details.
+        </p>
+      </div>
+
+      <!-- Active Status -->
+      <div class="flex items-center">
+        <input
+          id="active"
+          type="checkbox"
+          formControlName="active"
+          class="h-4 w-4 text-primary focus:ring-primary border-neutral-light rounded"
+        />
+        <label for="active" class="ml-2 block text-sm text-neutral-dark">
+          Active (available for booking)
+        </label>
+      </div>
+
+      <!-- Image Preview -->
+      <div *ngIf="serviceForm.get('imageUrl')?.value" class="mt-4">
+        <h3 class="text-sm font-medium text-neutral-dark mb-2">Image Preview:</h3>
+        <div class="relative w-full h-40 bg-neutral-light rounded-lg overflow-hidden">
+          <img [src]="serviceForm.get('imageUrl')?.value" alt="Service Preview" class="w-full h-full object-cover">
+        </div>
+      </div>
+
+      <!-- Submit Button -->
+      <div class="flex justify-end">
+        <button
+          type="submit"
+          class="btn btn-primary"
+          [disabled]="serviceForm.invalid || isSubmitting"
+        >
+          <span class="flex items-center">
+            <span *ngIf="isSubmitting" class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
+            {{ isSubmitting ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update Service' : 'Create Service') }}
+          </span>
+        </button>
+      </div>
+    </div>
+  </form>
+</div>

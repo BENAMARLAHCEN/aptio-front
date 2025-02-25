@@ -1,0 +1,308 @@
+<div class="space-y-6">
+  <!-- Page Title and Actions -->
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <h1 class="text-2xl font-bold text-neutral-dark">Services</h1>
+
+    <div class="flex items-center space-x-2">
+      <button (click)="manageCategories()" class="flex items-center px-4 py-2 bg-white border border-neutral-light rounded-lg text-neutral-dark hover:bg-neutral-light">
+        <span class="material-icons-outlined mr-1 text-sm">category</span>
+        Categories
+      </button>
+      <button (click)="createService()" class="btn btn-primary flex items-center">
+        <span class="material-icons-outlined mr-1 text-sm">add</span>
+        New Service
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="bg-white rounded-card shadow-card p-4">
+    <div class="flex flex-col md:flex-row md:items-center gap-4">
+      <!-- Search -->
+      <div class="relative flex-1">
+        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-neutral">
+          <span class="material-icons-outlined text-sm">search</span>
+        </span>
+        <input
+          type="text"
+          [(ngModel)]="filterOptions.search"
+          (ngModelChange)="onFilterChange()"
+          placeholder="Search services..."
+          class="w-full pl-10 pr-4 py-2 border border-neutral-light rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+      </div>
+
+      <!-- Category Filter -->
+      <div class="w-full md:w-44">
+        <select
+          [(ngModel)]="filterOptions.category"
+          (ngModelChange)="onFilterChange()"
+          class="w-full px-4 py-2 border border-neutral-light rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+          <option [ngValue]="null">All Categories</option>
+          <option *ngFor="let category of categories" [value]="category.name">
+            {{ category.name }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Status Filter -->
+      <div class="w-full md:w-44">
+        <select
+          [(ngModel)]="filterOptions.status"
+          (ngModelChange)="onFilterChange()"
+          class="w-full px-4 py-2 border border-neutral-light rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+          <option [ngValue]="null">All Statuses</option>
+          <option [ngValue]="true">Active</option>
+          <option [ngValue]="false">Inactive</option>
+        </select>
+      </div>
+
+      <!-- View Toggle -->
+      <button
+        (click)="toggleViewMode()"
+        class="flex items-center justify-center px-4 py-2 border border-neutral-light rounded-lg text-neutral-dark hover:bg-neutral-light">
+        <span class="material-icons-outlined mr-1 text-sm">{{ viewMode === 'grid' ? 'view_list' : 'grid_view' }}</span>
+        {{ viewMode === 'grid' ? 'List View' : 'Grid View' }}
+      </button>
+
+      <!-- Clear Filters -->
+      <button
+        *ngIf="filterOptions.category || filterOptions.status !== null || filterOptions.search"
+        (click)="clearFilters()"
+        class="flex items-center justify-center px-4 py-2 border border-neutral-light rounded-lg text-neutral-dark hover:bg-neutral-light">
+        <span class="material-icons-outlined mr-1 text-sm">clear</span>
+        Clear Filters
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="flex justify-center p-8">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="p-4 bg-red-100 border border-red-300 text-red-700 rounded-lg">
+    {{ errorMessage }}
+    <button (click)="loadData()" class="ml-2 text-primary hover:underline">Try Again</button>
+  </div>
+
+  <!-- Grid View -->
+  <div *ngIf="!isLoading && !errorMessage && viewMode === 'grid'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <!-- Service Cards -->
+    <div *ngFor="let service of filteredServices"
+         (click)="viewServiceDetails(service.id)"
+         class="bg-white rounded-card shadow-card overflow-hidden cursor-pointer hover:shadow-lg transition-shadow">
+      <!-- Service Image (if available) -->
+      <div *ngIf="service.imageUrl" class="h-40 w-full bg-neutral-light">
+        <img [src]="service.imageUrl" [alt]="service.name" class="h-full w-full object-cover">
+      </div>
+
+      <!-- Placeholder if no image -->
+      <div *ngIf="!service.imageUrl" class="h-40 w-full bg-neutral-light flex items-center justify-center">
+        <span class="material-icons-outlined text-4xl text-neutral">spa</span>
+      </div>
+
+      <!-- Service Content -->
+      <div class="p-4">
+        <div class="flex items-start justify-between">
+          <div>
+            <h3 class="text-lg font-medium text-neutral-dark">{{ service.name }}</h3>
+            <p class="text-sm text-neutral mt-1">{{ service.category }}</p>
+          </div>
+
+          <!-- Status Badge -->
+          <span
+            class="px-2 py-1 text-xs font-medium rounded-full"
+            [class.bg-green-100]="service.active"
+            [class.text-green-800]="service.active"
+            [class.bg-red-100]="!service.active"
+            [class.text-red-800]="!service.active">
+            {{ service.active ? 'Active' : 'Inactive' }}
+          </span>
+        </div>
+
+        <!-- Service Description -->
+        <p class="text-sm text-neutral-dark mt-3 line-clamp-2">{{ service.description }}</p>
+
+        <!-- Service Details -->
+        <div class="flex items-center justify-between mt-4">
+          <div class="text-sm text-neutral">
+            <span class="material-icons-outlined text-xs align-text-bottom">schedule</span>
+            {{ formatDuration(service.duration) }}
+          </div>
+          <div class="text-sm font-medium">{{ formatCurrency(service.price) }}</div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center justify-end space-x-2 mt-4 pt-4 border-t border-neutral-light">
+          <!-- Toggle Status -->
+          <button
+            (click)="toggleServiceStatus(service.id, $event)"
+            class="text-neutral-dark hover:text-primary focus:outline-none"
+            title="{{ service.active ? 'Deactivate' : 'Activate' }}">
+            <span class="material-icons-outlined text-sm">{{ service.active ? 'toggle_on' : 'toggle_off' }}</span>
+          </button>
+
+          <!-- Edit -->
+          <button
+            (click)="editService(service.id, $event)"
+            class="text-neutral-dark hover:text-primary focus:outline-none"
+            title="Edit">
+            <span class="material-icons-outlined text-sm">edit</span>
+          </button>
+
+          <!-- Delete -->
+          <button
+            (click)="deleteService(service.id, $event)"
+            class="text-neutral-dark hover:text-red-600 focus:outline-none"
+            title="Delete">
+            <span class="material-icons-outlined text-sm">delete</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="filteredServices.length === 0" class="md:col-span-2 lg:col-span-3 bg-white rounded-card shadow-card p-8">
+      <div class="flex flex-col items-center justify-center space-y-3">
+        <span class="material-icons-outlined text-4xl text-neutral-light">spa</span>
+        <h3 class="text-lg font-medium text-neutral-dark">No services found</h3>
+        <p class="text-sm text-neutral">
+          <span *ngIf="filterOptions.category || filterOptions.status !== null || filterOptions.search">
+            Try adjusting your filters or
+            <button (click)="clearFilters()" class="text-primary hover:underline">clear all filters</button>
+          </span>
+          <span *ngIf="!filterOptions.category && filterOptions.status === null && !filterOptions.search">
+            Create your first service to get started
+          </span>
+        </p>
+        <button
+          *ngIf="!filterOptions.category && filterOptions.status === null && !filterOptions.search"
+          (click)="createService()"
+          class="btn btn-primary mt-2">
+          Create Service
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- List View -->
+  <div *ngIf="!isLoading && !errorMessage && viewMode === 'list'" class="bg-white rounded-card shadow-card overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-neutral-light">
+        <thead class="bg-neutral-light">
+        <tr>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-neutral-dark uppercase tracking-wider">
+            Service
+          </th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-neutral-dark uppercase tracking-wider">
+            Category
+          </th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-neutral-dark uppercase tracking-wider">
+            Duration
+          </th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-neutral-dark uppercase tracking-wider">
+            Price
+          </th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-neutral-dark uppercase tracking-wider">
+            Status
+          </th>
+          <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-neutral-dark uppercase tracking-wider">
+            Actions
+          </th>
+        </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-neutral-light">
+        <tr *ngFor="let service of filteredServices"
+            (click)="viewServiceDetails(service.id)"
+            class="cursor-pointer hover:bg-neutral-light">
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="flex items-center">
+              <div *ngIf="service.imageUrl" class="flex-shrink-0 h-10 w-10 mr-3">
+                <img [src]="service.imageUrl" [alt]="service.name" class="h-10 w-10 rounded-full object-cover">
+              </div>
+              <div *ngIf="!service.imageUrl" class="flex-shrink-0 h-10 w-10 rounded-full bg-neutral-light flex items-center justify-center mr-3">
+                <span class="material-icons-outlined text-sm text-neutral">spa</span>
+              </div>
+              <div>
+                <div class="font-medium text-neutral-dark">{{ service.name }}</div>
+                <div class="text-xs text-neutral truncate max-w-xs">{{ service.description }}</div>
+              </div>
+            </div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm text-neutral-dark">{{ service.category }}</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm text-neutral-dark">{{ formatDuration(service.duration) }}</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm font-medium text-neutral-dark">{{ formatCurrency(service.price) }}</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+              <span class="px-2 py-1 text-xs font-medium rounded-full"
+                    [class.bg-green-100]="service.active"
+                    [class.text-green-800]="service.active"
+                    [class.bg-red-100]="!service.active"
+                    [class.text-red-800]="!service.active">
+                {{ service.active ? 'Active' : 'Inactive' }}
+              </span>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
+            <div class="flex items-center justify-end space-x-2">
+              <!-- Toggle Status -->
+              <button
+                (click)="toggleServiceStatus(service.id, $event)"
+                class="text-neutral-dark hover:text-primary focus:outline-none"
+                title="{{ service.active ? 'Deactivate' : 'Activate' }}">
+                <span class="material-icons-outlined text-sm">{{ service.active ? 'toggle_on' : 'toggle_off' }}</span>
+              </button>
+
+              <!-- Edit -->
+              <button
+                (click)="editService(service.id, $event)"
+                class="text-neutral-dark hover:text-primary focus:outline-none"
+                title="Edit">
+                <span class="material-icons-outlined text-sm">edit</span>
+              </button>
+
+              <!-- Delete -->
+              <button
+                (click)="deleteService(service.id, $event)"
+                class="text-neutral-dark hover:text-red-600 focus:outline-none"
+                title="Delete">
+                <span class="material-icons-outlined text-sm">delete</span>
+              </button>
+            </div>
+          </td>
+        </tr>
+
+        <!-- Empty state -->
+        <tr *ngIf="filteredServices.length === 0">
+          <td colspan="6" class="px-6 py-8 text-center">
+            <div class="flex flex-col items-center justify-center space-y-3">
+              <span class="material-icons-outlined text-4xl text-neutral-light">spa</span>
+              <h3 class="text-lg font-medium text-neutral-dark">No services found</h3>
+              <p class="text-sm text-neutral">
+                  <span *ngIf="filterOptions.category || filterOptions.status !== null || filterOptions.search">
+                    Try adjusting your filters or
+                    <button (click)="clearFilters()" class="text-primary hover:underline">clear all filters</button>
+                  </span>
+                <span *ngIf="!filterOptions.category && filterOptions.status === null && !filterOptions.search">
+                    Create your first service to get started
+                  </span>
+              </p>
+              <button
+                *ngIf="!filterOptions.category && filterOptions.status === null && !filterOptions.search"
+                (click)="createService()"
+                class="btn btn-primary mt-2">
+                Create Service
+              </button>
+            </div>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

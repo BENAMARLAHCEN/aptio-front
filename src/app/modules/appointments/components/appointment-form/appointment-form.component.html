@@ -1,0 +1,178 @@
+<div class="space-y-6">
+  <!-- Page Title -->
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-bold text-neutral-dark">
+      {{ isEditMode ? 'Edit Appointment' : 'New Appointment' }}
+    </h1>
+    <button
+      (click)="cancel()"
+      class="flex items-center px-4 py-2 border border-neutral-light rounded-lg text-neutral-dark hover:bg-neutral-light">
+      Cancel
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="flex justify-center p-8">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="p-4 bg-red-100 border border-red-300 text-red-700 rounded-lg">
+    {{ errorMessage }}
+    <button (click)="loadFormData()" class="ml-2 text-primary hover:underline">Try Again</button>
+  </div>
+
+  <!-- Success Message -->
+  <div *ngIf="successMessage" class="p-4 bg-green-100 border border-green-300 text-green-700 rounded-lg">
+    {{ successMessage }}
+  </div>
+
+  <!-- Appointment Form -->
+  <form *ngIf="!isLoading" [formGroup]="appointmentForm" (ngSubmit)="onSubmit()" class="bg-white rounded-card shadow-card p-6">
+    <div class="space-y-6">
+      <!-- Customer Selection -->
+      <div>
+        <label for="customerId" class="block text-sm font-medium text-neutral-dark mb-1">
+          Customer
+        </label>
+        <select
+          id="customerId"
+          formControlName="customerId"
+          class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+          [ngClass]="{'border-status-error': isFieldInvalid('customerId')}"
+        >
+          <option value="" disabled>Select a customer</option>
+          <option *ngFor="let customer of customers" [value]="customer.id">
+            {{ customer.firstName }} {{ customer.lastName }} ({{ customer.email }})
+          </option>
+        </select>
+        <p *ngIf="isFieldInvalid('customerId')" class="mt-1 text-sm text-status-error">
+          {{ getErrorMessage('customerId') }}
+        </p>
+      </div>
+
+      <!-- Service Selection -->
+      <div>
+        <label for="serviceId" class="block text-sm font-medium text-neutral-dark mb-1">
+          Service
+        </label>
+        <select
+          id="serviceId"
+          formControlName="serviceId"
+          (change)="onServiceChange()"
+          class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+          [ngClass]="{'border-status-error': isFieldInvalid('serviceId')}"
+        >
+          <option value="" disabled>Select a service</option>
+          <option *ngFor="let service of services" [value]="service.id">
+            {{ service.name }} ({{ service.duration }}min - ${{ service.price }})
+          </option>
+        </select>
+        <p *ngIf="isFieldInvalid('serviceId')" class="mt-1 text-sm text-status-error">
+          {{ getErrorMessage('serviceId') }}
+        </p>
+
+        <!-- Service Details -->
+        <div *ngIf="appointmentForm.get('serviceId')?.value" class="mt-2 p-3 bg-neutral-light rounded-lg">
+          <h3 class="font-medium text-sm">{{ getServiceById(appointmentForm.get('serviceId')?.value)?.name }}</h3>
+          <p class="text-xs text-neutral mt-1">{{ getServiceById(appointmentForm.get('serviceId')?.value)?.description }}</p>
+          <div class="flex items-center mt-2 text-xs">
+            <span class="text-neutral">
+              <span class="material-icons-outlined text-xs align-text-bottom">schedule</span>
+              {{ getServiceById(appointmentForm.get('serviceId')?.value)?.duration }} minutes
+            </span>
+            <span class="mx-2 text-neutral">•</span>
+            <span class="text-neutral">
+              ${{ getServiceById(appointmentForm.get('serviceId')?.value)?.price }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Date Selection -->
+      <div>
+        <label for="date" class="block text-sm font-medium text-neutral-dark mb-1">
+          Date
+        </label>
+        <input
+          id="date"
+          type="date"
+          formControlName="date"
+          (change)="onDateChange()"
+          class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+          [ngClass]="{'border-status-error': isFieldInvalid('date')}"
+        />
+        <p *ngIf="isFieldInvalid('date')" class="mt-1 text-sm text-status-error">
+          {{ getErrorMessage('date') }}
+        </p>
+      </div>
+
+      <!-- Time Selection -->
+      <div>
+        <label for="time" class="block text-sm font-medium text-neutral-dark mb-1">
+          Time
+        </label>
+
+        <!-- Time Loading State -->
+        <div *ngIf="isLoadingTimeSlots" class="flex items-center mt-2 mb-4">
+          <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"></div>
+          <span class="text-sm text-neutral">Loading available time slots...</span>
+        </div>
+
+        <!-- No Available Times Message -->
+        <div *ngIf="!isLoadingTimeSlots && availableTimeSlots.length === 0 && appointmentForm.get('serviceId')?.value && appointmentForm.get('date')?.value"
+             class="text-sm text-status-error mt-2 mb-4">
+          No available time slots for this date. Please select another date.
+        </div>
+
+        <!-- Time Slot Selection -->
+        <div *ngIf="!isLoadingTimeSlots && availableTimeSlots.length > 0" class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 mt-2">
+          <div *ngFor="let timeSlot of availableTimeSlots">
+            <button
+              type="button"
+              (click)="appointmentForm.get('time')?.setValue(timeSlot)"
+              class="w-full py-2 text-center rounded-lg border transition-colors"
+              [class.bg-primary-light]="appointmentForm.get('time')?.value === timeSlot"
+              [class.border-primary]="appointmentForm.get('time')?.value === timeSlot"
+              [class.text-primary]="appointmentForm.get('time')?.value === timeSlot"
+              [class.border-neutral-light]="appointmentForm.get('time')?.value !== timeSlot"
+              [class.hover:bg-neutral-light]="appointmentForm.get('time')?.value !== timeSlot"
+            >
+              {{ formatTimeForDisplay(timeSlot) }}
+            </button>
+          </div>
+        </div>
+        <p *ngIf="isFieldInvalid('time')" class="mt-1 text-sm text-status-error">
+          {{ getErrorMessage('time') }}
+        </p>
+      </div>
+
+      <!-- Notes -->
+      <div>
+        <label for="notes" class="block text-sm font-medium text-neutral-dark mb-1">
+          Notes (Optional)
+        </label>
+        <textarea
+          id="notes"
+          formControlName="notes"
+          rows="3"
+          class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+        ></textarea>
+      </div>
+
+      <!-- Submit Button -->
+      <div class="flex justify-end">
+        <button
+          type="submit"
+          class="btn btn-primary"
+          [disabled]="appointmentForm.invalid || isSubmitting"
+        >
+          <span class="flex items-center">
+            <span *ngIf="isSubmitting" class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
+            {{ isSubmitting ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update Appointment' : 'Create Appointment') }}
+          </span>
+        </button>
+      </div>
+    </div>
+  </form>
+</div>

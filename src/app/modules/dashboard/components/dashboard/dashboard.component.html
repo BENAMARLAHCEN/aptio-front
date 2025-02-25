@@ -1,0 +1,169 @@
+<div class="space-y-6">
+  <!-- Page Title -->
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-bold text-neutral-dark">Dashboard</h1>
+    <div class="flex items-center space-x-2">
+      <span class="text-sm text-neutral">Today: {{ '2025-02-25' | date:'EEEE, MMMM d, y' }}</span>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <app-stats-card *ngFor="let card of statsCards" [card]="card"></app-stats-card>
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Upcoming Appointments -->
+    <div class="lg:col-span-2">
+      <div class="bg-white rounded-card shadow-card p-4">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-medium text-neutral-dark">Upcoming Appointments</h2>
+          <a routerLink="/dashboard/appointments" class="text-primary text-sm hover:underline">View All</a>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="min-w-full">
+            <thead class="bg-neutral-light">
+            <tr>
+              <th class="px-4 py-3 text-left text-xs font-medium text-neutral-dark uppercase tracking-wider">Customer</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-neutral-dark uppercase tracking-wider">Service</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-neutral-dark uppercase tracking-wider">Date</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-neutral-dark uppercase tracking-wider">Time</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-neutral-dark uppercase tracking-wider">Status</th>
+            </tr>
+            </thead>
+            <tbody class="divide-y divide-neutral-light">
+            <tr *ngFor="let appointment of upcomingAppointments" class="hover:bg-neutral-light">
+              <td class="px-4 py-3 whitespace-nowrap">
+                <div class="text-sm font-medium text-neutral-dark">{{ appointment.customerName }}</div>
+              </td>
+              <td class="px-4 py-3 whitespace-nowrap">
+                <div class="text-sm text-neutral-dark">{{ appointment.service }}</div>
+              </td>
+              <td class="px-4 py-3 whitespace-nowrap">
+                <div class="text-sm text-neutral-dark">{{ appointment.date }}</div>
+              </td>
+              <td class="px-4 py-3 whitespace-nowrap">
+                <div class="text-sm text-neutral-dark">{{ appointment.time }}</div>
+              </td>
+              <td class="px-4 py-3 whitespace-nowrap">
+                  <span class="badge" [ngClass]="getStatusClass(appointment.status)">
+                    {{ appointment.status | titlecase }}
+                  </span>
+              </td>
+            </tr>
+            <tr *ngIf="upcomingAppointments.length === 0">
+              <td colspan="5" class="px-4 py-3 text-center text-sm text-neutral">
+                No upcoming appointments
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="lg:col-span-1">
+      <div class="bg-white rounded-card shadow-card p-4">
+        <h2 class="text-lg font-medium text-neutral-dark mb-4">Quick Actions</h2>
+
+        <div class="space-y-3">
+          <a routerLink="/dashboard/appointments/new" class="block w-full py-3 px-4 bg-primary text-white rounded-lg text-center font-medium hover:bg-primary-dark transition-colors">
+            New Appointment
+          </a>
+
+          <a routerLink="/dashboard/customers/new" class="block w-full py-3 px-4 bg-white border border-primary text-primary rounded-lg text-center font-medium hover:bg-primary-light transition-colors">
+            Add Customer
+          </a>
+
+          <a routerLink="/dashboard/services" class="block w-full py-3 px-4 bg-white border border-neutral-light text-neutral-dark rounded-lg text-center font-medium hover:bg-neutral-light transition-colors">
+            Manage Services
+          </a>
+        </div>
+
+        <!-- Calendar -->
+        <div class="mt-6">
+          <h3 class="text-md font-medium text-neutral-dark mb-2">Calendar</h3>
+          <div class="bg-neutral-light rounded-lg p-4">
+            <div class="flex justify-between items-center mb-4">
+              <button class="text-neutral">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                </svg>
+              </button>
+              <span class="font-medium">February 2025</span>
+              <button class="text-neutral">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                </svg>
+              </button>
+            </div>
+
+            <div class="grid grid-cols-7 gap-1 text-center text-sm">
+              <div class="text-neutral font-medium">S</div>
+              <div class="text-neutral font-medium">M</div>
+              <div class="text-neutral font-medium">T</div>
+              <div class="text-neutral font-medium">W</div>
+              <div class="text-neutral font-medium">T</div>
+              <div class="text-neutral font-medium">F</div>
+              <div class="text-neutral font-medium">S</div>
+
+              <!-- Empty cells for previous month -->
+              <div class="h-8 text-neutral opacity-50 flex items-center justify-center">26</div>
+              <div class="h-8 text-neutral opacity-50 flex items-center justify-center">27</div>
+              <div class="h-8 text-neutral opacity-50 flex items-center justify-center">28</div>
+              <div class="h-8 text-neutral opacity-50 flex items-center justify-center">29</div>
+              <div class="h-8 text-neutral opacity-50 flex items-center justify-center">30</div>
+              <div class="h-8 text-neutral opacity-50 flex items-center justify-center">31</div>
+              <div class="h-8 text-neutral-dark flex items-center justify-center">1</div>
+
+              <!-- February dates -->
+              <div class="h-8 text-neutral-dark flex items-center justify-center">2</div>
+              <div class="h-8 text-neutral-dark flex items-center justify-center">3</div>
+              <div class="h-8 text-neutral-dark flex items-center justify-center">4</div>
+              <div class="h-8 text-neutral-dark flex items-center justify-center">5</div>
+              <div class="h-8 text-neutral-dark flex items-center justify-center">6</div>
+              <div class="h-8 text-neutral-dark flex items-center justify-center">7</div>
+              <div class="h-8 text-neutral-dark flex items-center justify-center">8</div>
+
+              <div class="h-8 text-neutral-dark flex items-center justify-center">9</div>
+              <div class="h-8 text-neutral-dark flex items-center justify-center">10</div>
+              <div class="h-8 text-neutral-dark flex items-center justify-center">11</div>
+              <div class="h-8 text-neutral-dark flex items-center justify-center">12</div>
+              <div class="h-8 text-neutral-dark flex items-center justify-center">13</div>
+              <div class="h-8 text-neutral-dark flex items-center justify-center">14</div>
+              <div class="h-8 text-neutral-dark flex items-center justify-center">15</div>
+
+              <div class="h-8 text-neutral-dark flex items-center justify-center">16</div>
+              <div class="h-8 text-neutral-dark flex items-center justify-center">17</div>
+              <div class="h-8 text-neutral-dark flex items-center justify-center">18</div>
+              <div class="h-8 text-neutral-dark flex items-center justify-center">19</div>
+              <div class="h-8 text-neutral-dark flex items-center justify-center">20</div>
+              <div class="h-8 text-neutral-dark flex items-center justify-center">21</div>
+              <div class="h-8 text-neutral-dark flex items-center justify-center">22</div>
+
+              <div class="h-8 text-neutral-dark flex items-center justify-center">23</div>
+              <div class="h-8 text-neutral-dark flex items-center justify-center">24</div>
+              <div class="h-8 text-neutral-dark bg-primary-light text-primary font-medium rounded-full flex items-center justify-center">25</div>
+              <div class="h-8 text-neutral-dark flex items-center justify-center">26</div>
+              <div class="h-8 text-neutral-dark flex items-center justify-center">27</div>
+              <div class="h-8 text-neutral-dark flex items-center justify-center">28</div>
+
+              <!-- Empty cells for next month -->
+              <div class="h-8 text-neutral opacity-50 flex items-center justify-center">1</div>
+              <div class="h-8 text-neutral opacity-50 flex items-center justify-center">2</div>
+              <div class="h-8 text-neutral opacity-50 flex items-center justify-center">3</div>
+              <div class="h-8 text-neutral opacity-50 flex items-center justify-center">4</div>
+              <div class="h-8 text-neutral opacity-50 flex items-center justify-center">5</div>
+              <div class="h-8 text-neutral opacity-50 flex items-center justify-center">6</div>
+              <div class="h-8 text-neutral opacity-50 flex items-center justify-center">7</div>
+              <div class="h-8 text-neutral opacity-50 flex items-center justify-center">8</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

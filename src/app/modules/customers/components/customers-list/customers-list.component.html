@@ -1,0 +1,227 @@
+<div class="space-y-6">
+  <!-- Page Title and Actions -->
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <h1 class="text-2xl font-bold text-neutral-dark">Customers</h1>
+
+    <button (click)="createCustomer()" class="btn btn-primary flex items-center">
+      <span class="material-icons-outlined mr-1 text-sm">person_add</span>
+      New Customer
+    </button>
+  </div>
+
+  <!-- Filters and Search -->
+  <div class="bg-white rounded-card shadow-card p-4">
+    <div class="flex flex-col md:flex-row md:items-center gap-4">
+      <!-- Search -->
+      <div class="relative flex-1">
+        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-neutral">
+          <span class="material-icons-outlined text-sm">search</span>
+        </span>
+        <input
+          type="text"
+          placeholder="Search customers..."
+          (input)="onSearch($event)"
+          class="w-full pl-10 pr-4 py-2 border border-neutral-light rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+      </div>
+
+      <!-- Status Filter -->
+      <div class="flex items-center">
+        <span class="text-sm text-neutral-dark mr-2">Status:</span>
+        <button
+          (click)="setActiveFilter('all')"
+          [class.bg-primary]="activeFilter === 'all'"
+          [class.text-white]="activeFilter === 'all'"
+          [class.bg-white]="activeFilter !== 'all'"
+          [class.border-neutral-light]="activeFilter !== 'all'"
+          [class.text-neutral-dark]="activeFilter !== 'all'"
+          class="px-3 py-1 rounded-l-lg border">
+          All
+        </button>
+        <button
+          (click)="setActiveFilter('active')"
+          [class.bg-primary]="activeFilter === 'active'"
+          [class.text-white]="activeFilter === 'active'"
+          [class.bg-white]="activeFilter !== 'active'"
+          [class.border-neutral-light]="activeFilter !== 'active'"
+          [class.text-neutral-dark]="activeFilter !== 'active'"
+          class="px-3 py-1 border-t border-b">
+          Active
+        </button>
+        <button
+          (click)="setActiveFilter('inactive')"
+          [class.bg-primary]="activeFilter === 'inactive'"
+          [class.text-white]="activeFilter === 'inactive'"
+          [class.bg-white]="activeFilter !== 'inactive'"
+          [class.border-neutral-light]="activeFilter !== 'inactive'"
+          [class.text-neutral-dark]="activeFilter !== 'inactive'"
+          class="px-3 py-1 rounded-r-lg border">
+          Inactive
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="flex justify-center p-8">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="p-4 bg-red-100 border border-red-300 text-red-700 rounded-lg">
+    {{ errorMessage }}
+    <button (click)="loadCustomers()" class="ml-2 text-primary hover:underline">Try Again</button>
+  </div>
+
+  <!-- Customers Table -->
+  <div *ngIf="!isLoading && !errorMessage" class="bg-white rounded-card shadow-card overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-neutral-light">
+        <thead class="bg-neutral-light">
+        <tr>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-neutral-dark uppercase tracking-wider cursor-pointer"
+              (click)="setSorting('name')">
+            <div class="flex items-center">
+              Name
+              <span *ngIf="sortBy === 'name'" class="material-icons-outlined text-sm ml-1">
+                  {{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
+                </span>
+            </div>
+          </th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-neutral-dark uppercase tracking-wider cursor-pointer"
+              (click)="setSorting('email')">
+            <div class="flex items-center">
+              Contact
+              <span *ngIf="sortBy === 'email'" class="material-icons-outlined text-sm ml-1">
+                  {{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
+                </span>
+            </div>
+          </th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-neutral-dark uppercase tracking-wider cursor-pointer"
+              (click)="setSorting('visits')">
+            <div class="flex items-center">
+              Visits
+              <span *ngIf="sortBy === 'visits'" class="material-icons-outlined text-sm ml-1">
+                  {{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
+                </span>
+            </div>
+          </th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-neutral-dark uppercase tracking-wider cursor-pointer"
+              (click)="setSorting('spent')">
+            <div class="flex items-center">
+              Spent
+              <span *ngIf="sortBy === 'spent'" class="material-icons-outlined text-sm ml-1">
+                  {{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
+                </span>
+            </div>
+          </th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-neutral-dark uppercase tracking-wider cursor-pointer"
+              (click)="setSorting('lastVisit')">
+            <div class="flex items-center">
+              Last Visit
+              <span *ngIf="sortBy === 'lastVisit'" class="material-icons-outlined text-sm ml-1">
+                  {{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
+                </span>
+            </div>
+          </th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-neutral-dark uppercase tracking-wider">
+            Status
+          </th>
+          <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-neutral-dark uppercase tracking-wider">
+            Actions
+          </th>
+        </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-neutral-light">
+        <tr *ngFor="let customer of filteredCustomers"
+            (click)="viewCustomerDetails(customer.id)"
+            class="cursor-pointer hover:bg-neutral-light">
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="flex items-center">
+              <!-- Profile Photo or Avatar -->
+              <div class="flex-shrink-0 h-10 w-10 rounded-full overflow-hidden bg-primary-light">
+                <img *ngIf="customer.profileImage" [src]="customer.profileImage" alt="Profile" class="h-full w-full object-cover">
+                <div *ngIf="!customer.profileImage" class="h-full w-full flex items-center justify-center text-primary font-medium">
+                  {{ customer.firstName[0] }}{{ customer.lastName[0] }}
+                </div>
+              </div>
+              <div class="ml-4">
+                <div class="font-medium text-neutral-dark">{{ getFullName(customer) }}</div>
+                <div *ngIf="customer.address" class="text-xs text-neutral">
+                  {{ customer.address.city }}, {{ customer.address.state }}
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm text-neutral-dark">{{ customer.email }}</div>
+            <div class="text-xs text-neutral">{{ customer.phone }}</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm text-neutral-dark text-center">{{ customer.totalVisits }}</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm text-neutral-dark">{{ formatCurrency(customer.totalSpent) }}</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm text-neutral-dark">{{ formatDate(customer.lastVisit) }}</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+              <span class="px-2 py-1 text-xs font-medium rounded-full"
+                    [class.bg-green-100]="customer.active"
+                    [class.text-green-800]="customer.active"
+                    [class.bg-red-100]="!customer.active"
+                    [class.text-red-800]="!customer.active">
+                {{ customer.active ? 'Active' : 'Inactive' }}
+              </span>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
+            <div class="flex items-center justify-end space-x-2">
+              <!-- Edit button -->
+              <button
+                (click)="editCustomer(customer.id, $event)"
+                class="text-neutral-dark hover:text-primary focus:outline-none">
+                <span class="material-icons-outlined text-sm">edit</span>
+              </button>
+
+              <!-- Toggle status button -->
+              <button
+                (click)="toggleCustomerStatus(customer.id, customer.active, $event)"
+                class="text-neutral-dark hover:text-primary focus:outline-none"
+                [title]="customer.active ? 'Deactivate customer' : 'Activate customer'">
+                  <span class="material-icons-outlined text-sm">
+                    {{ customer.active ? 'block' : 'check_circle' }}
+                  </span>
+              </button>
+            </div>
+          </td>
+        </tr>
+
+        <!-- Empty state -->
+        <tr *ngIf="filteredCustomers.length === 0">
+          <td colspan="7" class="px-6 py-8 text-center">
+            <div class="flex flex-col items-center justify-center space-y-3">
+              <span class="material-icons-outlined text-4xl text-neutral-light">people</span>
+              <h3 class="text-lg font-medium text-neutral-dark">No customers found</h3>
+              <p class="text-sm text-neutral">
+                  <span *ngIf="searchTerm || activeFilter !== 'all'">
+                    Try adjusting your filters or
+                    <button (click)="searchTerms.next(''); setActiveFilter('all');" class="text-primary hover:underline">clear all filters</button>
+                  </span>
+                <span *ngIf="!searchTerm && activeFilter === 'all'">
+                    Add your first customer to get started
+                  </span>
+              </p>
+              <button
+                *ngIf="!searchTerm && activeFilter === 'all'"
+                (click)="createCustomer()"
+                class="btn btn-primary mt-2">
+                Add Customer
+              </button>
+            </div>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

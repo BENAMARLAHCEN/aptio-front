@@ -1,0 +1,60 @@
+<aside
+  [ngClass]="{'translate-x-0': isOpen, '-translate-x-full': !isOpen}"
+  class="fixed top-0 left-0 h-full w-64 bg-white border-r border-neutral-light shadow-lg transform
+         transition-transform duration-300 ease-in-out lg:transform-none lg:translate-x-0 pt-16 z-10">
+
+  <div class="h-full flex flex-col overflow-y-auto py-4">
+    <!-- Main Navigation -->
+    <nav class="px-4 space-y-1">
+      <div class="mb-2 text-xs font-medium text-neutral uppercase tracking-wider px-3">
+        Main
+      </div>
+
+      <a
+        *ngFor="let item of navItems"
+        [routerLink]="item.route"
+        routerLinkActive="bg-primary-light text-primary font-medium"
+        [routerLinkActiveOptions]="{exact: item.route === '/dashboard'}"
+        class="flex items-center px-3 py-2 rounded-lg text-sm text-neutral-dark hover:bg-neutral-light transition-colors duration-200">
+
+        <span class="material-icons-outlined text-lg mr-3">{{ item.icon }}</span>
+        <span>{{ item.label }}</span>
+
+        <!-- Badge -->
+        <span
+          *ngIf="item.badge"
+          class="ml-auto bg-status-error text-white text-xs font-medium px-2 py-0.5 rounded-full">
+          {{ item.badge }}
+        </span>
+      </a>
+    </nav>
+
+    <!-- Divider -->
+    <div class="mt-6 mb-6 mx-4 border-t border-neutral-light"></div>
+
+    <!-- Settings -->
+    <nav class="px-4 space-y-1 mt-auto">
+      <div class="mb-2 text-xs font-medium text-neutral uppercase tracking-wider px-3">
+        Settings
+      </div>
+
+      <a
+        *ngFor="let item of settingsItems"
+        [routerLink]="item.route"
+        routerLinkActive="bg-primary-light text-primary font-medium"
+        class="flex items-center px-3 py-2 rounded-lg text-sm text-neutral-dark hover:bg-neutral-light transition-colors duration-200">
+
+        <span class="material-icons-outlined text-lg mr-3">{{ item.icon }}</span>
+        <span>{{ item.label }}</span>
+      </a>
+    </nav>
+
+    <!-- App Info -->
+    <div class="mt-6 px-4 py-3">
+      <div class="bg-primary-light rounded-lg p-3 text-xs text-primary-dark">
+        <p class="font-medium">Aptio v1.0.0</p>
+        <p class="mt-1 opacity-80">© 2025 Aptio Inc.</p>
+      </div>
+    </div>
+  </div>
+</aside>

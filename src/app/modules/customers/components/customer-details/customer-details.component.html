@@ -1,0 +1,338 @@
+<div class="space-y-6">
+  <!-- Page Title and Actions -->
+  <div class="flex items-center justify-between">
+    <div class="flex items-center space-x-2">
+      <button (click)="goBack()" class="text-neutral-dark hover:text-primary focus:outline-none">
+        <span class="material-icons-outlined">arrow_back</span>
+      </button>
+      <h1 class="text-2xl font-bold text-neutral-dark">Customer Details</h1>
+    </div>
+
+    <div class="flex items-center space-x-2">
+      <button
+        (click)="createAppointment()"
+        class="flex items-center px-4 py-2 bg-white border border-neutral-light rounded-lg text-neutral-dark hover:bg-neutral-light">
+        <span class="material-icons-outlined mr-1 text-sm">event</span>
+        New Appointment
+      </button>
+      <button
+        (click)="editCustomer()"
+        class="flex items-center px-4 py-2 bg-white border border-neutral-light rounded-lg text-neutral-dark hover:bg-neutral-light">
+        <span class="material-icons-outlined mr-1 text-sm">edit</span>
+        Edit
+      </button>
+      <!-- Replace the toggle customer status button around line 27-38 with this fixed version -->
+      <button
+        (click)="toggleCustomerStatus()"
+        *ngIf="customer"
+        class="flex items-center px-4 py-2 bg-white border rounded-lg"
+        [class.border-green-300]="!customer.active"
+        [class.text-green-600]="!customer.active"
+        [class.hover:bg-green-50]="!customer.active"
+        [class.border-red-300]="customer.active"
+        [class.text-red-600]="customer.active"
+        [class.hover:bg-red-50]="customer.active">
+  <span class="material-icons-outlined mr-1 text-sm">
+    {{ customer.active ? 'block' : 'check_circle' }}
+  </span>
+        {{ customer.active ? 'Deactivate' : 'Activate' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="flex justify-center p-8">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="p-4 bg-red-100 border border-red-300 text-red-700 rounded-lg">
+    {{ errorMessage }}
+    <button (click)="loadCustomer()" class="ml-2 text-primary hover:underline">Try Again</button>
+  </div>
+
+  <!-- Customer Details -->
+  <div *ngIf="customer && !isLoading">
+    <!-- Header with basic info -->
+    <div class="bg-white rounded-card shadow-card p-6 mb-6">
+      <div class="flex flex-col md:flex-row md:items-center gap-6">
+        <!-- Profile Photo -->
+        <div class="flex-shrink-0">
+          <div class="h-24 w-24 rounded-full overflow-hidden bg-primary-light">
+            <img *ngIf="customer.profileImage" [src]="customer.profileImage" alt="Profile" class="h-full w-full object-cover">
+            <div *ngIf="!customer.profileImage" class="h-full w-full flex items-center justify-center text-primary font-medium text-3xl">
+              {{ customer.firstName[0] }}{{ customer.lastName[0] }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Basic Info -->
+        <div class="flex-1">
+          <h2 class="text-2xl font-bold text-neutral-dark mb-1">{{ getFullName() }}</h2>
+          <div class="flex items-center mb-2">
+            <span class="px-2 py-1 text-xs font-medium rounded-full mr-2"
+                  [class.bg-green-100]="customer.active"
+                  [class.text-green-800]="customer.active"
+                  [class.bg-red-100]="!customer.active"
+                  [class.text-red-800]="!customer.active">
+              {{ customer.active ? 'Active' : 'Inactive' }}
+            </span>
+            <span class="text-sm text-neutral">Customer since {{ formatDate(customer.registrationDate) }}</span>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+            <div class="flex items-center">
+              <span class="material-icons-outlined text-neutral mr-2 text-sm">email</span>
+              <span>{{ customer.email }}</span>
+            </div>
+            <div class="flex items-center">
+              <span class="material-icons-outlined text-neutral mr-2 text-sm">phone</span>
+              <span>{{ customer.phone }}</span>
+            </div>
+            <div *ngIf="customer.address" class="flex items-center col-span-full">
+              <span class="material-icons-outlined text-neutral mr-2 text-sm">location_on</span>
+              <span>{{ getFullAddress() }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Summary Stats -->
+        <div class="flex flex-col md:flex-row gap-4 md:border-l md:border-neutral-light md:pl-6">
+          <div class="text-center">
+            <p class="text-sm text-neutral">Total Visits</p>
+            <p class="text-2xl font-bold text-neutral-dark">{{ customer.totalVisits }}</p>
+          </div>
+          <div class="text-center">
+            <p class="text-sm text-neutral">Total Spent</p>
+            <p class="text-2xl font-bold text-neutral-dark">{{ formatCurrency(customer.totalSpent) }}</p>
+          </div>
+          <div class="text-center">
+            <p class="text-sm text-neutral">Last Visit</p>
+            <p class="text-lg font-medium text-neutral-dark">{{ formatDate(customer.lastVisit) }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="border-b border-neutral-light mb-6">
+      <nav class="flex space-x-6">
+        <button
+          [class.text-primary]="activeTab === 'details'"
+          [class.border-primary]="activeTab === 'details'"
+          [class.font-medium]="activeTab === 'details'"
+          [class.text-neutral]="activeTab !== 'details'"
+          [class.border-transparent]="activeTab !== 'details'"
+          class="px-1 py-3 border-b-2 text-sm"
+          (click)="setActiveTab('details')">
+          Personal Details
+        </button>
+        <button
+          [class.text-primary]="activeTab === 'appointments'"
+          [class.border-primary]="activeTab === 'appointments'"
+          [class.font-medium]="activeTab === 'appointments'"
+          [class.text-neutral]="activeTab !== 'appointments'"
+          [class.border-transparent]="activeTab !== 'appointments'"
+          class="px-1 py-3 border-b-2 text-sm"
+          (click)="setActiveTab('appointments')">
+          Appointments
+        </button>
+        <button
+          [class.text-primary]="activeTab === 'notes'"
+          [class.border-primary]="activeTab === 'notes'"
+          [class.font-medium]="activeTab === 'notes'"
+          [class.text-neutral]="activeTab !== 'notes'"
+          [class.border-transparent]="activeTab !== 'notes'"
+          class="px-1 py-3 border-b-2 text-sm"
+          (click)="setActiveTab('notes')">
+          Notes
+        </button>
+      </nav>
+    </div>
+
+    <!-- Tab Content -->
+    <!-- Personal Details Tab -->
+    <div *ngIf="activeTab === 'details'" class="bg-white rounded-card shadow-card p-6">
+      <h3 class="text-lg font-medium text-neutral-dark mb-4">Personal Information</h3>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+        <div>
+          <p class="text-sm text-neutral mb-1">First Name</p>
+          <p class="font-medium">{{ customer.firstName }}</p>
+        </div>
+
+        <div>
+          <p class="text-sm text-neutral mb-1">Last Name</p>
+          <p class="font-medium">{{ customer.lastName }}</p>
+        </div>
+
+        <div>
+          <p class="text-sm text-neutral mb-1">Email</p>
+          <p class="font-medium">{{ customer.email }}</p>
+        </div>
+
+        <div>
+          <p class="text-sm text-neutral mb-1">Phone</p>
+          <p class="font-medium">{{ customer.phone }}</p>
+        </div>
+
+        <div>
+          <p class="text-sm text-neutral mb-1">Birth Date</p>
+          <p class="font-medium">{{ customer.birthDate ? formatDate(customer.birthDate) : 'Not provided' }}</p>
+        </div>
+
+        <div>
+          <p class="text-sm text-neutral mb-1">Gender</p>
+          <p class="font-medium">{{ customer.gender || 'Not provided' }}</p>
+        </div>
+      </div>
+
+      <!-- Address Section -->
+      <h3 class="text-lg font-medium text-neutral-dark mt-8 mb-4">Address</h3>
+
+      <div *ngIf="customer.address" class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+        <div>
+          <p class="text-sm text-neutral mb-1">Street</p>
+          <p class="font-medium">{{ customer.address.street }}</p>
+        </div>
+
+        <div>
+          <p class="text-sm text-neutral mb-1">City</p>
+          <p class="font-medium">{{ customer.address.city }}</p>
+        </div>
+
+        <div>
+          <p class="text-sm text-neutral mb-1">State</p>
+          <p class="font-medium">{{ customer.address.state }}</p>
+        </div>
+
+        <div>
+          <p class="text-sm text-neutral mb-1">Zip Code</p>
+          <p class="font-medium">{{ customer.address.zipCode }}</p>
+        </div>
+
+        <div>
+          <p class="text-sm text-neutral mb-1">Country</p>
+          <p class="font-medium">{{ customer.address.country }}</p>
+        </div>
+      </div>
+
+      <div *ngIf="!customer.address" class="text-neutral italic mt-2">
+        No address information provided
+      </div>
+    </div>
+
+    <!-- Appointments Tab -->
+    <div *ngIf="activeTab === 'appointments'" class="bg-white rounded-card shadow-card p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-medium text-neutral-dark">Appointment History</h3>
+        <button (click)="createAppointment()" class="flex items-center text-sm text-primary hover:underline">
+          <span class="material-icons-outlined text-sm mr-1">add</span>
+          New Appointment
+        </button>
+      </div>
+
+      <!-- Loading State -->
+      <div *ngIf="isLoadingAppointments" class="flex justify-center p-8">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+
+      <!-- Appointments List -->
+      <div *ngIf="!isLoadingAppointments && appointments.length > 0" class="divide-y divide-neutral-light">
+        <div *ngFor="let appt of appointments" class="py-3">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+            <div>
+              <p class="font-medium">{{ appt.serviceName }}</p>
+              <p class="text-sm text-neutral">{{ formatDateTime(appt.date, appt.time) }}</p>
+            </div>
+            <div class="mt-2 md:mt-0">
+              <span class="px-2 py-1 text-xs font-medium rounded-full"
+                    [class.bg-green-100]="appt.status === 'confirmed'"
+                    [class.text-green-800]="appt.status === 'confirmed'"
+                    [class.bg-yellow-100]="appt.status === 'pending'"
+                    [class.text-yellow-800]="appt.status === 'pending'"
+                    [class.bg-red-100]="appt.status === 'cancelled'"
+                    [class.text-red-800]="appt.status === 'cancelled'"
+                    [class.bg-blue-100]="appt.status === 'completed'"
+                    [class.text-blue-800]="appt.status === 'completed'">
+                {{ appt.status | titlecase }}
+              </span>
+            </div>
+          </div>
+          <div *ngIf="appt.notes" class="mt-2 text-sm text-neutral bg-neutral-light p-2 rounded">
+            {{ appt.notes }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="!isLoadingAppointments && appointments.length === 0" class="text-center py-8">
+        <span class="material-icons-outlined text-4xl text-neutral-light">event_busy</span>
+        <h4 class="mt-2 font-medium text-neutral-dark">No appointments yet</h4>
+        <p class="text-sm text-neutral mt-1">Schedule this customer's first appointment</p>
+        <button (click)="createAppointment()" class="mt-4 btn btn-primary">
+          Create Appointment
+        </button>
+      </div>
+    </div>
+
+    <!-- Notes Tab -->
+    <div *ngIf="activeTab === 'notes'" class="bg-white rounded-card shadow-card p-6">
+      <h3 class="text-lg font-medium text-neutral-dark mb-4">Customer Notes</h3>
+
+      <!-- Add Note Form -->
+      <form [formGroup]="noteForm" (ngSubmit)="addNote()" class="mb-6">
+        <div class="mb-3">
+          <textarea
+            formControlName="content"
+            rows="3"
+            placeholder="Add a note about this customer..."
+            class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+          </textarea>
+        </div>
+        <div class="flex justify-end">
+          <button
+            type="submit"
+            [disabled]="noteForm.invalid || isAddingNote"
+            class="btn btn-primary">
+            <span class="flex items-center">
+              <span *ngIf="isAddingNote" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
+              Add Note
+            </span>
+          </button>
+        </div>
+      </form>
+
+      <!-- Notes List -->
+      <div *ngIf="customer.notes && customer.notes.length > 0" class="space-y-4">
+        <div *ngFor="let note of customer.notes" class="p-4 bg-neutral-light rounded-lg">
+          <p class="text-neutral-dark">{{ note.content }}</p>
+          <div class="mt-2 flex justify-between items-center text-xs text-neutral">
+            <span>{{ formatDate(note.createdAt) }}</span>
+            <span>Added by {{ note.createdBy }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="!customer.notes || customer.notes.length === 0" class="text-center py-6">
+        <span class="material-icons-outlined text-4xl text-neutral-light">notes</span>
+        <h4 class="mt-2 font-medium text-neutral-dark">No notes yet</h4>
+        <p class="text-sm text-neutral mt-1">Add notes about this customer's preferences or special requirements</p>
+      </div>
+    </div>
+
+    <!-- Delete Button (Danger Zone) -->
+    <div class="mt-8 p-6 bg-red-50 border border-red-200 rounded-lg">
+      <h3 class="text-lg font-medium text-red-800 mb-2">Danger Zone</h3>
+      <p class="text-sm text-red-600 mb-4">
+        Deleting this customer will permanently remove all their data from the system, including appointment history.
+      </p>
+      <button
+        (click)="deleteCustomer()"
+        class="flex items-center px-4 py-2 bg-white border border-red-300 rounded-lg text-red-600 hover:bg-red-50">
+        <span class="material-icons-outlined mr-1 text-sm">delete</span>
+        Delete Customer
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,183 @@
+<div class="space-y-6">
+  <!-- Page Title and Actions -->
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <h1 class="text-2xl font-bold text-neutral-dark">Appointments</h1>
+
+    <div class="flex items-center space-x-2">
+      <a routerLink="/dashboard/appointments/calendar" class="flex items-center px-4 py-2 bg-white border border-neutral-light rounded-lg text-neutral-dark hover:bg-neutral-light">
+        <span class="material-icons-outlined mr-1 text-sm">calendar_today</span>
+        Calendar View
+      </a>
+      <button (click)="createAppointment()" class="btn btn-primary flex items-center">
+        <span class="material-icons-outlined mr-1 text-sm">add</span>
+        New Appointment
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="bg-white rounded-card shadow-card p-4">
+    <div class="flex flex-col md:flex-row md:items-center gap-4">
+      <!-- Search -->
+      <div class="relative flex-1">
+        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-neutral">
+          <span class="material-icons-outlined text-sm">search</span>
+        </span>
+        <input
+          type="text"
+          [(ngModel)]="filterOptions.search"
+          (ngModelChange)="onFilterChange()"
+          placeholder="Search appointments..."
+          class="w-full pl-10 pr-4 py-2 border border-neutral-light rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+      </div>
+
+      <!-- Status Filter -->
+      <div class="w-full md:w-48">
+        <select
+          [(ngModel)]="filterOptions.status"
+          (ngModelChange)="onFilterChange()"
+          class="w-full px-4 py-2 border border-neutral-light rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+          <option [ngValue]="null">All Statuses</option>
+          <option *ngFor="let status of statusOptions" [value]="status.value">
+            {{ status.label }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Date Filter -->
+      <div class="w-full md:w-48">
+        <select
+          [(ngModel)]="filterOptions.date"
+          (ngModelChange)="onFilterChange()"
+          class="w-full px-4 py-2 border border-neutral-light rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+          <option [ngValue]="null">All Dates</option>
+          <option *ngFor="let date of dateOptions" [value]="date">
+            {{ formatDate(date) }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Clear Filters -->
+      <button
+        *ngIf="filterOptions.status || filterOptions.date || filterOptions.search"
+        (click)="clearFilters()"
+        class="flex items-center justify-center px-4 py-2 border border-neutral-light rounded-lg text-neutral-dark hover:bg-neutral-light">
+        <span class="material-icons-outlined mr-1 text-sm">clear</span>
+        Clear Filters
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="flex justify-center p-8">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="p-4 bg-red-100 border border-red-300 text-red-700 rounded-lg">
+    {{ errorMessage }}
+    <button (click)="loadAppointments()" class="ml-2 text-primary hover:underline">Try Again</button>
+  </div>
+
+  <!-- Appointments Table -->
+  <div *ngIf="!isLoading && !errorMessage" class="bg-white rounded-card shadow-card overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-neutral-light">
+        <thead class="bg-neutral-light">
+        <tr>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-neutral-dark uppercase tracking-wider">
+            Customer
+          </th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-neutral-dark uppercase tracking-wider">
+            Service
+          </th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-neutral-dark uppercase tracking-wider">
+            Date & Time
+          </th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-neutral-dark uppercase tracking-wider">
+            Status
+          </th>
+          <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-neutral-dark uppercase tracking-wider">
+            Actions
+          </th>
+        </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-neutral-light">
+        <tr *ngFor="let appointment of filteredAppointments"
+            (click)="viewAppointmentDetails(appointment.id)"
+            class="cursor-pointer hover:bg-neutral-light">
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="font-medium text-neutral-dark">{{ appointment.customerName }}</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm text-neutral-dark">{{ appointment.serviceName }}</div>
+            <div class="text-xs text-neutral">{{ appointment.duration }} minutes</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm text-neutral-dark">{{ formatDate(appointment.date) }}</div>
+            <div class="text-xs text-neutral">{{ formatTime(appointment.time) }}</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+              <span class="px-2 py-1 text-xs font-medium rounded-full" [ngClass]="getStatusClass(appointment.status)">
+                {{ appointment.status | titlecase }}
+              </span>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
+            <div class="flex items-center justify-end space-x-2">
+              <!-- Status dropdown -->
+              <div class="relative inline-block text-left">
+                <button
+                  (click)="$event.stopPropagation()"
+                  class="text-neutral-dark hover:text-primary focus:outline-none"
+                  [matMenuTriggerFor]="statusMenu">
+                  <span class="material-icons-outlined text-sm">more_vert</span>
+                </button>
+                <mat-menu #statusMenu="matMenu">
+                  <button
+                    *ngFor="let status of statusOptions"
+                    (click)="updateAppointmentStatus(appointment.id, status.value, $event)"
+                    mat-menu-item>
+                    {{ status.label }}
+                  </button>
+                </mat-menu>
+              </div>
+
+              <!-- Edit button -->
+              <button
+                (click)="editAppointment(appointment.id, $event)"
+                class="text-neutral-dark hover:text-primary focus:outline-none">
+                <span class="material-icons-outlined text-sm">edit</span>
+              </button>
+            </div>
+          </td>
+        </tr>
+
+        <!-- Empty state -->
+        <tr *ngIf="filteredAppointments.length === 0">
+          <td colspan="5" class="px-6 py-8 text-center">
+            <div class="flex flex-col items-center justify-center space-y-3">
+              <span class="material-icons-outlined text-4xl text-neutral-light">event_busy</span>
+              <h3 class="text-lg font-medium text-neutral-dark">No appointments found</h3>
+              <p class="text-sm text-neutral">
+                  <span *ngIf="filterOptions.status || filterOptions.date || filterOptions.search">
+                    Try adjusting your filters or
+                    <button (click)="clearFilters()" class="text-primary hover:underline">clear all filters</button>
+                  </span>
+                <span *ngIf="!filterOptions.status && !filterOptions.date && !filterOptions.search">
+                    Create your first appointment to get started
+                  </span>
+              </p>
+              <button
+                *ngIf="!filterOptions.status && !filterOptions.date && !filterOptions.search"
+                (click)="createAppointment()"
+                class="btn btn-primary mt-2">
+                Create Appointment
+              </button>
+            </div>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

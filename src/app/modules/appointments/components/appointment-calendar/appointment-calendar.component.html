@@ -1,0 +1,97 @@
+<div class="space-y-6">
+  <!-- Page Title and Actions -->
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <h1 class="text-2xl font-bold text-neutral-dark">Calendar</h1>
+
+    <div class="flex items-center space-x-2">
+      <a routerLink="/dashboard/appointments" class="flex items-center px-4 py-2 bg-white border border-neutral-light rounded-lg text-neutral-dark hover:bg-neutral-light">
+        <span class="material-icons-outlined mr-1 text-sm">list</span>
+        List View
+      </a>
+      <button (click)="createAppointment()" class="btn btn-primary flex items-center">
+        <span class="material-icons-outlined mr-1 text-sm">add</span>
+        New Appointment
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="flex justify-center p-8">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="p-4 bg-red-100 border border-red-300 text-red-700 rounded-lg">
+    {{ errorMessage }}
+    <button (click)="loadAppointments()" class="ml-2 text-primary hover:underline">Try Again</button>
+  </div>
+
+  <!-- Calendar -->
+  <div *ngIf="!isLoading && !errorMessage" class="bg-white rounded-card shadow-card p-4">
+    <!-- Month Navigation -->
+    <div class="flex items-center justify-between mb-6">
+      <button (click)="prevMonth()" class="text-neutral-dark hover:text-primary focus:outline-none">
+        <span class="material-icons-outlined">chevron_left</span>
+      </button>
+
+      <h2 class="text-xl font-bold">
+        {{ currentMonth | date:'MMMM yyyy' }}
+      </h2>
+
+      <button (click)="nextMonth()" class="text-neutral-dark hover:text-primary focus:outline-none">
+        <span class="material-icons-outlined">chevron_right</span>
+      </button>
+    </div>
+
+    <!-- Calendar Grid -->
+    <div class="overflow-x-auto">
+      <div class="min-w-full">
+        <!-- Days of Week -->
+        <div class="grid grid-cols-7 mb-2">
+          <div *ngFor="let day of daysOfWeek" class="text-center text-sm font-medium text-neutral-dark p-2">
+            {{ day }}
+          </div>
+        </div>
+
+        <!-- Calendar Weeks -->
+        <div *ngFor="let week of weeks" class="grid grid-cols-7 mb-1">
+          <div *ngFor="let day of week.days" [class]="getDayClass(day)"
+               [class.min-h-calendar-cell]="day.isCurrentMonth">
+            <!-- Date Number -->
+            <div class="flex justify-between items-start">
+              <span [class.font-bold]="day.isToday">
+                {{ day.date | date:'d' }}
+              </span>
+
+              <!-- Add button for current month -->
+              <button
+                *ngIf="day.isCurrentMonth"
+                (click)="createAppointment()"
+                class="text-xs text-neutral-dark hover:text-primary">
+                <span class="material-icons-outlined text-sm">add</span>
+              </button>
+            </div>
+
+            <!-- Appointments for the day -->
+            <div *ngIf="day.appointments.length > 0" class="mt-1 space-y-1">
+              <div
+                *ngFor="let appointment of day.appointments | slice:0:3"
+                (click)="viewAppointmentDetails(appointment.id)"
+                class="text-xs p-1 rounded cursor-pointer"
+                [class]="getStatusClass(appointment.status)">
+                <div class="font-medium truncate">{{ formatTime(appointment.time) }}</div>
+                <div class="truncate">{{ appointment.customerName }}</div>
+                <div class="truncate text-[10px]">{{ appointment.serviceName }}</div>
+              </div>
+
+              <!-- Show count if more than 3 appointments -->
+              <div *ngIf="day.appointments.length > 3" class="text-xs text-neutral text-center">
+                +{{ day.appointments.length - 3 }} more
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

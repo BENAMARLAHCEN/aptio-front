@@ -1,0 +1,183 @@
+<!-- src/app/modules/landing/components/service-details/service-details.component.html -->
+<div class="bg-white">
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8 flex justify-center">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+    <div class="p-4 bg-red-100 border border-red-300 text-red-700 rounded-lg">
+      {{ errorMessage }}
+      <button (click)="loadService()" class="ml-2 text-primary hover:underline">Try Again</button>
+    </div>
+  </div>
+
+  <!-- Service Details -->
+  <div *ngIf="service && !isLoading" class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+    <!-- Breadcrumb and Back Button -->
+    <div class="flex items-center justify-between mb-8">
+      <nav class="flex" aria-label="Breadcrumb">
+        <ol class="flex items-center space-x-2">
+          <li>
+            <a (click)="goBack()" class="text-neutral hover:text-neutral-dark cursor-pointer">Services</a>
+          </li>
+          <li class="flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-neutral" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+            <span class="ml-2 text-neutral-dark">{{ service.name }}</span>
+          </li>
+        </ol>
+      </nav>
+      <button (click)="goBack()" class="inline-flex items-center px-4 py-2 border border-neutral-light rounded-md text-neutral-dark hover:bg-neutral-light">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        Back
+      </button>
+    </div>
+
+    <!-- Service Content -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <!-- Service Image -->
+      <div>
+        <!-- Service Image (if available) -->
+        <div *ngIf="service.imageUrl" class="rounded-lg overflow-hidden shadow-lg">
+          <img [src]="service.imageUrl" [alt]="service.name" class="w-full h-auto">
+        </div>
+
+        <!-- Placeholder if no image -->
+        <div *ngIf="!service.imageUrl" class="rounded-lg bg-neutral-light h-80 flex items-center justify-center shadow-lg">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 text-neutral" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        </div>
+      </div>
+
+      <!-- Service Info -->
+      <div>
+        <span class="inline-block px-3 py-1 bg-primary-light text-primary text-sm font-medium rounded-full">
+          {{ service.category }}
+        </span>
+        <h1 class="mt-2 text-3xl font-extrabold text-neutral-dark tracking-tight sm:text-4xl">
+          {{ service.name }}
+        </h1>
+        <div class="mt-4 flex items-center justify-between">
+          <div class="flex items-center text-neutral-dark">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>{{ formatDuration(service.duration) }}</span>
+          </div>
+          <span class="text-2xl font-bold text-neutral-dark">{{ formatCurrency(service.price) }}</span>
+        </div>
+
+        <div class="mt-6">
+          <h2 class="text-lg font-medium text-neutral-dark">Description</h2>
+          <p class="mt-2 text-base text-neutral-dark">
+            {{ service.description }}
+          </p>
+        </div>
+
+        <div class="mt-8">
+          <h2 class="text-lg font-medium text-neutral-dark">What's Included</h2>
+          <ul class="mt-2 space-y-2">
+            <li class="flex items-start">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              <span>Professional service by trained experts</span>
+            </li>
+            <li class="flex items-start">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              <span>Eco-friendly materials and methods</span>
+            </li>
+            <li class="flex items-start">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              <span>Detailed recycling report</span>
+            </li>
+            <li class="flex items-start">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              <span>Customer satisfaction guarantee</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Book Now Button -->
+        <div class="mt-8 border-t border-neutral-light pt-8">
+          <button
+            (click)="navigateToBooking()"
+            class="w-full inline-flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary hover:bg-primary-dark focus:outline-none shadow-sm">
+            Book This Service Now
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Related Services -->
+    <div *ngIf="relatedServices.length > 0" class="mt-16">
+      <h2 class="text-2xl font-bold text-neutral-dark mb-8">Related Services</h2>
+      <div class="grid grid-cols-1 gap-y-10 gap-x-6 sm:grid-cols-2 lg:grid-cols-3">
+        <!-- Related Service Card -->
+        <div *ngFor="let relatedService of relatedServices"
+             (click)="navigateToService(relatedService.id)"
+             class="group bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer">
+          <!-- Service Image (if available) -->
+          <div *ngIf="relatedService.imageUrl" class="h-48 w-full bg-neutral-light">
+            <img [src]="relatedService.imageUrl" [alt]="relatedService.name" class="h-full w-full object-cover">
+          </div>
+
+          <!-- Placeholder if no image -->
+          <div *ngIf="!relatedService.imageUrl" class="h-48 w-full bg-neutral-light flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-neutral" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </div>
+
+          <!-- Service Content -->
+          <div class="p-4">
+            <h3 class="text-lg font-medium text-neutral-dark">{{ relatedService.name }}</h3>
+            <p class="mt-1 text-sm text-neutral line-clamp-2">{{ relatedService.description }}</p>
+            <div class="mt-2 flex justify-between items-center">
+              <span class="text-sm text-neutral">{{ formatDuration(relatedService.duration) }}</span>
+              <span class="font-bold text-neutral-dark">{{ formatCurrency(relatedService.price) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA Banner -->
+  <div *ngIf="service && !isLoading" class="bg-primary mt-12">
+    <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:py-16 lg:px-8 lg:flex lg:items-center lg:justify-between">
+      <h2 class="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+        <span class="block">Ready to schedule this service?</span>
+        <span class="block text-primary-light">Book {{ service.name }} today.</span>
+      </h2>
+      <div class="mt-8 flex lg:mt-0 lg:flex-shrink-0">
+        <div class="inline-flex rounded-md shadow">
+          <button (click)="navigateToBooking()" class="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-primary bg-white hover:bg-neutral-light">
+            Book Now
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="mt-6">
+    <button (click)="goBack()" class="inline-flex items-center px-4 py-2 border border-neutral-light rounded-md text-neutral-dark hover:bg-neutral-light">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+      </svg>
+      Back to Services
+    </button>
+  </div>
+
+</div>

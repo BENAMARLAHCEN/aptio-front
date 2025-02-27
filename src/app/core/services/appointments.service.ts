@@ -20,6 +20,24 @@ export interface Service {
   price: number;
   category: string;
 }
+export interface GuestBookingRequest {
+  serviceId: string;
+  date: string;
+  time: string;
+  notes?: string;
+  customerId: string;
+  customerInfo: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    address: {
+      street: string;
+      city: string;
+      postalCode: string;
+    }
+  };
+}
 
 export interface AppointmentStatus {
   value: 'pending' | 'confirmed' | 'cancelled' | 'completed';
@@ -325,5 +343,50 @@ export class AppointmentsService {
     const availableSlots = timeSlots.filter(slot => !bookedSlots.includes(slot));
 
     return of(availableSlots).pipe(delay(300));
+  }
+
+
+  createGuestAppointment(appointmentData: GuestBookingRequest): Observable<Appointment> {
+    // In production: return this.http.post<Appointment>(`${this.apiUrl}/guest-booking`, appointmentData);
+
+    // For demonstration, we'll simulate creating a guest booking
+    // Find service details from mock data
+    const service = this.mockServices.find(s => s.id === appointmentData.serviceId);
+
+    if (!service) {
+      throw new Error('Service not found');
+    }
+
+    // Create a mock customer for the guest
+    const guestCustomer: Customer = {
+      id: `guest-${Date.now()}`,
+      firstName: appointmentData.customerInfo.firstName,
+      lastName: appointmentData.customerInfo.lastName,
+      email: appointmentData.customerInfo.email,
+      phone: appointmentData.customerInfo.phone
+    };
+
+    // Create new appointment with mock ID and dates
+    const newAppointment: Appointment = {
+      id: (this.mockAppointments.length + 1).toString(),
+      customerId: guestCustomer.id,
+      customerName: `${guestCustomer.firstName} ${guestCustomer.lastName}`,
+      serviceId: service.id,
+      serviceName: service.name,
+      date: appointmentData.date,
+      time: appointmentData.time,
+      duration: service.duration,
+      status: 'pending',
+      price: service.price,
+      notes: appointmentData.notes,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    // Add to mock data
+    this.mockAppointments.push(newAppointment);
+    this.mockCustomers.push(guestCustomer);
+
+    return of(newAppointment).pipe(delay(500));
   }
 }

@@ -7,21 +7,21 @@
         <main class="mt-10 mx-auto max-w-7xl px-4 sm:mt-12 sm:px-6 lg:mt-16 lg:px-8 xl:mt-20">
           <div class="sm:text-center lg:text-left">
             <h1 class="text-4xl tracking-tight font-extrabold text-white sm:text-5xl md:text-6xl">
-              <span class="block">Simplify your</span>
-              <span class="block text-primary-light">recycling efforts</span>
+              <span class="block">Streamline your</span>
+              <span class="block text-primary-light">business operations</span>
             </h1>
             <p class="mt-3 text-base text-white sm:mt-5 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl lg:mx-0">
-              Join RecycleHub for convenient waste collection and recycling services. Contribute to a cleaner and more sustainable environment with just a few clicks.
+              Aptio helps service-based businesses manage appointments, customers, and services efficiently. Boost productivity and enhance customer experience with our all-in-one solution.
             </p>
             <div class="mt-5 sm:mt-8 sm:flex sm:justify-center lg:justify-start">
               <div class="rounded-md shadow">
                 <button (click)="navigateToBooking()" class="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary hover:bg-primary-dark md:py-4 md:text-lg md:px-10">
-                  Book Now
+                  Schedule Demo
                 </button>
               </div>
               <div class="mt-3 sm:mt-0 sm:ml-3">
                 <button (click)="navigateToServices()" class="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-primary bg-white hover:bg-neutral-light md:py-4 md:text-lg md:px-10">
-                  Our Services
+                  Explore Features
                 </button>
               </div>
             </div>
@@ -30,7 +30,7 @@
       </div>
     </div>
     <div class="lg:absolute lg:inset-y-0 lg:right-0 lg:w-1/2">
-      <img class="h-56 w-full object-cover sm:h-72 md:h-96 lg:w-full lg:h-full" src="https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80" alt="Recycling bins">
+      <img class="h-56 w-full object-cover sm:h-72 md:h-96 lg:w-full lg:h-full" src="https://images.unsplash.com/photo-1556761175-b413da4baf72?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80" alt="Business management dashboard">
     </div>
   </section>
 
@@ -38,12 +38,12 @@
   <section *ngIf="!isLoading && !errorMessage && featuredServices.length > 0" class="py-12 bg-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="lg:text-center">
-        <h2 class="text-base text-primary font-semibold tracking-wide uppercase">Our Services</h2>
+        <h2 class="text-base text-primary font-semibold tracking-wide uppercase">Our Features</h2>
         <p class="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-neutral-dark sm:text-4xl">
-          Comprehensive Recycling Solutions
+          Comprehensive Business Management
         </p>
         <p class="mt-4 max-w-2xl text-xl text-neutral lg:mx-auto">
-          We offer a range of services to help you manage waste responsibly and contribute to environmental sustainability.
+          From appointment scheduling to customer management, Aptio provides all the tools your service business needs to thrive.
         </p>
       </div>
 
@@ -63,19 +63,201 @@
     </div>
   </section>
 
+  <!-- Features Section -->
+  <section class="py-12 bg-neutral-light">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="lg:text-center">
+        <h2 class="text-base text-primary font-semibold tracking-wide uppercase">How It Works</h2>
+        <p class="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-neutral-dark sm:text-4xl">
+          Designed for Service Businesses
+        </p>
+        <p class="mt-4 max-w-2xl text-xl text-neutral lg:mx-auto">
+          Aptio streamlines your operations with an intuitive, user-friendly interface.
+        </p>
+      </div>
+
+      <div class="mt-10">
+        <div class="grid grid-cols-1 gap-10 md:grid-cols-3">
+
+          <!-- Feature 1 -->
+          <div class="relative">
+            <div class="absolute flex items-center justify-center h-12 w-12 rounded-md bg-primary text-white">
+              <span class="text-lg font-bold">1</span>
+            </div>
+            <div class="ml-16">
+              <h3 class="text-xl font-medium text-neutral-dark">Appointment Management</h3>
+              <p class="mt-2 text-base text-neutral">
+                Create, manage and track appointments with a user-friendly interface. Send automated reminders to reduce no-shows.
+              </p>
+            </div>
+          </div>
+
+          <!-- Feature 2 -->
+          <div class="relative">
+            <div class="absolute flex items-center justify-center h-12 w-12 rounded-md bg-primary text-white">
+              <span class="text-lg font-bold">2</span>
+            </div>
+            <div class="ml-16">
+              <h3 class="text-xl font-medium text-neutral-dark">Customer Profiles</h3>
+              <p class="mt-2 text-base text-neutral">
+                Keep detailed customer records with histories, preferences, and notes for personalized service.
+              </p>
+            </div>
+          </div>
+
+          <!-- Feature 3 -->
+          <div class="relative">
+            <div class="absolute flex items-center justify-center h-12 w-12 rounded-md bg-primary text-white">
+              <span class="text-lg font-bold">3</span>
+            </div>
+            <div class="ml-16">
+              <h3 class="text-xl font-medium text-neutral-dark">Service Catalog</h3>
+              <p class="mt-2 text-base text-neutral">
+                Define your services with pricing, duration, and descriptions. Easily update and organize them into categories.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Get Started Button -->
+      <div class="mt-12 text-center">
+        <button (click)="navigateToBooking()" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary-dark">
+          Get Started Today
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials Section -->
+  <section class="py-12 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="lg:text-center">
+        <h2 class="text-base text-primary font-semibold tracking-wide uppercase">Testimonials</h2>
+        <p class="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-neutral-dark sm:text-4xl">
+          Trusted by Businesses Like Yours
+        </p>
+      </div>
+
+      <div class="mt-10">
+        <div class="grid grid-cols-1 gap-8 md:grid-cols-3">
+
+          <!-- Testimonial 1 -->
+          <div class="bg-neutral-light rounded-lg p-6 shadow-md">
+            <div class="flex items-center mb-4">
+              <div class="h-12 w-12 rounded-full bg-primary-light flex items-center justify-center text-primary font-bold text-xl">
+                JD
+              </div>
+              <div class="ml-4">
+                <h4 class="text-lg font-medium text-neutral-dark">John Davis</h4>
+                <p class="text-sm text-neutral">Salon Owner</p>
+              </div>
+            </div>
+            <p class="text-neutral-dark">
+              "Since implementing Aptio, our salon has seen a 30% decrease in no-shows and a 25% increase in bookings. The customer management tools have transformed our client relationships."
+            </p>
+            <div class="mt-4 flex text-yellow-400">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+            </div>
+          </div>
+
+          <!-- Testimonial 2 -->
+          <div class="bg-neutral-light rounded-lg p-6 shadow-md">
+            <div class="flex items-center mb-4">
+              <div class="h-12 w-12 rounded-full bg-primary-light flex items-center justify-center text-primary font-bold text-xl">
+                ES
+              </div>
+              <div class="ml-4">
+                <h4 class="text-lg font-medium text-neutral-dark">Emily Smith</h4>
+                <p class="text-sm text-neutral">Spa Manager</p>
+              </div>
+            </div>
+            <p class="text-neutral-dark">
+              "Aptio's scheduling system has completely transformed our spa. The staff love how easy it is to manage their calendars, and our clients appreciate the automated reminders."
+            </p>
+            <div class="mt-4 flex text-yellow-400">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+            </div>
+          </div>
+
+          <!-- Testimonial 3 -->
+          <div class="bg-neutral-light rounded-lg p-6 shadow-md">
+            <div class="flex items-center mb-4">
+              <div class="h-12 w-12 rounded-full bg-primary-light flex items-center justify-center text-primary font-bold text-xl">
+                MB
+              </div>
+              <div class="ml-4">
+                <h4 class="text-lg font-medium text-neutral-dark">Mark Brown</h4>
+                <p class="text-sm text-neutral">Fitness Studio Owner</p>
+              </div>
+            </div>
+            <p class="text-neutral-dark">
+              "The customer profiles in Aptio have helped us provide much more personalized training sessions. Our clients feel known and valued, and our retention rates have improved significantly."
+            </p>
+            <div class="mt-4 flex text-yellow-400">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- CTA Section -->
   <section class="py-12 bg-primary">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="text-center">
         <h2 class="text-3xl font-extrabold text-white sm:text-4xl">
-          Ready to Start Recycling?
+          Ready to Grow Your Business?
         </h2>
         <p class="mt-4 text-xl text-white opacity-90">
-          Join thousands of environmentally conscious individuals and businesses making a difference.
+          Join thousands of service businesses using Aptio to streamline their operations.
         </p>
         <div class="mt-8 flex justify-center">
           <button (click)="navigateToBooking()" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-primary bg-white hover:bg-neutral-light">
-            Book Now
+            Start Free Trial
           </button>
           <button (click)="navigateToServices()" class="ml-4 inline-flex items-center px-6 py-3 border border-white text-base font-medium rounded-md text-white hover:bg-primary-dark">
             Learn More

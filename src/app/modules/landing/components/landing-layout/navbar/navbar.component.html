@@ -1,0 +1,147 @@
+<!-- src/app/modules/landing/components/landing-layout/navbar/navbar.component.html -->
+<nav class="bg-white shadow-md">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex justify-between h-16">
+      <!-- Logo and desktop menu -->
+      <div class="flex">
+        <!-- Logo -->
+        <div class="flex-shrink-0 flex items-center">
+          <a routerLink="/" class="text-xl font-bold text-primary">
+            Aptio
+          </a>
+        </div>
+
+        <!-- Desktop menu -->
+        <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+          <a routerLink="/"
+             routerLinkActive="border-primary text-neutral-dark"
+             [routerLinkActiveOptions]="{exact: true}"
+             class="border-transparent text-neutral hover:text-neutral-dark inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+            Home
+          </a>
+          <a routerLink="/services"
+             routerLinkActive="border-primary text-neutral-dark"
+             class="border-transparent text-neutral hover:text-neutral-dark inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+            Features
+          </a>
+          <a routerLink="/booking"
+             routerLinkActive="border-primary text-neutral-dark"
+             class="border-transparent text-neutral hover:text-neutral-dark inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+            Get Started
+          </a>
+          <a href="#"
+             class="border-transparent text-neutral hover:text-neutral-dark inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+            Pricing
+          </a>
+        </div>
+      </div>
+
+      <!-- Auth buttons -->
+      <div class="hidden sm:ml-6 sm:flex sm:items-center sm:space-x-4">
+        <ng-container *ngIf="!isLoggedIn; else loggedInButtons">
+          <button
+            (click)="login()"
+            class="text-neutral-dark hover:bg-neutral-light px-3 py-2 rounded-md text-sm font-medium"
+          >
+            Sign In
+          </button>
+          <button
+            (click)="register()"
+            class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-md text-sm font-medium"
+          >
+            Start Free Trial
+          </button>
+        </ng-container>
+
+        <ng-template #loggedInButtons>
+          <button
+            (click)="dashboard()"
+            class="text-neutral-dark hover:bg-neutral-light px-3 py-2 rounded-md text-sm font-medium"
+          >
+            Dashboard
+          </button>
+          <button
+            (click)="logout()"
+            class="text-neutral-dark hover:bg-neutral-light px-3 py-2 rounded-md text-sm font-medium"
+          >
+            Sign Out
+          </button>
+        </ng-template>
+      </div>
+
+      <!-- Mobile menu button -->
+      <div class="flex items-center sm:hidden">
+        <button
+          (click)="toggleMobileMenu()"
+          class="inline-flex items-center justify-center p-2 rounded-md text-neutral hover:text-neutral-dark hover:bg-neutral-light focus:outline-none"
+        >
+          <svg class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path *ngIf="!isMobileMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            <path *ngIf="isMobileMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile menu -->
+  <div class="sm:hidden" [ngClass]="{'block': isMobileMenuOpen, 'hidden': !isMobileMenuOpen}">
+    <div class="pt-2 pb-3 space-y-1">
+      <a routerLink="/"
+         routerLinkActive="bg-primary-light text-primary"
+         [routerLinkActiveOptions]="{exact: true}"
+         class="text-neutral hover:bg-neutral-light block px-3 py-2 rounded-md text-base font-medium">
+        Home
+      </a>
+      <a routerLink="/services"
+         routerLinkActive="bg-primary-light text-primary"
+         class="text-neutral hover:bg-neutral-light block px-3 py-2 rounded-md text-base font-medium">
+        Features
+      </a>
+      <a routerLink="/booking"
+         routerLinkActive="bg-primary-light text-primary"
+         class="text-neutral hover:bg-neutral-light block px-3 py-2 rounded-md text-base font-medium">
+        Get Started
+      </a>
+      <a href="#"
+         class="text-neutral hover:bg-neutral-light block px-3 py-2 rounded-md text-base font-medium">
+        Pricing
+      </a>
+    </div>
+
+    <!-- Mobile auth buttons -->
+    <div class="pt-4 pb-3 border-t border-neutral-light">
+      <div class="space-y-1">
+        <ng-container *ngIf="!isLoggedIn; else mobileLoggedInButtons">
+          <button
+            (click)="login()"
+            class="block w-full text-left px-4 py-2 text-base font-medium text-neutral hover:bg-neutral-light"
+          >
+            Sign In
+          </button>
+          <button
+            (click)="register()"
+            class="block w-full text-left px-4 py-2 text-base font-medium text-primary hover:bg-primary-light"
+          >
+            Start Free Trial
+          </button>
+        </ng-container>
+
+        <ng-template #mobileLoggedInButtons>
+          <button
+            (click)="dashboard()"
+            class="block w-full text-left px-4 py-2 text-base font-medium text-neutral hover:bg-neutral-light"
+          >
+            Dashboard
+          </button>
+          <button
+            (click)="logout()"
+            class="block w-full text-left px-4 py-2 text-base font-medium text-neutral hover:bg-neutral-light"
+          >
+            Sign Out
+          </button>
+        </ng-template>
+      </div>
+    </div>
+  </div>
+</nav>

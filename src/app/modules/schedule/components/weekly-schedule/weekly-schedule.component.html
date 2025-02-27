@@ -1,0 +1,110 @@
+<div class="space-y-4">
+  <!-- Week Navigation and Staff Selector -->
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-2 md:space-y-0">
+    <!-- Week Navigation -->
+    <div class="flex items-center bg-neutral-light p-3 rounded-lg">
+      <button
+        (click)="changeWeek(-1)"
+        class="p-1 rounded-full text-neutral-dark hover:bg-white focus:outline-none"
+        title="Previous Week">
+        <span class="material-icons-outlined">chevron_left</span>
+      </button>
+
+      <div class="flex items-center mx-2">
+        <span class="material-icons-outlined mr-2 text-primary">date_range</span>
+        <span class="font-medium">{{ getWeekRangeDisplay() }}</span>
+      </div>
+
+      <button
+        (click)="changeWeek(1)"
+        class="p-1 rounded-full text-neutral-dark hover:bg-white focus:outline-none"
+        title="Next Week">
+        <span class="material-icons-outlined">chevron_right</span>
+      </button>
+
+      <button
+        (click)="goToToday()"
+        class="ml-2 px-3 py-1 bg-white rounded-md text-sm text-neutral-dark hover:bg-primary-light hover:text-primary focus:outline-none"
+        title="Go to Today">
+        Today
+      </button>
+    </div>
+
+    <!-- Staff Selector -->
+    <div class="flex items-center bg-neutral-light p-3 rounded-lg">
+      <span class="material-icons-outlined mr-2 text-primary">person</span>
+      <select
+        [(ngModel)]="selectedStaffId"
+        (ngModelChange)="onStaffChange()"
+        class="bg-white border border-neutral-light rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+        <option *ngFor="let member of staff" [value]="member.id">
+          {{ member.firstName }} {{ member.lastName }}
+        </option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="flex justify-center p-8">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="p-4 bg-red-100 border border-red-300 text-red-700 rounded-lg">
+    {{ errorMessage }}
+    <button (click)="loadScheduleData()" class="ml-2 text-primary hover:underline">Try Again</button>
+  </div>
+
+  <!-- Weekly Schedule -->
+  <div *ngIf="!isLoading && !errorMessage" class="grid grid-cols-1 md:grid-cols-7 gap-4">
+    <div *ngFor="let day of weekDays" [class]="getDayClass(day)">
+      <!-- Day Header -->
+      <div class="p-3 border-b border-neutral-light" [class.bg-primary-light]="day.isToday">
+        <div class="flex justify-between items-center">
+          <div>
+            <div class="font-medium">{{ day.dayName }}</div>
+            <div class="text-sm text-neutral-dark">{{ formatDateForDisplay(day.date) }}</div>
+          </div>
+          <div *ngIf="day.isToday" class="px-2 py-1 bg-primary text-white text-xs rounded-full">
+            Today
+          </div>
+        </div>
+
+        <!-- Working hours -->
+        <div class="mt-1 text-xs" [class.text-neutral-dark]="isWorking(day)" [class.text-neutral]="!isWorking(day)">
+          {{ getWorkingHours(day) }}
+        </div>
+      </div>
+
+      <!-- Day Schedule -->
+      <div class="p-3">
+        <!-- No Schedule Message -->
+        <div *ngIf="day.entries.length === 0" class="text-center py-4 text-sm text-neutral">
+          <span *ngIf="isWorking(day)">No appointments</span>
+          <span *ngIf="!isWorking(day)">Not working</span>
+        </div>
+
+        <!-- Schedule Entries -->
+        <div *ngIf="day.entries.length > 0" class="space-y-2">
+          <div
+            *ngFor="let entry of day.entries"
+            class="p-2 rounded-lg cursor-pointer"
+            [class]="getEntryTypeClass(entry.type)"
+            (click)="viewAppointment(entry.id)">
+            <div class="font-medium text-sm">{{ entry.title }}</div>
+            <div class="text-xs">{{ formatTimeRange(entry.startTime, entry.endTime) }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Appointment Button -->
+  <div class="fixed bottom-6 right-6">
+    <button
+      (click)="createAppointment()"
+      class="bg-primary text-white rounded-full p-4 shadow-lg hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+      <span class="material-icons-outlined">add</span>
+    </button>
+  </div>
+</div>

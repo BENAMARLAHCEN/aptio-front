@@ -1,0 +1,52 @@
+<div class="h-full">
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="flex justify-center p-4">
+    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg text-sm">
+    {{ errorMessage }}
+  </div>
+
+  <!-- No Resource Selected -->
+  <div *ngIf="!resource && !isLoading" class="text-center p-4 text-neutral">
+    No resource selected.
+  </div>
+
+  <!-- Resource Schedule -->
+  <div *ngIf="resource && !isLoading && !errorMessage">
+    <!-- Resource Header -->
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="font-medium">{{ resource.name }}</h3>
+      <span class="text-xs px-2 py-1 rounded-full" [style.background-color]="resource.color + '33'" [style.color]="resource.color">
+        {{ resource.type }}
+      </span>
+    </div>
+
+    <!-- No Entries Message -->
+    <div *ngIf="entries.length === 0" class="text-center py-3 text-sm text-neutral">
+      No bookings for this resource
+    </div>
+
+    <!-- Entries List -->
+    <div *ngIf="entries.length > 0" class="space-y-2">
+      <div
+        *ngFor="let entry of entries"
+        class="p-2 rounded-lg text-sm"
+        [class]="getEntryTypeClass(entry.type)">
+        <div class="font-medium">{{ entry.title }}</div>
+        <div class="text-xs">{{ formatTimeRange(entry.startTime, entry.endTime) }}</div>
+
+        <!-- Staff info if available -->
+        <div *ngIf="staffMap.has(entry.staffId)" class="flex items-center mt-1">
+          <span
+            class="w-2 h-2 rounded-full mr-1"
+            [style.background-color]="getStaffColor(entry.staffId)">
+          </span>
+          <span class="text-xs">{{ getStaffName(entry.staffId) }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

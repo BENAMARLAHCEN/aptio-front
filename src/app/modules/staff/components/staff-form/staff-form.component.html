@@ -1,0 +1,225 @@
+<div class="space-y-6">
+  <!-- Page Title -->
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-bold text-neutral-dark">
+      {{ isEditMode ? 'Edit Staff Member' : 'New Staff Member' }}
+    </h1>
+    <button
+      (click)="cancel()"
+      class="flex items-center px-4 py-2 border border-neutral-light rounded-lg text-neutral-dark hover:bg-neutral-light">
+      Cancel
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="flex justify-center p-8">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="p-4 bg-red-100 border border-red-300 text-red-700 rounded-lg">
+    {{ errorMessage }}
+    <button *ngIf="isEditMode && staffId" (click)="loadStaff(staffId)" class="ml-2 text-primary hover:underline">Try Again</button>
+  </div>
+
+  <!-- Success Message -->
+  <div *ngIf="successMessage" class="p-4 bg-green-100 border border-green-300 text-green-700 rounded-lg">
+    {{ successMessage }}
+  </div>
+
+  <!-- Staff Form -->
+  <form *ngIf="!isLoading" [formGroup]="staffForm" (ngSubmit)="onSubmit()" class="bg-white rounded-card shadow-card p-6">
+    <div class="space-y-6">
+      <!-- Personal Information Section -->
+      <div>
+        <h2 class="text-lg font-medium text-neutral-dark mb-4">Personal Information</h2>
+
+        <!-- Name Fields -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label for="firstName" class="block text-sm font-medium text-neutral-dark mb-1">
+              First Name*
+            </label>
+            <input
+              id="firstName"
+              type="text"
+              formControlName="firstName"
+              class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              [ngClass]="{'border-status-error': isFieldInvalid('firstName')}"
+            />
+            <p *ngIf="isFieldInvalid('firstName')" class="mt-1 text-sm text-status-error">
+              {{ getErrorMessage('firstName') }}
+            </p>
+          </div>
+
+          <div>
+            <label for="lastName" class="block text-sm font-medium text-neutral-dark mb-1">
+              Last Name*
+            </label>
+            <input
+              id="lastName"
+              type="text"
+              formControlName="lastName"
+              class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              [ngClass]="{'border-status-error': isFieldInvalid('lastName')}"
+            />
+            <p *ngIf="isFieldInvalid('lastName')" class="mt-1 text-sm text-status-error">
+              {{ getErrorMessage('lastName') }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Contact Fields -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label for="email" class="block text-sm font-medium text-neutral-dark mb-1">
+              Email Address*
+            </label>
+            <input
+              id="email"
+              type="email"
+              formControlName="email"
+              class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              [ngClass]="{'border-status-error': isFieldInvalid('email')}"
+            />
+            <p *ngIf="isFieldInvalid('email')" class="mt-1 text-sm text-status-error">
+              {{ getErrorMessage('email') }}
+            </p>
+          </div>
+
+          <div>
+            <label for="phone" class="block text-sm font-medium text-neutral-dark mb-1">
+              Phone Number*
+            </label>
+            <input
+              id="phone"
+              type="tel"
+              formControlName="phone"
+              class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              [ngClass]="{'border-status-error': isFieldInvalid('phone')}"
+            />
+            <p *ngIf="isFieldInvalid('phone')" class="mt-1 text-sm text-status-error">
+              {{ getErrorMessage('phone') }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Professional Information Section -->
+      <div class="pt-4 border-t border-neutral-light">
+        <h2 class="text-lg font-medium text-neutral-dark mb-4">Professional Information</h2>
+
+        <!-- Position Field -->
+        <div class="mb-4">
+          <label for="position" class="block text-sm font-medium text-neutral-dark mb-1">
+            Position*
+          </label>
+          <select
+            id="position"
+            formControlName="position"
+            class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+            [ngClass]="{'border-status-error': isFieldInvalid('position')}"
+          >
+            <option value="" disabled>Select a position</option>
+            <option *ngFor="let pos of positions" [value]="pos">{{ pos }}</option>
+          </select>
+          <p *ngIf="isFieldInvalid('position')" class="mt-1 text-sm text-status-error">
+            {{ getErrorMessage('position') }}
+          </p>
+        </div>
+
+        <!-- Specialties Field -->
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-neutral-dark mb-1">
+            Specialties
+          </label>
+          <div class="flex flex-wrap gap-2 mt-2">
+            <button
+              *ngFor="let specialty of specialtyOptions"
+              type="button"
+              (click)="toggleSpecialty(specialty)"
+              class="px-3 py-1 rounded-full text-sm border"
+              [class.bg-primary-light]="isSpecialtySelected(specialty)"
+              [class.border-primary]="isSpecialtySelected(specialty)"
+              [class.text-primary-dark]="isSpecialtySelected(specialty)"
+              [class.border-neutral-light]="!isSpecialtySelected(specialty)"
+            >
+              {{ specialty }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Color Selection -->
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-neutral-dark mb-1">
+            Color Label
+          </label>
+          <div class="flex flex-wrap gap-2 mt-2">
+            <button
+              *ngFor="let color of colorOptions"
+              type="button"
+              (click)="setColor(color)"
+              class="w-8 h-8 rounded-full border-2"
+              [style.background-color]="color"
+              [class.border-white]="staffForm.value.color !== color"
+              [class.border-black]="staffForm.value.color === color"
+            ></button>
+          </div>
+        </div>
+
+        <!-- Avatar URL -->
+        <div class="mb-4">
+          <label for="avatar" class="block text-sm font-medium text-neutral-dark mb-1">
+            Avatar URL (Optional)
+          </label>
+          <input
+            id="avatar"
+            type="text"
+            formControlName="avatar"
+            class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+          />
+          <p class="mt-1 text-sm text-neutral">
+            Enter a URL for the staff member's profile picture.
+          </p>
+        </div>
+
+        <!-- Avatar Preview -->
+        <div *ngIf="staffForm.get('avatar')?.value" class="mb-4">
+          <label class="block text-sm font-medium text-neutral-dark mb-1">
+            Avatar Preview
+          </label>
+          <div class="mt-1 rounded-full overflow-hidden w-20 h-20 border border-neutral-light">
+            <img [src]="staffForm.get('avatar')?.value" alt="Avatar Preview" class="w-full h-full object-cover">
+          </div>
+        </div>
+
+        <!-- Active Status -->
+        <div class="flex items-center">
+          <input
+            id="isActive"
+            type="checkbox"
+            formControlName="isActive"
+            class="h-4 w-4 text-primary focus:ring-primary border-neutral-light rounded"
+          />
+          <label for="isActive" class="ml-2 block text-sm text-neutral-dark">
+            Active (available for appointments)
+          </label>
+        </div>
+      </div>
+
+      <!-- Submit Button -->
+      <div class="flex justify-end pt-4 border-t border-neutral-light">
+        <button
+          type="submit"
+          class="btn btn-primary"
+          [disabled]="staffForm.invalid || isSubmitting"
+        >
+          <span class="flex items-center">
+            <span *ngIf="isSubmitting" class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
+            {{ isSubmitting ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update Staff Member' : 'Create Staff Member') }}
+          </span>
+        </button>
+      </div>
+    </div>
+  </form>
+</div>

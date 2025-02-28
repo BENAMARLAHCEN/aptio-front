@@ -139,11 +139,7 @@ export class ServiceCategoriesComponent implements OnInit {
   }
 
   toggleCategoryStatus(category: ServiceCategory): void {
-    const updatedData = {
-      active: !category.active
-    };
-
-    this.servicesService.updateCategory(category.id, updatedData).subscribe({
+    this.servicesService.toggleCategoryStatus(category.id, !category.active).subscribe({
       next: () => {
         category.active = !category.active; // Update locally
       },

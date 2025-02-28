@@ -1,0 +1,104 @@
+<!-- src/app/modules/user-appointments/components/user-appointment-details/user-appointment-details.component.html -->
+<div class="space-y-6">
+  <!-- Page Title and Actions -->
+  <div class="flex items-center justify-between">
+    <div class="flex items-center space-x-2">
+      <button (click)="goBack()" class="text-neutral-dark hover:text-primary focus:outline-none">
+        <span class="material-icons-outlined">arrow_back</span>
+      </button>
+      <h1 class="text-2xl font-bold text-neutral-dark">Appointment Details</h1>
+    </div>
+
+    <div class="flex items-center space-x-2">
+      <button
+        *ngIf="appointment && isAppointmentCancellable(appointment)"
+        (click)="cancelAppointment()"
+        class="flex items-center px-4 py-2 bg-white border border-red-300 rounded-lg text-red-600 hover:bg-red-50">
+        <span class="material-icons-outlined mr-1 text-sm">cancel</span>
+        Cancel Appointment
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="flex justify-center p-8">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="p-4 bg-red-100 border border-red-300 text-red-700 rounded-lg">
+    {{ errorMessage }}
+    <button *ngIf="errorMessage !== 'You do not have permission to view this appointment'" (click)="loadAppointment()" class="ml-2 text-primary hover:underline">Try Again</button>
+  </div>
+
+  <!-- Appointment Details -->
+  <div *ngIf="appointment && !isLoading" class="bg-white rounded-card shadow-card p-6">
+    <!-- Status Badge -->
+    <div class="flex justify-between items-center mb-6">
+      <span class="px-3 py-1 text-sm font-medium rounded-full" [ngClass]="getStatusClass(appointment.status)">
+        {{ appointment.status | titlecase }}
+      </span>
+
+      <!-- Cancellation notice for cancelled appointments -->
+      <div *ngIf="appointment.status === 'cancelled'" class="text-sm text-red-600">
+        This appointment has been cancelled
+      </div>
+    </div>
+
+    <!-- Service Info -->
+    <div class="mb-6">
+      <h2 class="text-xl font-bold text-neutral-dark mb-2">{{ appointment.serviceName }}</h2>
+      <div class="flex items-center text-sm text-neutral">
+        <span class="material-icons-outlined text-sm mr-1">schedule</span>
+        <span>{{ appointment.duration }} minutes</span>
+        <span class="mx-2">•</span>
+        <span>${{ appointment.price }}</span>
+      </div>
+    </div>
+
+    <!-- Date and Time -->
+    <div class="mb-6 p-4 bg-neutral-light rounded-lg">
+      <h3 class="font-medium text-neutral-dark mb-2">Date & Time</h3>
+      <p class="text-lg">{{ formatDate(appointment.date) }}</p>
+      <p>{{ formatTime(appointment.time) }} - {{ formatEndTime(appointment.time, appointment.duration) }}</p>
+    </div>
+
+    <!-- Staff Information -->
+    <div class="mb-6 p-4 bg-neutral-light rounded-lg">
+      <h3 class="font-medium text-neutral-dark mb-2">Staff</h3>
+      <p *ngIf="appointment.staffName">{{ appointment.staffName }}</p>
+      <p *ngIf="!appointment.staffName" class="text-neutral italic">Not assigned yet</p>
+    </div>
+
+    <!-- Notes -->
+    <div *ngIf="appointment.notes" class="mb-6 p-4 bg-neutral-light rounded-lg">
+      <h3 class="font-medium text-neutral-dark mb-2">Notes</h3>
+      <p>{{ appointment.notes }}</p>
+    </div>
+
+    <!-- Appointment ID and Timestamps -->
+    <div class="text-xs text-neutral">
+      <p>Appointment ID: {{ appointment.id }}</p>
+      <p>Created: {{ appointment.createdAt | date:'medium' }}</p>
+      <p *ngIf="appointment.updatedAt !== appointment.createdAt">Last Updated: {{ appointment.updatedAt | date:'medium' }}</p>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div *ngIf="appointment && !isLoading" class="flex justify-between">
+    <button
+      (click)="goBack()"
+      class="flex items-center px-4 py-2 border border-neutral-light rounded-lg text-neutral-dark hover:bg-neutral-light">
+      <span class="material-icons-outlined mr-1 text-sm">arrow_back</span>
+      Back to My Appointments
+    </button>
+
+    <button
+      *ngIf="isAppointmentCancellable(appointment)"
+      (click)="cancelAppointment()"
+      class="flex items-center px-4 py-2 bg-white border border-red-300 rounded-lg text-red-600 hover:bg-red-50">
+      <span class="material-icons-outlined mr-1 text-sm">cancel</span>
+      Cancel Appointment
+    </button>
+  </div>
+</div>

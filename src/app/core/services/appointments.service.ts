@@ -148,7 +148,56 @@ export class AppointmentsService {
         .pipe(catchError(this.handleError<Appointment[]>('getAppointmentsByDate', [])));
   }
 
+  getAppointmentsByCustomerId(customerId: string): Observable<Appointment[]> {
+    return this.http.get<Appointment[]>(`${this.apiUrl}/appointments?customerId=${customerId}`)
+        .pipe(catchError(this.handleError<Appointment[]>('getAppointmentsByCustomerId', [])));
+  }
 
+  // Add these methods to the AppointmentsService class in appointments.service.ts
+
+  /**
+   * Get appointments for the current authenticated user
+   * @param status Optional status filter
+   * @returns Observable with list of user's appointments
+   */
+  getUserAppointments(status?: string): Observable<Appointment[]> {
+    let url = `${this.apiUrl}/appointments/user/appointments`;
+    if (status) {
+      url += `?status=${status}`;
+    }
+    return this.http.get<Appointment[]>(url)
+        .pipe(catchError(this.handleError<Appointment[]>('getUserAppointments', [])));
+  }
+
+  /**
+   * Get a specific appointment for the current user
+   * @param id Appointment ID
+   * @returns Observable with appointment details
+   */
+  getUserAppointmentById(id: string): Observable<Appointment> {
+    return this.http.get<Appointment>(`${this.apiUrl}/appointments/user/appointments/${id}`)
+        .pipe(catchError(this.handleError<Appointment>('getUserAppointmentById')));
+  }
+
+  /**
+   * Cancel an appointment for the current user
+   * @param id Appointment ID
+   * @returns Observable with updated appointment
+   */
+  cancelUserAppointment(id: string): Observable<Appointment> {
+    return this.http.patch<Appointment>(`${this.apiUrl}/appointments/user/appointments/${id}/status`, { status: 'CANCELLED' })
+        .pipe(catchError(this.handleError<Appointment>('cancelUserAppointment')));
+  }
+
+  /**
+   * Create an appointment for the current user
+   * @param appointmentData Appointment data
+   * @returns Observable with created appointment
+   */
+  createUserAppointment(appointmentData: Partial<AppointmentFormData>): Observable<Appointment> {
+    return this.http.post<Appointment>(`${this.apiUrl}/appointments/user/appointments`, appointmentData)
+        .pipe(catchError(this.handleError<Appointment>('createUserAppointment')));
+  }
 
   /**
    * Handle Http operation that failed.

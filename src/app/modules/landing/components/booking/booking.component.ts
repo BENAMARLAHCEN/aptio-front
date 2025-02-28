@@ -245,24 +245,24 @@ export class BookingComponent implements OnInit {
     };
 
     // Use AppointmentsService to create appointment
-    this.appointmentsService.createGuestAppointment(appointmentData).subscribe({
-      next: (appointment) => {
-        this.successMessage = 'Appointment booked successfully!';
-        this.isSubmitting = false;
-
-        // Reset form after successful submission
-        this.bookingForm.reset();
-        this.currentStep = 1;
-
-        // If we want to redirect to a confirmation page later
-        // this.router.navigate(['/booking/confirmation', appointment.id]);
-      },
-      error: (error) => {
-        this.errorMessage = 'Failed to book appointment. Please try again.';
-        this.isSubmitting = false;
-        console.error('Error booking appointment:', error);
-      }
-    });
+    // this.appointmentsService.createGuestAppointment(appointmentData).subscribe({
+    //   next: (appointment) => {
+    //     this.successMessage = 'Appointment booked successfully!';
+    //     this.isSubmitting = false;
+    //
+    //     // Reset form after successful submission
+    //     this.bookingForm.reset();
+    //     this.currentStep = 1;
+    //
+    //     // If we want to redirect to a confirmation page later
+    //     // this.router.navigate(['/booking/confirmation', appointment.id]);
+    //   },
+    //   error: (error) => {
+    //     this.errorMessage = 'Failed to book appointment. Please try again.';
+    //     this.isSubmitting = false;
+    //     console.error('Error booking appointment:', error);
+    //   }
+    // });
   }
 
   selectTimeSlot(time: string): void {

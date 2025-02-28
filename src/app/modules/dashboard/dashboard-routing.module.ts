@@ -39,6 +39,11 @@ const routes: Routes = [
         loadChildren: () => import('../settings/settings.module').then(m => m.SettingsModule),
         data: { roles: ['ROLE_ADMIN'] }
       },
+      {
+        path: 'my-appointments',
+        loadChildren: () => import('../user-appointments/user-appointments.module').then(m => m.UserAppointmentsModule),
+        data: { roles: ['ROLE_USER', 'ROLE_ADMIN', 'ROLE_STAFF'] }
+      },
       { path: 'staff',
         loadChildren: () => import('../staff/staff.module').then(m => m.StaffModule) ,
         data: { roles: ['ROLE_ADMIN'] }

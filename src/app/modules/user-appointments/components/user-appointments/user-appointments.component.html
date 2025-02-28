@@ -1,0 +1,138 @@
+<!-- src/app/modules/user-appointments/components/user-appointments/user-appointments.component.html -->
+<div class="space-y-6">
+  <!-- Page Title and Status Filters -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <h1 class="text-2xl font-bold text-neutral-dark">My Appointments</h1>
+
+    <div class="flex flex-wrap gap-2">
+      <button
+        (click)="setStatusFilter(null)"
+        class="px-3 py-1 text-sm rounded-full transition-colors"
+        [ngClass]="statusFilter === null ? 'bg-primary text-white' : 'bg-neutral-light text-neutral-dark hover:bg-neutral'">
+        All
+      </button>
+      <button
+        (click)="setStatusFilter('pending')"
+        class="px-3 py-1 text-sm rounded-full transition-colors"
+        [ngClass]="statusFilter === 'pending' ? 'bg-yellow-400 text-white' : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'">
+        Pending
+      </button>
+      <button
+        (click)="setStatusFilter('confirmed')"
+        class="px-3 py-1 text-sm rounded-full transition-colors"
+        [ngClass]="statusFilter === 'confirmed' ? 'bg-green-500 text-white' : 'bg-green-100 text-green-800 hover:bg-green-200'">
+        Confirmed
+      </button>
+      <button
+        (click)="setStatusFilter('completed')"
+        class="px-3 py-1 text-sm rounded-full transition-colors"
+        [ngClass]="statusFilter === 'completed' ? 'bg-blue-500 text-white' : 'bg-blue-100 text-blue-800 hover:bg-blue-200'">
+        Completed
+      </button>
+      <button
+        (click)="setStatusFilter('cancelled')"
+        class="px-3 py-1 text-sm rounded-full transition-colors"
+        [ngClass]="statusFilter === 'cancelled' ? 'bg-red-500 text-white' : 'bg-red-100 text-red-800 hover:bg-red-200'">
+        Cancelled
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="flex justify-center p-8">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="p-4 bg-red-100 border border-red-300 text-red-700 rounded-lg">
+    {{ errorMessage }}
+    <button (click)="loadUserAppointments()" class="ml-2 text-primary hover:underline">Try Again</button>
+  </div>
+
+  <!-- Appointments Table -->
+  <div *ngIf="!isLoading && !errorMessage" class="bg-white rounded-card shadow-card overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-neutral-light">
+        <thead class="bg-neutral-light">
+        <tr>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-neutral-dark uppercase tracking-wider">
+            Service
+          </th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-neutral-dark uppercase tracking-wider">
+            Date & Time
+          </th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-neutral-dark uppercase tracking-wider">
+            Staff
+          </th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-neutral-dark uppercase tracking-wider">
+            Status
+          </th>
+          <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-neutral-dark uppercase tracking-wider">
+            Actions
+          </th>
+        </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-neutral-light">
+        <tr *ngFor="let appointment of filteredAppointments"
+            (click)="viewAppointmentDetails(appointment.id)"
+            class="cursor-pointer hover:bg-neutral-light">
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="font-medium text-neutral-dark">{{ appointment.serviceName }}</div>
+            <div class="text-xs text-neutral">{{ appointment.duration }} minutes</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm text-neutral-dark">{{ formatDate(appointment.date) }}</div>
+            <div class="text-xs text-neutral">{{ formatTime(appointment.time) }}</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm text-neutral-dark">{{ appointment.staffName || 'Not assigned' }}</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+              <span class="px-2 py-1 text-xs font-medium rounded-full" [ngClass]="getStatusClass(appointment.status)">
+                {{ appointment.status | titlecase }}
+              </span>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
+            <div class="flex items-center justify-end space-x-2">
+              <!-- Cancel button (only for upcoming appointments) -->
+              <button
+                *ngIf="isAppointmentCancellable(appointment)"
+                (click)="cancelAppointment(appointment.id, $event)"
+                class="text-neutral-dark hover:text-red-600 focus:outline-none"
+                title="Cancel appointment">
+                <span class="material-icons-outlined text-sm">cancel</span>
+              </button>
+
+              <!-- View details button -->
+              <button
+                (click)="viewAppointmentDetails(appointment.id)"
+                class="text-neutral-dark hover:text-primary focus:outline-none">
+                <span class="material-icons-outlined text-sm">visibility</span>
+              </button>
+            </div>
+          </td>
+        </tr>
+
+        <!-- Empty state -->
+        <tr *ngIf="filteredAppointments.length === 0">
+          <td colspan="5" class="px-6 py-8 text-center">
+            <div class="flex flex-col items-center justify-center space-y-3">
+              <span class="material-icons-outlined text-4xl text-neutral-light">event_busy</span>
+              <h3 class="text-lg font-medium text-neutral-dark">No appointments found</h3>
+              <p class="text-sm text-neutral">
+                  <span *ngIf="statusFilter">
+                    Try selecting a different status filter or
+                    <button (click)="setStatusFilter(null)" class="text-primary hover:underline">view all appointments</button>
+                  </span>
+                <span *ngIf="!statusFilter">
+                    You don't have any appointments yet
+                  </span>
+              </p>
+            </div>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

@@ -1,4 +1,4 @@
-// src/app/core/interceptors/auth.interceptor.ts
+// src/app/core/interceptors/http.interceptor.ts
 import { Injectable } from '@angular/core';
 import {
   HttpRequest,
@@ -23,19 +23,31 @@ export class AuthInterceptor implements HttpInterceptor {
     const token = this.authService.getToken();
 
     if (token) {
-      request = request.clone({
-        setHeaders: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+      // Don't add token to auth endpoints to avoid issues
+      if (!request.url.includes('/auth/')) {
+        request = request.clone({
+          setHeaders: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+      }
     }
 
     return next.handle(request).pipe(
       catchError((error: HttpErrorResponse) => {
+        // Handle 401 Unauthorized errors (expired token, etc.)
         if (error.status === 401) {
           this.authService.logout();
-          this.router.navigate(['/auth/login']);
+          this.router.navigate(['/auth/login'], {
+            queryParams: { returnUrl: this.router.url }
+          });
         }
+
+        // Handle 403 Forbidden errors (insufficient permissions)
+        if (error.status === 403) {
+          this.router.navigate(['/forbidden']);
+        }
+
         return throwError(() => error);
       })
     );

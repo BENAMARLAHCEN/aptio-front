@@ -1,3 +1,4 @@
+// src/app/app-routing.module.ts
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { AuthGuard } from './core/guards/auth.guard';
@@ -13,9 +14,18 @@ const routes: Routes = [
   },
   {
     path: 'dashboard',
-    loadChildren: () => import('./modules/dashboard/dashboard.module').then(m => m.DashboardModule)
+    loadChildren: () => import('./modules/dashboard/dashboard.module').then(m => m.DashboardModule),
+    canActivate: [AuthGuard]
   },
-  { path: '**', redirectTo: '' }
+  {
+    path: 'forbidden',
+    loadComponent: () => import('./shared/components/forbidden/forbidden.component').then(c => c.ForbiddenComponent)
+  },
+  {
+    path: 'not-found',
+    loadComponent: () => import('./shared/components/not-found/not-found.component').then(c => c.NotFoundComponent)
+  },
+  { path: '**', redirectTo: 'not-found' }
 ];
 
 @NgModule({
@@ -23,4 +33,3 @@ const routes: Routes = [
   exports: [RouterModule]
 })
 export class AppRoutingModule { }
-

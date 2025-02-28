@@ -1,12 +1,12 @@
-// src/app/shared/components/forbidden/forbidden.component.ts
+// src/app/shared/components/not-found/not-found.component.ts
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 
 @Component({
-  selector: 'app-forbidden',
+  selector: 'app-not-found',
   standalone: true,
   imports: [CommonModule, RouterModule],
-  templateUrl: './forbidden.component.html',
+  templateUrl: './not-found.component.html',
 })
-export class ForbiddenComponent {}
+export class NotFoundComponent {}

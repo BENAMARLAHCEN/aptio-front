@@ -1,8 +1,8 @@
+// src/app/modules/dashboard/dashboard-routing.module.ts
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { DashboardLayoutComponent } from './components/dashboard-layout/dashboard-layout.component';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
-import { AuthGuard } from '../../core/guards/auth.guard';
 
 const routes: Routes = [
   {
@@ -10,20 +10,38 @@ const routes: Routes = [
     component: DashboardLayoutComponent,
     children: [
       { path: '', component: DashboardComponent },
-      // Add more routes for other dashboard features
-      { path: 'appointments', loadChildren: () => import('../appointments/appointments.module').then(m => m.AppointmentsModule) },
-      { path: 'profile', loadChildren: () => import('../profile/profile.module').then(m => m.ProfileModule) },
+      {
+        path: 'appointments',
+        loadChildren: () => import('../appointments/appointments.module').then(m => m.AppointmentsModule),
+        data: { roles: ['ROLE_ADMIN', 'ROLE_STAFF'] }
+      },
+      {
+        path: 'profile',
+        loadChildren: () => import('../profile/profile.module').then(m => m.ProfileModule)
+      },
       {
         path: 'customers',
-        loadChildren: () => import('../customers/customers.module').then(m => m.CustomersModule)
+        loadChildren: () => import('../customers/customers.module').then(m => m.CustomersModule),
+        data: { roles: ['ROLE_ADMIN', 'ROLE_STAFF'] }
       },
       {
         path: 'services',
-        loadChildren: () => import('../services/services.module').then(m => m.ServicesModule)
+        loadChildren: () => import('../services/services.module').then(m => m.ServicesModule),
+        data: { roles: ['ROLE_ADMIN'] }
       },
       {
         path: 'schedule',
-        loadChildren: () => import('../schedule/schedule.module').then(m => m.ScheduleModule)
+        loadChildren: () => import('../schedule/schedule.module').then(m => m.ScheduleModule),
+        data: { roles: ['ROLE_ADMIN', 'ROLE_STAFF'] }
+      },
+      {
+        path: 'settings',
+        loadChildren: () => import('../settings/settings.module').then(m => m.SettingsModule),
+        data: { roles: ['ROLE_ADMIN'] }
+      },
+      { path: 'staff',
+        loadChildren: () => import('../staff/staff.module').then(m => m.StaffModule) ,
+        data: { roles: ['ROLE_ADMIN'] }
       },
     ]
   }

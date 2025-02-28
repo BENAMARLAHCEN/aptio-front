@@ -73,8 +73,11 @@ export class AppointmentsListComponent implements OnInit {
   }
 
   applyFilters(): void {
+    console.log('appointments:', this.appointments);
+
     this.filteredAppointments = this.appointments.filter(appointment => {
       // Status filter
+
       if (this.filterOptions.status && appointment.status !== this.filterOptions.status) {
         return false;
       }
@@ -85,6 +88,7 @@ export class AppointmentsListComponent implements OnInit {
       }
 
       // Search filter (case-insensitive)
+
       if (this.filterOptions.search) {
         const searchLower = this.filterOptions.search.toLowerCase();
         return appointment.customerName.toLowerCase().includes(searchLower) ||
@@ -97,9 +101,13 @@ export class AppointmentsListComponent implements OnInit {
 
     // Sort by date and time
     this.filteredAppointments.sort((a, b) => {
+      // Convert dates to strings if they are not already
+      const dateA = a.date.toString();
+      const dateB = b.date.toString();
+
       // Sort by date first
-      if (a.date !== b.date) {
-        return a.date.localeCompare(b.date);
+      if (dateA !== dateB) {
+        return dateA.localeCompare(dateB);
       }
       // Then by time
       return a.time.localeCompare(b.time);
@@ -158,6 +166,10 @@ export class AppointmentsListComponent implements OnInit {
   }
 
   formatTime(timeString: string): string {
+    if (typeof timeString !== 'string') {
+      return '';
+    }
+
     const [hours, minutes] = timeString.split(':');
     const date = new Date();
     date.setHours(parseInt(hours, 10));

@@ -1,146 +1,143 @@
-// src/app/modules/profile/components/profile-edit/profile-edit.component.ts
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { UserService, User } from '../../../../core/services/user.service';
+import { ProfileService, UserProfile, PasswordUpdate } from '../../../../core/services/profile.service';
 
 @Component({
   selector: 'app-profile-edit',
   templateUrl: './profile-edit.component.html'
 })
 export class ProfileEditComponent implements OnInit {
-  profileForm: FormGroup;
-  passwordForm: FormGroup;
-  user: User | null = null;
+  profileForm!: FormGroup;
+  passwordForm!: FormGroup;
+  showPasswordForm = false;
+  activeTab = 'profile';
+
   isLoading = true;
-  isSaving = false;
-  activeSection = 'profile'; // 'profile' or 'password'
+  isSubmitting = false;
+  isChangingPassword = false;
+
   errorMessage: string | null = null;
   successMessage: string | null = null;
-  selectedFile: File | null = null;
-  previewUrl: string | null = null;
+  passwordError: string | null = null;
+  passwordSuccess: string | null = null;
+
+  profile: UserProfile | null = null;
 
   constructor(
     private fb: FormBuilder,
-    private userService: UserService,
+    private profileService: ProfileService,
     private router: Router,
     private route: ActivatedRoute
-  ) {
-    // Initialize forms with default values
+  ) {}
+
+  ngOnInit(): void {
+    this.initForms();
+    this.loadProfile();
+
+    // Check if the route has a fragment for changing password
+    this.route.fragment.subscribe(fragment => {
+      if (fragment === 'change-password') {
+        this.activeTab = 'security';
+        this.showPasswordForm = true;
+      }
+    });
+  }
+
+  initForms(): void {
+    // Initialize profile form
     this.profileForm = this.fb.group({
       firstName: ['', Validators.required],
       lastName: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
       phone: [''],
-      birthday: [''],
+      birthDate: [''],
       'address.street': [''],
       'address.city': [''],
-      'address.postalCode': ['']
+      'address.state': [''],
+      'address.zipCode': [''],
+      'address.country': ['']
     });
 
+    // Initialize password form
     this.passwordForm = this.fb.group({
-      currentPassword: ['', [Validators.required, Validators.minLength(6)]],
+      currentPassword: ['', Validators.required],
       newPassword: ['', [Validators.required, Validators.minLength(6)]],
       confirmPassword: ['', Validators.required]
     }, { validator: this.passwordMatchValidator });
   }
 
-  ngOnInit(): void {
-    this.route.queryParams.subscribe(params => {
-      if (params['section'] === 'password') {
-        this.activeSection = 'password';
-      }
-    });
-
-    this.loadUserProfile();
-  }
-
-  loadUserProfile(): void {
+  loadProfile(): void {
     this.isLoading = true;
     this.errorMessage = null;
 
-    this.userService.getCurrentUser().subscribe({
-      next: (user) => {
-        this.user = user;
-        this.populateForm(user);
+    this.profileService.getCurrentProfile().subscribe({
+      next: (profile) => {
+        this.profile = profile;
+        this.populateForm(profile);
         this.isLoading = false;
       },
       error: (error) => {
         this.errorMessage = 'Failed to load profile. Please try again.';
         this.isLoading = false;
-        console.error('Error loading user profile:', error);
+        console.error('Error loading profile:', error);
       }
     });
   }
 
-  populateForm(user: User): void {
+  populateForm(profile: UserProfile): void {
     this.profileForm.patchValue({
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      phone: user.phone,
-      birthday: this.formatDateForInput(user.birthday),
-      'address.street': user.address?.street || '',
-      'address.city': user.address?.city || '',
-      'address.postalCode': user.address?.postalCode || ''
+      firstName: profile.firstName,
+      lastName: profile.lastName,
+      email: profile.email,
+      phone: profile.phone || '',
+      birthDate: profile.birthDate || '',
+      'address.street': profile.address?.street || '',
+      'address.city': profile.address?.city || '',
+      'address.state': profile.address?.state || '',
+      'address.zipCode': profile.address?.zipCode || '',
+      'address.country': profile.address?.country || ''
     });
-
-    if (user.profilePhoto) {
-      this.previewUrl = user.profilePhoto;
-    }
   }
 
-  formatDateForInput(date: Date | undefined): string {
-    if (!date) return '';
-    const d = new Date(date);
-    return d.toISOString().split('T')[0];
-  }
-
-  passwordMatchValidator(group: FormGroup): { [key: string]: boolean } | null {
-    const newPassword = group.get('newPassword')?.value;
-    const confirmPassword = group.get('confirmPassword')?.value;
-
-    return newPassword === confirmPassword ? null : { passwordMismatch: true };
-  }
-
-  onSaveProfile(): void {
+  onSubmit(): void {
     if (this.profileForm.valid) {
-      this.isSaving = true;
+      this.isSubmitting = true;
       this.errorMessage = null;
       this.successMessage = null;
 
+      // Prepare form data
       const formValues = this.profileForm.value;
-
-      // Restructure address fields
-      const userData: Partial<User> = {
+      const profileData: Partial<UserProfile> = {
         firstName: formValues.firstName,
         lastName: formValues.lastName,
         email: formValues.email,
         phone: formValues.phone,
-        birthday: formValues.birthday ? new Date(formValues.birthday) : undefined,
+        birthDate: formValues.birthDate,
         address: {
           street: formValues['address.street'],
           city: formValues['address.city'],
-          postalCode: formValues['address.postalCode']
+          state: formValues['address.state'],
+          zipCode: formValues['address.zipCode'],
+          country: formValues['address.country']
         }
       };
 
-      this.userService.updateProfile(userData).subscribe({
-        next: (updatedUser) => {
-          this.user = updatedUser;
+      // Check if address is empty
+      const hasAddress = Object.values(profileData.address || {}).some(value => !!value);
+      if (!hasAddress) {
+        profileData.address = undefined;
+      }
 
-          // If a new photo was selected, upload it
-          if (this.selectedFile) {
-            this.uploadProfilePhoto();
-          } else {
-            this.isSaving = false;
-            this.successMessage = 'Profile updated successfully!';
-            setTimeout(() => this.router.navigate(['/dashboard/profile']), 1500);
-          }
+      this.profileService.updateProfile(profileData).subscribe({
+        next: (updatedProfile) => {
+          this.profile = updatedProfile;
+          this.successMessage = 'Profile updated successfully!';
+          this.isSubmitting = false;
         },
         error: (error) => {
           this.errorMessage = 'Failed to update profile. Please try again.';
-          this.isSaving = false;
+          this.isSubmitting = false;
           console.error('Error updating profile:', error);
         }
       });
@@ -149,66 +146,28 @@ export class ProfileEditComponent implements OnInit {
     }
   }
 
-  onChangePassword(): void {
+  changePassword(): void {
     if (this.passwordForm.valid) {
-      this.isSaving = true;
-      this.errorMessage = null;
-      this.successMessage = null;
+      this.isChangingPassword = true;
+      this.passwordError = null;
+      this.passwordSuccess = null;
 
-      const { currentPassword, newPassword } = this.passwordForm.value;
+      const passwordData: PasswordUpdate = this.passwordForm.value;
 
-      this.userService.changePassword(currentPassword, newPassword).subscribe({
+      this.profileService.changePassword(passwordData).subscribe({
         next: () => {
-          this.isSaving = false;
-          this.successMessage = 'Password changed successfully!';
+          this.passwordSuccess = 'Password changed successfully!';
+          this.isChangingPassword = false;
           this.passwordForm.reset();
-          setTimeout(() => this.router.navigate(['/dashboard/profile']), 1500);
         },
         error: (error) => {
-          this.errorMessage = 'Failed to change password. Please verify your current password and try again.';
-          this.isSaving = false;
+          this.passwordError = error.error?.message || 'Failed to change password. Please try again.';
+          this.isChangingPassword = false;
           console.error('Error changing password:', error);
         }
       });
     } else {
       this.markFormGroupTouched(this.passwordForm);
-    }
-  }
-
-  uploadProfilePhoto(): void {
-    if (!this.selectedFile) {
-      this.isSaving = false;
-      this.successMessage = 'Profile updated successfully!';
-      setTimeout(() => this.router.navigate(['/dashboard/profile']), 1500);
-      return;
-    }
-
-    this.userService.updateProfilePhoto(this.selectedFile).subscribe({
-      next: (response) => {
-        this.isSaving = false;
-        this.successMessage = 'Profile updated successfully!';
-        setTimeout(() => this.router.navigate(['/dashboard/profile']), 1500);
-      },
-      error: (error) => {
-        // Profile was updated but photo upload failed
-        this.errorMessage = 'Profile updated but failed to upload photo.';
-        this.isSaving = false;
-        console.error('Error uploading photo:', error);
-      }
-    });
-  }
-
-  onFileSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length) {
-      this.selectedFile = input.files[0];
-
-      // Create preview URL
-      const reader = new FileReader();
-      reader.onload = () => {
-        this.previewUrl = reader.result as string;
-      };
-      reader.readAsDataURL(this.selectedFile);
     }
   }
 
@@ -220,6 +179,18 @@ export class ProfileEditComponent implements OnInit {
         this.markFormGroupTouched(control as FormGroup);
       }
     });
+  }
+
+  passwordMatchValidator(g: FormGroup): { [key: string]: boolean } | null {
+    const newPassword = g.get('newPassword')?.value;
+    const confirmPassword = g.get('confirmPassword')?.value;
+
+    if (newPassword !== confirmPassword) {
+      g.get('confirmPassword')?.setErrors({ 'passwordMismatch': true });
+      return { 'passwordMismatch': true };
+    }
+
+    return null;
   }
 
   isFieldInvalid(form: FormGroup, field: string): boolean {
@@ -241,17 +212,31 @@ export class ProfileEditComponent implements OnInit {
     }
 
     if (control.hasError('minlength')) {
-      return `Minimum ${control.errors?.['minlength']?.requiredLength} characters required`;
+      const minLength = control.getError('minlength').requiredLength;
+      return `Minimum ${minLength} characters required`;
+    }
+
+    if (control.hasError('passwordMismatch')) {
+      return 'Passwords do not match';
     }
 
     return '';
   }
 
-  switchSection(section: string): void {
-    this.activeSection = section;
+  togglePasswordForm(): void {
+    this.showPasswordForm = !this.showPasswordForm;
+    if (!this.showPasswordForm) {
+      this.passwordForm.reset();
+      this.passwordError = null;
+      this.passwordSuccess = null;
+    }
   }
 
-  cancelEdit(): void {
+  switchTab(tab: string): void {
+    this.activeTab = tab;
+  }
+
+  cancel(): void {
     this.router.navigate(['/dashboard/profile']);
   }
 }

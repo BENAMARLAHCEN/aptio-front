@@ -2,7 +2,9 @@
   <!-- Page Title -->
   <div class="flex items-center justify-between">
     <h1 class="text-2xl font-bold text-neutral-dark">Edit Profile</h1>
-    <button (click)="cancelEdit()" class="btn border border-neutral-light text-neutral-dark hover:bg-neutral-light">
+    <button
+      (click)="cancel()"
+      class="flex items-center px-4 py-2 border border-neutral-light rounded-lg text-neutral-dark hover:bg-neutral-light">
       Cancel
     </button>
   </div>
@@ -15,300 +17,316 @@
   <!-- Error Message -->
   <div *ngIf="errorMessage" class="p-4 bg-red-100 border border-red-300 text-red-700 rounded-lg">
     {{ errorMessage }}
-  </div>
-
-  <!-- Success Message -->
-  <div *ngIf="successMessage" class="p-4 bg-green-100 border border-green-300 text-green-700 rounded-lg">
-    {{ successMessage }}
+    <button (click)="loadProfile()" class="ml-2 text-primary hover:underline">Try Again</button>
   </div>
 
   <!-- Tabs -->
-  <div *ngIf="!isLoading" class="border-b border-neutral-light">
+  <div *ngIf="!isLoading" class="border-b border-neutral-light mb-6">
     <nav class="flex space-x-6">
       <button
-        [class.text-primary]="activeSection === 'profile'"
-        [class.border-primary]="activeSection === 'profile'"
-        [class.font-medium]="activeSection === 'profile'"
-        [class.text-neutral]="activeSection !== 'profile'"
-        [class.border-transparent]="activeSection !== 'profile'"
+        [class.text-primary]="activeTab === 'profile'"
+        [class.border-primary]="activeTab === 'profile'"
+        [class.font-medium]="activeTab === 'profile'"
+        [class.text-neutral]="activeTab !== 'profile'"
+        [class.border-transparent]="activeTab !== 'profile'"
         class="px-1 py-3 border-b-2 text-sm"
-        (click)="switchSection('profile')">
-        Personal Information
+        (click)="switchTab('profile')">
+        Profile Information
       </button>
       <button
-        [class.text-primary]="activeSection === 'password'"
-        [class.border-primary]="activeSection === 'password'"
-        [class.font-medium]="activeSection === 'password'"
-        [class.text-neutral]="activeSection !== 'password'"
-        [class.border-transparent]="activeSection !== 'password'"
+        [class.text-primary]="activeTab === 'security'"
+        [class.border-primary]="activeTab === 'security'"
+        [class.font-medium]="activeTab === 'security'"
+        [class.text-neutral]="activeTab !== 'security'"
+        [class.border-transparent]="activeTab !== 'security'"
         class="px-1 py-3 border-b-2 text-sm"
-        (click)="switchSection('password')">
-        Change Password
+        (click)="switchTab('security')">
+        Security
       </button>
     </nav>
   </div>
 
-  <!-- Profile Form -->
-  <form *ngIf="!isLoading && activeSection === 'profile'" [formGroup]="profileForm" (ngSubmit)="onSaveProfile()" class="bg-white rounded-card shadow-card p-6">
-    <div class="space-y-6">
-      <!-- Profile Photo -->
-      <div class="flex flex-col sm:flex-row items-center gap-6">
-        <div class="relative">
-          <div class="w-28 h-28 rounded-full overflow-hidden bg-neutral-light">
-            <img *ngIf="previewUrl" [src]="previewUrl" alt="Profile Preview" class="w-full h-full object-cover">
-            <div *ngIf="!previewUrl && user" class="w-full h-full flex items-center justify-center bg-primary-light text-primary text-3xl font-bold">
-              {{ user.firstName[0] }}{{ user.lastName[0] }}
+  <!-- Profile Information Tab -->
+  <div *ngIf="!isLoading && activeTab === 'profile'">
+    <!-- Success Message -->
+    <div *ngIf="successMessage" class="p-4 mb-6 bg-green-100 border border-green-300 text-green-700 rounded-lg">
+      {{ successMessage }}
+    </div>
+
+    <!-- Profile Form -->
+    <form [formGroup]="profileForm" (ngSubmit)="onSubmit()" class="bg-white rounded-card shadow-card p-6">
+      <div class="space-y-6">
+        <!-- Personal Information Section -->
+        <div>
+          <h2 class="text-lg font-medium text-neutral-dark mb-4">Personal Information</h2>
+
+          <!-- Name Fields -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label for="firstName" class="block text-sm font-medium text-neutral-dark mb-1">
+                First Name*
+              </label>
+              <input
+                id="firstName"
+                type="text"
+                formControlName="firstName"
+                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                [ngClass]="{'border-status-error': isFieldInvalid(profileForm, 'firstName')}"
+              />
+              <p *ngIf="isFieldInvalid(profileForm, 'firstName')" class="mt-1 text-sm text-status-error">
+                {{ getErrorMessage(profileForm, 'firstName') }}
+              </p>
+            </div>
+
+            <div>
+              <label for="lastName" class="block text-sm font-medium text-neutral-dark mb-1">
+                Last Name*
+              </label>
+              <input
+                id="lastName"
+                type="text"
+                formControlName="lastName"
+                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                [ngClass]="{'border-status-error': isFieldInvalid(profileForm, 'lastName')}"
+              />
+              <p *ngIf="isFieldInvalid(profileForm, 'lastName')" class="mt-1 text-sm text-status-error">
+                {{ getErrorMessage(profileForm, 'lastName') }}
+              </p>
             </div>
           </div>
-          <label for="photo-upload" class="absolute -right-2 -bottom-2 bg-primary text-white p-2 rounded-full cursor-pointer hover:bg-primary-dark">
-            <span class="material-icons-outlined text-sm">photo_camera</span>
-            <input type="file" id="photo-upload" class="hidden" accept="image/*" (change)="onFileSelected($event)">
-          </label>
-        </div>
-        <div>
-          <h3 class="font-medium">Profile Photo</h3>
-          <p class="text-sm text-neutral mt-1">Upload a photo to personalize your profile.</p>
-          <p class="text-xs text-neutral mt-2">Supported formats: JPG, PNG. Max size: 5MB</p>
-        </div>
-      </div>
 
-      <!-- Personal Info -->
-      <div>
-        <h3 class="font-medium mb-4">Personal Information</h3>
+          <!-- Contact Fields -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label for="email" class="block text-sm font-medium text-neutral-dark mb-1">
+                Email Address*
+              </label>
+              <input
+                id="email"
+                type="email"
+                formControlName="email"
+                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                [ngClass]="{'border-status-error': isFieldInvalid(profileForm, 'email')}"
+              />
+              <p *ngIf="isFieldInvalid(profileForm, 'email')" class="mt-1 text-sm text-status-error">
+                {{ getErrorMessage(profileForm, 'email') }}
+              </p>
+            </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- First Name -->
+            <div>
+              <label for="phone" class="block text-sm font-medium text-neutral-dark mb-1">
+                Phone Number
+              </label>
+              <input
+                id="phone"
+                type="tel"
+                formControlName="phone"
+                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
+            </div>
+          </div>
+
+          <!-- Birth Date -->
           <div>
-            <label for="firstName" class="block text-sm font-medium text-neutral-dark mb-1">
-              First Name
+            <label for="birthDate" class="block text-sm font-medium text-neutral-dark mb-1">
+              Birth Date
             </label>
             <input
-              id="firstName"
-              type="text"
-              formControlName="firstName"
+              id="birthDate"
+              type="date"
+              formControlName="birthDate"
               class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-              [ngClass]="{'border-status-error': isFieldInvalid(profileForm, 'firstName')}"
             />
-            <p *ngIf="isFieldInvalid(profileForm, 'firstName')" class="mt-1 text-sm text-status-error">
-              {{ getErrorMessage(profileForm, 'firstName') }}
+          </div>
+        </div>
+
+        <!-- Address Section -->
+        <div class="pt-4 border-t border-neutral-light">
+          <h2 class="text-lg font-medium text-neutral-dark mb-4">Address Information</h2>
+
+          <!-- Street -->
+          <div class="mb-4">
+            <label for="street" class="block text-sm font-medium text-neutral-dark mb-1">
+              Street
+            </label>
+            <input
+              id="street"
+              type="text"
+              formControlName="address.street"
+              class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+            />
+          </div>
+
+          <!-- City and State -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label for="city" class="block text-sm font-medium text-neutral-dark mb-1">
+                City
+              </label>
+              <input
+                id="city"
+                type="text"
+                formControlName="address.city"
+                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label for="state" class="block text-sm font-medium text-neutral-dark mb-1">
+                State/Province
+              </label>
+              <input
+                id="state"
+                type="text"
+                formControlName="address.state"
+                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
+            </div>
+          </div>
+
+          <!-- Zip and Country -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label for="zipCode" class="block text-sm font-medium text-neutral-dark mb-1">
+                Zip/Postal Code
+              </label>
+              <input
+                id="zipCode"
+                type="text"
+                formControlName="address.zipCode"
+                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label for="country" class="block text-sm font-medium text-neutral-dark mb-1">
+                Country
+              </label>
+              <input
+                id="country"
+                type="text"
+                formControlName="address.country"
+                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="flex justify-end pt-4 border-t border-neutral-light">
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="profileForm.invalid || isSubmitting"
+          >
+            <span class="flex items-center">
+              <span *ngIf="isSubmitting" class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
+              {{ isSubmitting ? 'Saving...' : 'Save Changes' }}
+            </span>
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Security Tab -->
+  <div *ngIf="!isLoading && activeTab === 'security'">
+    <div class="bg-white rounded-card shadow-card p-6">
+      <h2 class="text-lg font-medium text-neutral-dark mb-4">Account Security</h2>
+
+      <!-- Password Change Toggle Button -->
+      <button
+        *ngIf="!showPasswordForm"
+        (click)="togglePasswordForm()"
+        class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors duration-200">
+        Change Password
+      </button>
+
+      <!-- Password Change Form -->
+      <div *ngIf="showPasswordForm" class="mt-4">
+        <!-- Password Error Message -->
+        <div *ngIf="passwordError" class="p-4 mb-6 bg-red-100 border border-red-300 text-red-700 rounded-lg">
+          {{ passwordError }}
+        </div>
+
+        <!-- Password Success Message -->
+        <div *ngIf="passwordSuccess" class="p-4 mb-6 bg-green-100 border border-green-300 text-green-700 rounded-lg">
+          {{ passwordSuccess }}
+        </div>
+
+        <form [formGroup]="passwordForm" (ngSubmit)="changePassword()" class="space-y-4">
+          <!-- Current Password -->
+          <div>
+            <label for="currentPassword" class="block text-sm font-medium text-neutral-dark mb-1">
+              Current Password*
+            </label>
+            <input
+              id="currentPassword"
+              type="password"
+              formControlName="currentPassword"
+              class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              [ngClass]="{'border-status-error': isFieldInvalid(passwordForm, 'currentPassword')}"
+            />
+            <p *ngIf="isFieldInvalid(passwordForm, 'currentPassword')" class="mt-1 text-sm text-status-error">
+              {{ getErrorMessage(passwordForm, 'currentPassword') }}
             </p>
           </div>
 
-          <!-- Last Name -->
+          <!-- New Password -->
           <div>
-            <label for="lastName" class="block text-sm font-medium text-neutral-dark mb-1">
-              Last Name
+            <label for="newPassword" class="block text-sm font-medium text-neutral-dark mb-1">
+              New Password*
             </label>
             <input
-              id="lastName"
-              type="text"
-              formControlName="lastName"
+              id="newPassword"
+              type="password"
+              formControlName="newPassword"
               class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-              [ngClass]="{'border-status-error': isFieldInvalid(profileForm, 'lastName')}"
+              [ngClass]="{'border-status-error': isFieldInvalid(passwordForm, 'newPassword')}"
             />
-            <p *ngIf="isFieldInvalid(profileForm, 'lastName')" class="mt-1 text-sm text-status-error">
-              {{ getErrorMessage(profileForm, 'lastName') }}
+            <p *ngIf="isFieldInvalid(passwordForm, 'newPassword')" class="mt-1 text-sm text-status-error">
+              {{ getErrorMessage(passwordForm, 'newPassword') }}
             </p>
           </div>
-        </div>
 
-        <!-- Email -->
-        <div class="mt-4">
-          <label for="email" class="block text-sm font-medium text-neutral-dark mb-1">
-            Email Address
-          </label>
-          <input
-            id="email"
-            type="email"
-            formControlName="email"
-            class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-            [ngClass]="{'border-status-error': isFieldInvalid(profileForm, 'email')}"
-          />
-          <p *ngIf="isFieldInvalid(profileForm, 'email')" class="mt-1 text-sm text-status-error">
-            {{ getErrorMessage(profileForm, 'email') }}
-          </p>
-        </div>
-
-        <!-- Phone -->
-        <div class="mt-4">
-          <label for="phone" class="block text-sm font-medium text-neutral-dark mb-1">
-            Phone Number
-          </label>
-          <input
-            id="phone"
-            type="tel"
-            formControlName="phone"
-            class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-          />
-        </div>
-
-        <!-- Birthday -->
-        <div class="mt-4">
-          <label for="birthday" class="block text-sm font-medium text-neutral-dark mb-1">
-            Birthday
-          </label>
-          <input
-            id="birthday"
-            type="date"
-            formControlName="birthday"
-            class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-          />
-        </div>
-      </div>
-
-      <!-- Address Information -->
-      <div class="pt-4 border-t border-neutral-light">
-        <h3 class="font-medium mb-4">Address Information</h3>
-
-        <!-- Street -->
-        <div>
-          <label for="street" class="block text-sm font-medium text-neutral-dark mb-1">
-            Street
-          </label>
-          <input
-            id="street"
-            type="text"
-            formControlName="address.street"
-            class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-          />
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-          <!-- City -->
+          <!-- Confirm Password -->
           <div>
-            <label for="city" class="block text-sm font-medium text-neutral-dark mb-1">
-              City
+            <label for="confirmPassword" class="block text-sm font-medium text-neutral-dark mb-1">
+              Confirm New Password*
             </label>
             <input
-              id="city"
-              type="text"
-              formControlName="address.city"
+              id="confirmPassword"
+              type="password"
+              formControlName="confirmPassword"
               class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              [ngClass]="{'border-status-error': isFieldInvalid(passwordForm, 'confirmPassword')}"
             />
+            <p *ngIf="isFieldInvalid(passwordForm, 'confirmPassword')" class="mt-1 text-sm text-status-error">
+              {{ getErrorMessage(passwordForm, 'confirmPassword') }}
+            </p>
           </div>
 
-          <!-- Postal Code -->
-          <div>
-            <label for="postalCode" class="block text-sm font-medium text-neutral-dark mb-1">
-              Postal Code
-            </label>
-            <input
-              id="postalCode"
-              type="text"
-              formControlName="address.postalCode"
-              class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-            />
+          <!-- Form Buttons -->
+          <div class="flex justify-end space-x-2 pt-4">
+            <button
+              type="button"
+              (click)="togglePasswordForm()"
+              class="px-4 py-2 border border-neutral-light rounded-lg text-neutral-dark hover:bg-neutral-light">
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="btn btn-primary"
+              [disabled]="passwordForm.invalid || isChangingPassword"
+            >
+              <span class="flex items-center">
+                <span *ngIf="isChangingPassword" class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
+                {{ isChangingPassword ? 'Changing Password...' : 'Change Password' }}
+              </span>
+            </button>
           </div>
-        </div>
-      </div>
-
-      <!-- Submit Button -->
-      <div class="flex justify-end">
-        <button
-          type="submit"
-          class="btn btn-primary"
-          [disabled]="profileForm.invalid || isSaving"
-        >
-          <span class="flex items-center">
-            <span *ngIf="isSaving" class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
-            {{ isSaving ? 'Saving...' : 'Save Changes' }}
-          </span>
-        </button>
+        </form>
       </div>
     </div>
-  </form>
-
-  <!-- Password Form -->
-  <form *ngIf="!isLoading && activeSection === 'password'" [formGroup]="passwordForm" (ngSubmit)="onChangePassword()" class="bg-white rounded-card shadow-card p-6">
-    <div class="space-y-6 max-w-md">
-      <h3 class="font-medium mb-4">Change Password</h3>
-
-      <!-- Current Password -->
-      <div>
-        <label for="currentPassword" class="block text-sm font-medium text-neutral-dark mb-1">
-          Current Password
-        </label>
-        <input
-          id="currentPassword"
-          type="password"
-          formControlName="currentPassword"
-          class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-          [ngClass]="{'border-status-error': isFieldInvalid(passwordForm, 'currentPassword')}"
-        />
-        <p *ngIf="isFieldInvalid(passwordForm, 'currentPassword')" class="mt-1 text-sm text-status-error">
-          {{ getErrorMessage(passwordForm, 'currentPassword') }}
-        </p>
-      </div>
-
-      <!-- New Password -->
-      <div>
-        <label for="newPassword" class="block text-sm font-medium text-neutral-dark mb-1">
-          New Password
-        </label>
-        <input
-          id="newPassword"
-          type="password"
-          formControlName="newPassword"
-          class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-          [ngClass]="{'border-status-error': isFieldInvalid(passwordForm, 'newPassword')}"
-        />
-        <p *ngIf="isFieldInvalid(passwordForm, 'newPassword')" class="mt-1 text-sm text-status-error">
-          {{ getErrorMessage(passwordForm, 'newPassword') }}
-        </p>
-      </div>
-
-      <!-- Confirm Password -->
-      <div>
-        <label for="confirmPassword" class="block text-sm font-medium text-neutral-dark mb-1">
-          Confirm New Password
-        </label>
-        <input
-          id="confirmPassword"
-          type="password"
-          formControlName="confirmPassword"
-          class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-          [ngClass]="{'border-status-error': isFieldInvalid(passwordForm, 'confirmPassword')}"
-        />
-        <p *ngIf="isFieldInvalid(passwordForm, 'confirmPassword')" class="mt-1 text-sm text-status-error">
-          {{ getErrorMessage(passwordForm, 'confirmPassword') }}
-        </p>
-        <p *ngIf="passwordForm.hasError('passwordMismatch') && passwordForm.get('confirmPassword')?.touched" class="mt-1 text-sm text-status-error">
-          Passwords do not match
-        </p>
-      </div>
-
-      <!-- Password Requirements -->
-      <div class="bg-neutral-light p-4 rounded-lg">
-        <h4 class="text-sm font-medium mb-2">Password Requirements</h4>
-        <ul class="text-xs space-y-1 text-neutral-dark">
-          <li class="flex items-center">
-            <span class="material-icons-outlined text-status-success mr-1 text-xs">check_circle</span>
-            Minimum 6 characters
-          </li>
-          <li class="flex items-center">
-            <span class="material-icons-outlined text-status-success mr-1 text-xs">check_circle</span>
-            Include at least one number
-          </li>
-          <li class="flex items-center">
-            <span class="material-icons-outlined text-status-success mr-1 text-xs">check_circle</span>
-            Include both uppercase and lowercase characters
-          </li>
-        </ul>
-      </div>
-
-      <!-- Submit Button -->
-      <div class="flex justify-end">
-        <button
-          type="submit"
-          class="btn btn-primary"
-          [disabled]="passwordForm.invalid || isSaving"
-        >
-          <span class="flex items-center">
-            <span *ngIf="isSaving" class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
-            {{ isSaving ? 'Saving...' : 'Change Password' }}
-          </span>
-        </button>
-      </div>
-    </div>
-  </form>
+  </div>
 </div>

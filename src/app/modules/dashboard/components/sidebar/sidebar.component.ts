@@ -23,7 +23,7 @@ export class SidebarComponent implements OnInit {
       icon: 'calendar_today',
       label: 'Appointments',
       route: '/dashboard/appointments',
-      badge: 3,
+      // badge: 3,
       roles: ['ROLE_ADMIN', 'ROLE_STAFF']
     },
     {

@@ -1,261 +1,246 @@
 <!-- src/app/modules/landing/components/booking/booking.component.html -->
-<div class="bg-neutral-light min-h-screen py-12">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <!-- Header -->
-    <div class="text-center mb-10">
-      <h1 class="text-3xl font-extrabold text-neutral-dark sm:text-4xl">Book Your Recycling Service</h1>
-      <p class="mt-4 text-lg text-neutral max-w-3xl mx-auto">
-        Schedule a pickup or drop-off with our easy booking process. Choose the service, select a time, and we'll take care of the rest.
-      </p>
+<div class="bg-white">
+  <!-- Hero Section -->
+  <div class="bg-primary-dark">
+    <div class="max-w-7xl mx-auto py-16 px-4 sm:py-24 sm:px-6 lg:px-8">
+      <div class="text-center">
+        <h1 class="text-4xl font-extrabold text-white sm:text-5xl sm:tracking-tight lg:text-6xl">Book Your Appointment</h1>
+        <p class="mt-6 max-w-lg mx-auto text-xl text-white">
+          Schedule a service with our easy-to-use booking system.
+        </p>
+      </div>
     </div>
+  </div>
 
-    <!-- Loading State -->
-    <div *ngIf="isLoading" class="flex justify-center mb-8">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-    </div>
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8 flex justify-center">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+  </div>
 
-    <!-- Error Message -->
-    <div *ngIf="errorMessage" class="p-4 bg-red-100 border border-red-300 text-red-700 rounded-lg mb-8">
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+    <div class="p-4 bg-red-100 border border-red-300 text-red-700 rounded-lg">
       {{ errorMessage }}
-      <button (click)="loadServices()" class="ml-2 text-primary hover:underline">Try Again</button>
+      <button (click)="loadData()" class="ml-2 text-primary hover:underline">Try Again</button>
     </div>
+  </div>
 
-    <!-- Success Message -->
-    <div *ngIf="successMessage" class="p-6 bg-green-100 border border-green-300 text-green-700 rounded-lg mb-8 text-center">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-green-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-      <h3 class="text-xl font-bold mb-2">{{ successMessage }}</h3>
-      <p class="mb-4">Thank you for booking with us. You will receive a confirmation email shortly.</p>
-      <div class="flex justify-center space-x-4">
-        <button (click)="currentStep = 1" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
-          Book Another Service
-        </button>
-        <button routerLink="/" class="px-4 py-2 border border-neutral-light bg-white rounded-md text-neutral-dark hover:bg-neutral-light">
-          Return to Home
+  <!-- Success Message -->
+  <div *ngIf="bookingSuccess" class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+    <div class="p-4 bg-green-100 border border-green-300 text-green-700 rounded-lg">
+      <h3 class="text-lg font-medium">Booking Successful!</h3>
+      <p class="mt-2">Your appointment has been scheduled successfully. We've sent a confirmation email with all the details.</p>
+      <div class="mt-4">
+        <button (click)="resetForm()" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark">
+          Book Another Appointment
         </button>
       </div>
     </div>
+  </div>
 
-    <!-- Booking Form -->
-    <form *ngIf="!isLoading && !successMessage" [formGroup]="bookingForm" (ngSubmit)="onSubmit()" class="space-y-8">
-      <!-- Progress Steps -->
-      <div class="flex justify-between items-center bg-white rounded-lg p-4 shadow-md">
-        <div
-          *ngFor="let step of [1, 2, 3]; let i = index"
-          class="flex-1 flex flex-col items-center"
-          [class.text-primary]="currentStep === step"
-          [class.text-neutral-dark]="currentStep > step"
-          [class.text-neutral]="currentStep < step"
-        >
-          <div class="flex items-center">
+  <!-- Booking Form -->
+  <div *ngIf="!isLoading && !bookingSuccess" class="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
+    <div class="bg-white rounded-lg shadow-lg p-6 md:p-8 lg:p-10">
+      <form [formGroup]="bookingForm" (ngSubmit)="onSubmit()" class="space-y-8">
+        <!-- Form Steps -->
+        <div class="border-b border-neutral-light pb-4">
+          <div class="flex items-center justify-between">
             <div
-              class="h-10 w-10 rounded-full flex items-center justify-center border-2 font-bold"
-              [class.border-primary]="currentStep === step"
-              [class.bg-primary]="currentStep > step"
-              [class.text-white]="currentStep > step"
-              [class.border-neutral]="currentStep < step"
-            >
-              <span *ngIf="currentStep <= step">{{ step }}</span>
-              <svg *ngIf="currentStep > step" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <div *ngIf="i < 2" class="w-full border-t-2 mx-2" [class.border-primary]="currentStep > step + 1"></div>
-          </div>
-          <span class="mt-2 font-medium">
-            {{ step === 1 ? 'Service' : step === 2 ? 'Schedule' : 'Details' }}
-          </span>
-        </div>
-      </div>
-
-      <!-- Step 1: Service Selection -->
-      <div *ngIf="currentStep === 1" class="bg-white rounded-lg p-6 shadow-md">
-        <h2 class="text-xl font-bold text-neutral-dark mb-6">Choose a Service</h2>
-
-        <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <!-- Service Card -->
-          <div *ngFor="let service of services"
-               [class.border-primary]="bookingForm.get('serviceId')?.value === service.id"
-               [class.bg-primary-light]="bookingForm.get('serviceId')?.value === service.id"
-               class="border-2 rounded-lg p-4 cursor-pointer hover:border-primary transition-colors"
-               (click)="bookingForm.get('serviceId')?.setValue(service.id)">
-
-            <!-- Service Image (if available) -->
-            <div *ngIf="service.imageUrl" class="h-40 w-full mb-4 bg-neutral-light rounded-md overflow-hidden">
-              <img [src]="service.imageUrl" [alt]="service.name" class="h-full w-full object-cover">
-            </div>
-
-            <!-- Placeholder if no image -->
-            <div *ngIf="!service.imageUrl" class="h-40 w-full mb-4 bg-neutral-light rounded-md flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-neutral" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-            </div>
-
-            <h3 class="text-lg font-medium text-neutral-dark">{{ service.name }}</h3>
-            <p class="text-sm text-neutral mt-1 line-clamp-2">{{ service.description }}</p>
-
-            <div class="mt-4 flex justify-between items-center">
-              <span class="text-sm text-neutral">{{ service.duration }} min</span>
-              <span class="font-bold text-neutral-dark">{{ formatCurrency(service.price) }}</span>
-            </div>
-          </div>
-        </div>
-
-        <div *ngIf="isFieldInvalid('serviceId')" class="mt-4 text-status-error text-sm">
-          {{ getErrorMessage('serviceId') }}
-        </div>
-
-        <!-- Next Button -->
-        <div class="mt-8 flex justify-end">
-          <button
-            type="button"
-            (click)="nextStep()"
-            class="inline-flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary hover:bg-primary-dark focus:outline-none shadow-sm">
-            Continue to Schedule
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      <!-- Step 2: Date & Time Selection -->
-      <div *ngIf="currentStep === 2" class="bg-white rounded-lg p-6 shadow-md">
-        <h2 class="text-xl font-bold text-neutral-dark mb-6">Choose a Date & Time</h2>
-
-        <!-- Selected Service Info -->
-        <div *ngIf="selectedService" class="bg-neutral-light p-4 rounded-lg mb-6">
-          <div class="flex items-start">
-            <div class="flex-shrink-0">
-              <div *ngIf="selectedService.imageUrl" class="h-16 w-16 rounded-md overflow-hidden">
-                <img [src]="selectedService.imageUrl" [alt]="selectedService.name" class="h-full w-full object-cover">
+              [class.text-primary]="currentStep >= 1"
+              [class.text-neutral]="currentStep < 1"
+              class="flex items-center">
+              <div
+                [class.bg-primary]="currentStep >= 1"
+                [class.bg-neutral-light]="currentStep < 1"
+                [class.text-white]="currentStep >= 1"
+                [class.text-neutral]="currentStep < 1"
+                class="flex items-center justify-center w-8 h-8 rounded-full mr-2">
+                1
               </div>
-              <div *ngIf="!selectedService.imageUrl" class="h-16 w-16 bg-white rounded-md flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-neutral" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              <span class="font-medium">Select Service</span>
+            </div>
+
+            <div class="flex-grow mx-4 border-t border-dashed border-neutral-light"></div>
+
+            <div
+              [class.text-primary]="currentStep >= 2"
+              [class.text-neutral]="currentStep < 2"
+              class="flex items-center">
+              <div
+                [class.bg-primary]="currentStep >= 2"
+                [class.bg-neutral-light]="currentStep < 2"
+                [class.text-white]="currentStep >= 2"
+                [class.text-neutral]="currentStep < 2"
+                class="flex items-center justify-center w-8 h-8 rounded-full mr-2">
+                2
+              </div>
+              <span class="font-medium">Choose Date & Time</span>
+            </div>
+
+            <div class="flex-grow mx-4 border-t border-dashed border-neutral-light"></div>
+
+            <div
+              [class.text-primary]="currentStep >= 3"
+              [class.text-neutral]="currentStep < 3"
+              class="flex items-center">
+              <div
+                [class.bg-primary]="currentStep >= 3"
+                [class.bg-neutral-light]="currentStep < 3"
+                [class.text-white]="currentStep >= 3"
+                [class.text-neutral]="currentStep < 3"
+                class="flex items-center justify-center w-8 h-8 rounded-full mr-2">
+                3
+              </div>
+              <span class="font-medium">Your Information</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 1: Service Selection -->
+        <div *ngIf="currentStep === 1" class="space-y-6">
+          <!-- Category Selection -->
+          <div>
+            <label for="category" class="block text-sm font-medium text-neutral-dark mb-1">
+              Service Category
+            </label>
+            <select
+              id="category"
+              (change)="onCategoryChange($event)"
+              class="w-full px-4 py-2 border border-neutral-light rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+              <option value="">All Categories</option>
+              <option *ngFor="let category of categories" [value]="category.name">
+                {{ category.name }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Services Grid -->
+          <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div *ngFor="let service of filteredServices"
+                 (click)="selectService(service)"
+                 [class.ring-2]="selectedService?.id === service.id"
+                 [class.ring-primary]="selectedService?.id === service.id"
+                 class="cursor-pointer bg-white border border-neutral-light rounded-lg p-4 hover:border-primary transition">
+              <div class="flex justify-between">
+                <h3 class="font-medium text-neutral-dark">{{ service.name }}</h3>
+                <span class="text-primary font-bold">{{ formatCurrency(service.price) }}</span>
+              </div>
+              <p class="mt-2 text-sm text-neutral">{{ service.description }}</p>
+              <div class="mt-2 text-xs text-neutral flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-              </div>
-            </div>
-            <div class="ml-4">
-              <h3 class="text-lg font-medium text-neutral-dark">{{ selectedService.name }}</h3>
-              <div class="flex items-center text-sm text-neutral mt-1">
-                <span>{{ selectedService.duration }} min</span>
-                <span class="mx-2">•</span>
-                <span>{{ formatCurrency(selectedService.price) }}</span>
+                {{ formatDuration(service.duration) }}
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Date Selection -->
-        <div class="mb-6">
-          <label for="date" class="block text-sm font-medium text-neutral-dark mb-1">
-            Date
-          </label>
-          <input
-            id="date"
-            type="date"
-            formControlName="date"
-            class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-            [class.border-status-error]="isFieldInvalid('date')"
-            [min]="formatDateForInput(datenow)">
-
-          <div *ngIf="isFieldInvalid('date')" class="mt-1 text-status-error text-sm">
-            {{ getErrorMessage('date') }}
-          </div>
-        </div>
-
-        <!-- Time Selection -->
-        <div>
-          <label class="block text-sm font-medium text-neutral-dark mb-1">
-            Time
-          </label>
-
-          <!-- Time Loading State -->
-          <div *ngIf="isLoadingTimeSlots" class="flex items-center mt-2 mb-4">
-            <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"></div>
-            <span class="text-sm text-neutral">Loading available time slots...</span>
-          </div>
-
-          <!-- No Available Times Message -->
-          <div *ngIf="!isLoadingTimeSlots && availableTimeSlots.length === 0 && bookingForm.get('serviceId')?.value && bookingForm.get('date')?.value"
-               class="text-sm text-status-error mt-2 mb-4">
-            No available time slots for this date. Please select another date.
-          </div>
-
-          <!-- Time Slots -->
-          <div *ngIf="!isLoadingTimeSlots && availableTimeSlots.length > 0" class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 mt-2">
-            <div *ngFor="let timeSlot of availableTimeSlots">
-              <button
-                type="button"
-                (click)="selectTimeSlot(timeSlot)"
-                class="w-full py-2 text-center rounded-lg border transition-colors"
-                [class.bg-primary-light]="bookingForm.get('time')?.value === timeSlot"
-                [class.border-primary]="bookingForm.get('time')?.value === timeSlot"
-                [class.text-primary]="bookingForm.get('time')?.value === timeSlot"
-                [class.border-neutral-light]="bookingForm.get('time')?.value !== timeSlot"
-                [class.hover:bg-neutral-light]="bookingForm.get('time')?.value !== timeSlot">
-                {{ formatTime(timeSlot) }}
-              </button>
-            </div>
-          </div>
-
-          <div *ngIf="isFieldInvalid('time')" class="mt-1 text-status-error text-sm">
-            {{ getErrorMessage('time') }}
-          </div>
-        </div>
-
-        <!-- Navigation Buttons -->
-        <div class="mt-8 flex justify-between">
-          <button
-            type="button"
-            (click)="prevStep()"
-            class="inline-flex justify-center items-center px-6 py-3 border border-neutral-light rounded-md text-neutral-dark hover:bg-neutral-light focus:outline-none">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          <!-- Empty State -->
+          <div *ngIf="filteredServices.length === 0" class="text-center py-8">
+            <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-neutral" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            Back
-          </button>
+            <h3 class="mt-2 text-lg font-medium text-neutral-dark">No services found</h3>
+          </div>
 
-          <button
-            type="button"
-            (click)="nextStep()"
-            class="inline-flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary hover:bg-primary-dark focus:outline-none shadow-sm">
-            Continue to Details
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      <!-- Step 3: Customer Information -->
-      <div *ngIf="currentStep === 3" class="bg-white rounded-lg p-6 shadow-md">
-        <h2 class="text-xl font-bold text-neutral-dark mb-6">Your Information</h2>
-
-        <!-- Booking Summary -->
-        <div *ngIf="selectedService" class="bg-neutral-light p-4 rounded-lg mb-6">
-          <h3 class="font-medium text-neutral-dark mb-2">Booking Summary</h3>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-            <div>
-              <p class="text-neutral">Service:</p>
-              <p class="font-medium text-neutral-dark">{{ selectedService.name }}</p>
-            </div>
-            <div>
-              <p class="text-neutral">Date:</p>
-              <p class="font-medium text-neutral-dark">{{ bookingForm.get('date')?.value | date:'fullDate' }}</p>
-            </div>
-            <div>
-              <p class="text-neutral">Time:</p>
-              <p class="font-medium text-neutral-dark">{{ formatTime(bookingForm.get('time')?.value) }}</p>
-            </div>
+          <div class="pt-4">
+            <button
+              type="button"
+              (click)="goToNextStep()"
+              [disabled]="!selectedService"
+              class="w-full inline-flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed">
+              Continue
+            </button>
           </div>
         </div>
 
-        <!-- Customer Information Form -->
-        <div class="space-y-6">
+        <!-- Step 2: Date & Time Selection -->
+        <div *ngIf="currentStep === 2" class="space-y-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Date Selection -->
+            <div class="space-y-4">
+              <h3 class="text-lg font-medium text-neutral-dark">Select Date</h3>
+
+              <!-- Date input -->
+              <div>
+                <label for="date" class="block text-sm font-medium text-neutral-dark mb-1">
+                  Appointment Date
+                </label>
+                <input
+                  id="date"
+                  type="date"
+                  formControlName="date"
+                  (change)="onDateChange()"
+                  [min]="minDate"
+                  class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  [ngClass]="{'border-status-error': isFieldInvalid('date')}"
+                />
+                <p *ngIf="isFieldInvalid('date')" class="mt-1 text-sm text-status-error">
+                  {{ getErrorMessage('date') }}
+                </p>
+              </div>
+            </div>
+
+            <!-- Time Selection -->
+            <div class="space-y-4">
+              <h3 class="text-lg font-medium text-neutral-dark">Select Time</h3>
+
+              <!-- Time Loading State -->
+              <div *ngIf="isLoadingTimeSlots" class="flex items-center mt-2 mb-4">
+                <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"></div>
+                <span class="text-sm text-neutral">Loading available time slots...</span>
+              </div>
+
+              <!-- No Available Times Message -->
+              <div *ngIf="!isLoadingTimeSlots && availableTimeSlots.length === 0 && bookingForm.get('date')?.value"
+                   class="text-sm text-status-error mt-2 mb-4">
+                No available time slots for this date. Please select another date.
+              </div>
+
+              <!-- Time Slot Selection -->
+              <div *ngIf="!isLoadingTimeSlots && availableTimeSlots.length > 0" class="grid grid-cols-3 gap-2 mt-2">
+                <div *ngFor="let timeSlot of availableTimeSlots">
+                  <button
+                    type="button"
+                    (click)="bookingForm.get('time')?.setValue(timeSlot)"
+                    class="w-full py-2 text-center rounded-lg border transition-colors"
+                    [class.bg-primary-light]="bookingForm.get('time')?.value === timeSlot"
+                    [class.border-primary]="bookingForm.get('time')?.value === timeSlot"
+                    [class.text-primary]="bookingForm.get('time')?.value === timeSlot"
+                    [class.border-neutral-light]="bookingForm.get('time')?.value !== timeSlot"
+                    [class.hover:bg-neutral-light]="bookingForm.get('time')?.value !== timeSlot">
+                    {{ formatTimeForDisplay(timeSlot) }}
+                  </button>
+                </div>
+              </div>
+
+              <p *ngIf="isFieldInvalid('time')" class="mt-1 text-sm text-status-error">
+                {{ getErrorMessage('time') }}
+              </p>
+            </div>
+          </div>
+
+          <div class="flex justify-between pt-4">
+            <button
+              type="button"
+              (click)="goToPreviousStep()"
+              class="inline-flex justify-center items-center px-6 py-3 border border-neutral-light text-base font-medium rounded-md text-neutral-dark hover:bg-neutral-light">
+              Back
+            </button>
+            <button
+              type="button"
+              (click)="goToNextStep()"
+              [disabled]="!bookingForm.get('date')?.valid || !bookingForm.get('time')?.valid"
+              class="inline-flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed">
+              Continue
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 3: Customer Information -->
+        <div *ngIf="currentStep === 3" class="space-y-6">
+          <h3 class="text-lg font-medium text-neutral-dark">Your Information</h3>
+
           <!-- Name Fields -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -267,11 +252,11 @@
                 type="text"
                 formControlName="firstName"
                 class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                [ngClass]="{'border-status-error': isFieldInvalid('firstName')}">
-
-              <div *ngIf="isFieldInvalid('firstName')" class="mt-1 text-status-error text-sm">
+                [ngClass]="{'border-status-error': isFieldInvalid('firstName')}"
+              />
+              <p *ngIf="isFieldInvalid('firstName')" class="mt-1 text-sm text-status-error">
                 {{ getErrorMessage('firstName') }}
-              </div>
+              </p>
             </div>
 
             <div>
@@ -283,11 +268,11 @@
                 type="text"
                 formControlName="lastName"
                 class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                [ngClass]="{'border-status-error': isFieldInvalid('lastName')}">
-
-              <div *ngIf="isFieldInvalid('lastName')" class="mt-1 text-status-error text-sm">
+                [ngClass]="{'border-status-error': isFieldInvalid('lastName')}"
+              />
+              <p *ngIf="isFieldInvalid('lastName')" class="mt-1 text-sm text-status-error">
                 {{ getErrorMessage('lastName') }}
-              </div>
+              </p>
             </div>
           </div>
 
@@ -302,11 +287,11 @@
                 type="email"
                 formControlName="email"
                 class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                [ngClass]="{'border-status-error': isFieldInvalid('email')}">
-
-              <div *ngIf="isFieldInvalid('email')" class="mt-1 text-status-error text-sm">
+                [ngClass]="{'border-status-error': isFieldInvalid('email')}"
+              />
+              <p *ngIf="isFieldInvalid('email')" class="mt-1 text-sm text-status-error">
                 {{ getErrorMessage('email') }}
-              </div>
+              </p>
             </div>
 
             <div>
@@ -318,68 +303,11 @@
                 type="tel"
                 formControlName="phone"
                 class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                [ngClass]="{'border-status-error': isFieldInvalid('phone')}">
-
-              <div *ngIf="isFieldInvalid('phone')" class="mt-1 text-status-error text-sm">
+                [ngClass]="{'border-status-error': isFieldInvalid('phone')}"
+              />
+              <p *ngIf="isFieldInvalid('phone')" class="mt-1 text-sm text-status-error">
                 {{ getErrorMessage('phone') }}
-              </div>
-            </div>
-          </div>
-
-          <!-- Address -->
-          <div>
-            <h3 class="text-sm font-medium text-neutral-dark mb-4">Address*</h3>
-
-            <div class="space-y-4">
-              <div>
-                <label for="street" class="block text-sm font-medium text-neutral-dark mb-1">
-                  Street Address
-                </label>
-                <input
-                  id="street"
-                  type="text"
-                  formControlName="address.street"
-                  class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  [ngClass]="{'border-status-error': isAddressFieldInvalid('street')}">
-
-                <div *ngIf="isAddressFieldInvalid('street')" class="mt-1 text-status-error text-sm">
-                  Street address is required
-                </div>
-              </div>
-
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label for="city" class="block text-sm font-medium text-neutral-dark mb-1">
-                    City
-                  </label>
-                  <input
-                    id="city"
-                    type="text"
-                    formControlName="address.city"
-                    class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    [ngClass]="{'border-status-error': isAddressFieldInvalid('city')}">
-
-                  <div *ngIf="isAddressFieldInvalid('city')" class="mt-1 text-status-error text-sm">
-                    City is required
-                  </div>
-                </div>
-
-                <div>
-                  <label for="postalCode" class="block text-sm font-medium text-neutral-dark mb-1">
-                    Postal Code
-                  </label>
-                  <input
-                    id="postalCode"
-                    type="text"
-                    formControlName="address.postalCode"
-                    class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    [ngClass]="{'border-status-error': isAddressFieldInvalid('postalCode')}">
-
-                  <div *ngIf="isAddressFieldInvalid('postalCode')" class="mt-1 text-status-error text-sm">
-                    Postal code is required
-                  </div>
-                </div>
-              </div>
+              </p>
             </div>
           </div>
 
@@ -393,31 +321,55 @@
               formControlName="notes"
               rows="3"
               class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-              placeholder="Any special instructions or information we should know?"></textarea>
+            ></textarea>
+          </div>
+
+          <!-- Summary -->
+          <div class="bg-neutral-light p-4 rounded-lg">
+            <h4 class="font-medium text-neutral-dark">Appointment Summary</h4>
+            <div class="mt-2 space-y-2">
+              <div class="flex justify-between text-sm">
+                <span>Service:</span>
+                <span class="font-medium">{{ selectedService?.name }}</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span>Date:</span>
+                <span class="font-medium">{{ formatSummaryDate(bookingForm.get('date')?.value) }}</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span>Time:</span>
+                <span class="font-medium">{{ formatTimeForDisplay(bookingForm.get('time')?.value) }}</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span>Duration:</span>
+                <span class="font-medium">{{ formatDuration(selectedService?.duration || 0) }}</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span>Price:</span>
+                <span class="font-medium">{{ formatCurrency(selectedService?.price || 0) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex justify-between pt-4">
+            <button
+              type="button"
+              (click)="goToPreviousStep()"
+              class="inline-flex justify-center items-center px-6 py-3 border border-neutral-light text-base font-medium rounded-md text-neutral-dark hover:bg-neutral-light">
+              Back
+            </button>
+            <button
+              type="submit"
+              [disabled]="bookingForm.invalid || isSubmitting"
+              class="inline-flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed">
+              <span class="flex items-center">
+                <span *ngIf="isSubmitting" class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
+                {{ isSubmitting ? 'Booking...' : 'Book Appointment' }}
+              </span>
+            </button>
           </div>
         </div>
-
-        <!-- Navigation Buttons -->
-        <div class="mt-8 flex justify-between">
-          <button
-            type="button"
-            (click)="prevStep()"
-            class="inline-flex justify-center items-center px-6 py-3 border border-neutral-light rounded-md text-neutral-dark hover:bg-neutral-light focus:outline-none">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-            </svg>
-            Back
-          </button>
-
-          <button
-            type="submit"
-            class="inline-flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary hover:bg-primary-dark focus:outline-none shadow-sm"
-            [disabled]="isSubmitting">
-            <span *ngIf="isSubmitting" class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
-            {{ isSubmitting ? 'Processing...' : 'Complete Booking' }}
-          </button>
-        </div>
-      </div>
-    </form>
+      </form>
+    </div>
   </div>
 </div>

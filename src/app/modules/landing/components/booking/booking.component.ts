@@ -1,300 +1,260 @@
 // src/app/modules/landing/components/booking/booking.component.ts
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Router, ActivatedRoute } from '@angular/router';
-import { ServicesService, Service } from '../../../../core/services/services.service';
+import { ActivatedRoute } from '@angular/router';
+import { ServicesService, Service, ServiceCategory } from '../../../../core/services/services.service';
 import { AppointmentsService } from '../../../../core/services/appointments.service';
-import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-booking',
   templateUrl: './booking.component.html'
 })
 export class BookingComponent implements OnInit {
-  bookingForm!: FormGroup;
-  services: Service[] = [];
-  availableTimeSlots: string[] = [];
+  // Form and step management
+  bookingForm: FormGroup;
+  currentStep = 1;
+  isSubmitting = false;
+  bookingSuccess = false;
+  minDate: string;
 
-  selectedService: Service | null = null;
-  selectedDate: string = '';
-
+  // Data loading states
   isLoading = true;
   isLoadingTimeSlots = false;
-  isSubmitting = false;
-
   errorMessage: string | null = null;
-  successMessage: string | null = null;
 
-  currentStep = 1;
-  totalSteps = 3;
+  // Service selection
+  services: Service[] = [];
+  filteredServices: Service[] = [];
+  categories: ServiceCategory[] = [];
+  selectedService: Service | null = null;
+  selectedCategory: string | null = null;
+  availableTimeSlots: string[] = [];
 
   constructor(
-    private fb: FormBuilder,
-    private servicesService: ServicesService,
-    private appointmentsService: AppointmentsService,
-    private authService: AuthService,
-    private router: Router,
-    private route: ActivatedRoute
-  ) {}
-
-  ngOnInit(): void {
-    this.initForm();
-    this.loadServices();
-
-    // Check for query parameters (serviceId)
-    this.route.queryParams.subscribe(params => {
-      if (params['serviceId']) {
-        this.preSelectService(params['serviceId']);
-      }
-    });
-  }
-
-  initForm(): void {
+      private fb: FormBuilder,
+      private servicesService: ServicesService,
+      private appointmentsService: AppointmentsService,
+      private route: ActivatedRoute
+  ) {
+    // Set minimum date to today
     const today = new Date();
-    const formattedDate = this.formatDateForInput(today);
+    this.minDate = today.toISOString().split('T')[0];
 
+    // Initialize booking form
     this.bookingForm = this.fb.group({
-      // Step 1: Service Selection
+      // Service step
       serviceId: ['', Validators.required],
 
-      // Step 2: Date & Time Selection
-      date: [formattedDate, Validators.required],
+      // Date and time step
+      date: ['', Validators.required],
       time: ['', Validators.required],
 
-      // Step 3: Customer Information
+      // Customer info step
       firstName: ['', Validators.required],
       lastName: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
-      phone: ['', Validators.required],
-      address: this.fb.group({
-        street: ['', Validators.required],
-        city: ['', Validators.required],
-        postalCode: ['', Validators.required]
-      }),
+      phone: ['', [Validators.required, Validators.pattern(/^\+?[0-9\s\-\(\)]+$/)]],
       notes: ['']
-    });
-
-    // Subscribe to serviceId changes
-    this.bookingForm.get('serviceId')?.valueChanges.subscribe(serviceId => {
-      if (serviceId) {
-        this.selectedService = this.services.find(service => service.id === serviceId) || null;
-        this.loadTimeSlots();
-      } else {
-        this.selectedService = null;
-        this.availableTimeSlots = [];
-      }
-    });
-
-    // Subscribe to date changes
-    this.bookingForm.get('date')?.valueChanges.subscribe(date => {
-      if (date) {
-        this.selectedDate = date;
-        this.loadTimeSlots();
-      }
     });
   }
 
-  loadServices(): void {
+  ngOnInit(): void {
+    // Check for service ID in query params
+    this.route.queryParams.subscribe(params => {
+      const serviceId = params['serviceId'];
+      if (serviceId) {
+        // Pre-select service if provided in URL
+        this.bookingForm.get('serviceId')?.setValue(serviceId);
+      }
+    });
+
+    this.loadData();
+  }
+
+  loadData(): void {
     this.isLoading = true;
     this.errorMessage = null;
 
-    this.servicesService.getServices().subscribe({
-      next: (services) => {
-        // Show only active services
-        this.services = services.filter(service => service.active);
-        this.isLoading = false;
+    // Load categories and services
+    this.servicesService.getCategories().subscribe({
+      next: (categories) => {
+        this.categories = categories.filter(category => category.active);
+
+        this.servicesService.getServices().subscribe({
+          next: (services) => {
+            // Show only active services
+            this.services = services.filter(service => service.active);
+            this.filteredServices = [...this.services];
+
+            // If a service ID was pre-selected from URL params, select it
+            const serviceId = this.bookingForm.get('serviceId')?.value;
+            if (serviceId) {
+              const service = this.services.find(s => s.id === serviceId);
+              if (service) {
+                this.selectService(service);
+                // Move to next step
+                this.currentStep = 2;
+              }
+            }
+
+            this.isLoading = false;
+          },
+          error: (error) => {
+            this.errorMessage = 'Failed to load services. Please try again.';
+            this.isLoading = false;
+            console.error('Error loading services:', error);
+          }
+        });
       },
       error: (error) => {
-        this.errorMessage = 'Failed to load services. Please try again.';
+        this.errorMessage = 'Failed to load categories. Please try again.';
         this.isLoading = false;
-        console.error('Error loading services:', error);
+        console.error('Error loading categories:', error);
       }
     });
   }
 
-  preSelectService(serviceId: string): void {
-    // This will be called when the component is loaded with a serviceId query parameter
-    this.servicesService.getServiceById(serviceId).subscribe({
-      next: (service) => {
-        if (service && service.active) {
-          this.bookingForm.patchValue({ serviceId: service.id });
-          this.selectedService = service;
-        }
-      },
-      error: (error) => {
-        console.error('Error pre-selecting service:', error);
-      }
-    });
+  // Handle category change
+  onCategoryChange(event: Event): void {
+    const select = event.target as HTMLSelectElement;
+    const value = select.value;
+
+    this.selectedCategory = value === '' ? null : value;
+    this.filterServices();
   }
 
-  loadTimeSlots(): void {
-    const serviceId = this.bookingForm.get('serviceId')?.value;
-    const date = this.bookingForm.get('date')?.value;
-
-    if (!serviceId || !date) {
-      this.availableTimeSlots = [];
-      return;
+  // Filter services based on selected category
+  filterServices(): void {
+    if (this.selectedCategory) {
+      this.filteredServices = this.services.filter(service =>
+          service.category === this.selectedCategory
+      );
+    } else {
+      this.filteredServices = [...this.services];
     }
+  }
 
+  // Select a service
+  selectService(service: Service): void {
+    this.selectedService = service;
+    this.bookingForm.get('serviceId')?.setValue(service.id);
+  }
+
+  // Handle date change
+  onDateChange(): void {
+    const date = this.bookingForm.get('date')?.value;
+    const serviceId = this.bookingForm.get('serviceId')?.value;
+
+    if (date && serviceId) {
+      this.loadTimeSlots(date, serviceId);
+    } else {
+      // Clear time slots if date or service not selected
+      this.availableTimeSlots = [];
+      this.bookingForm.get('time')?.setValue('');
+    }
+  }
+
+  // Load available time slots
+  loadTimeSlots(date: string, serviceId: string): void {
     this.isLoadingTimeSlots = true;
-    this.bookingForm.get('time')?.setValue('');
+    this.availableTimeSlots = [];
 
     this.appointmentsService.getAvailableTimeSlots(date, serviceId).subscribe({
       next: (timeSlots) => {
         this.availableTimeSlots = timeSlots;
+
+        // Clear selected time if it's no longer available
+        const currentTime = this.bookingForm.get('time')?.value;
+        if (currentTime && !timeSlots.includes(currentTime)) {
+          this.bookingForm.get('time')?.setValue('');
+        }
+
         this.isLoadingTimeSlots = false;
       },
       error: (error) => {
         console.error('Error loading time slots:', error);
         this.isLoadingTimeSlots = false;
-        this.availableTimeSlots = [];
       }
     });
   }
 
-  nextStep(): void {
-    // Validate current step before proceeding
-    if (this.validateCurrentStep()) {
+  // Navigation methods
+  goToNextStep(): void {
+    if (this.currentStep < 3) {
       this.currentStep++;
+
+      // If moving to step 2, load time slots if service and date are selected
+      if (this.currentStep === 2) {
+        const date = this.bookingForm.get('date')?.value;
+        const serviceId = this.bookingForm.get('serviceId')?.value;
+
+        if (date && serviceId) {
+          this.loadTimeSlots(date, serviceId);
+        }
+      }
     }
   }
 
-  prevStep(): void {
+  goToPreviousStep(): void {
     if (this.currentStep > 1) {
       this.currentStep--;
     }
   }
 
-  validateCurrentStep(): boolean {
-    switch (this.currentStep) {
-      case 1:
-        return this.validateStep1();
-      case 2:
-        return this.validateStep2();
-      default:
-        return true;
-    }
-  }
-
-  validateStep1(): boolean {
-    const serviceControl = this.bookingForm.get('serviceId');
-    if (serviceControl?.invalid) {
-      serviceControl.markAsTouched();
-      return false;
-    }
-    return true;
-  }
-
-  validateStep2(): boolean {
-    const dateControl = this.bookingForm.get('date');
-    const timeControl = this.bookingForm.get('time');
-
-    let valid = true;
-    if (dateControl?.invalid) {
-      dateControl.markAsTouched();
-      valid = false;
-    }
-
-    if (timeControl?.invalid) {
-      timeControl.markAsTouched();
-      valid = false;
-    }
-
-    return valid;
-  }
-
+  // Form submission
   onSubmit(): void {
-    // Mark all fields as touched to trigger validation
-    this.markFormGroupTouched(this.bookingForm);
-
-    if (this.bookingForm.valid) {
+    if (this.bookingForm.valid && this.selectedService) {
       this.isSubmitting = true;
-      this.errorMessage = null;
-      this.successMessage = null;
 
-      // Check if user is authenticated
-      if (this.authService.isAuthenticated()) {
-        // If authenticated, use the user's ID for the booking
-        this.submitBooking();
-      } else {
-        // If not authenticated, prompt to sign in or continue as guest
-        // For this example, we'll just proceed with booking as guest
-        this.submitBooking();
-      }
+      // Prepare appointment data
+      const appointmentData = {
+        customerId: this.createTemporaryCustomerId(), // In a real system, you'd create or get a customer ID
+        serviceId: this.bookingForm.get('serviceId')?.value,
+        date: this.bookingForm.get('date')?.value,
+        time: this.bookingForm.get('time')?.value,
+        notes: this.bookingForm.get('notes')?.value
+      };
+
+      // In a real application, this would call the API to create the appointment
+      // For this simulation, we'll just simulate a successful booking
+      setTimeout(() => {
+        this.isSubmitting = false;
+        this.bookingSuccess = true;
+      }, 1500);
+
+      // In a real application:
+      /*
+      this.appointmentsService.createAppointment(appointmentData).subscribe({
+        next: (response) => {
+          this.isSubmitting = false;
+          this.bookingSuccess = true;
+        },
+        error: (error) => {
+          this.isSubmitting = false;
+          this.errorMessage = 'Failed to book appointment. Please try again.';
+          console.error('Error booking appointment:', error);
+        }
+      });
+      */
+    } else {
+      this.markFormGroupTouched(this.bookingForm);
     }
   }
 
-  submitBooking(): void {
-    // Prepare appointment data
-    const formData = this.bookingForm.value;
-
-    const appointmentData = {
-      serviceId: formData.serviceId,
-      date: formData.date,
-      time: formData.time,
-      notes: formData.notes,
-      // For guest booking, we create a temporary customer record
-      customerId: 'guest',
-      customerInfo: {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
-        phone: formData.phone,
-        address: formData.address
-      }
-    };
-
-    // Use AppointmentsService to create appointment
-    // this.appointmentsService.createGuestAppointment(appointmentData).subscribe({
-    //   next: (appointment) => {
-    //     this.successMessage = 'Appointment booked successfully!';
-    //     this.isSubmitting = false;
-    //
-    //     // Reset form after successful submission
-    //     this.bookingForm.reset();
-    //     this.currentStep = 1;
-    //
-    //     // If we want to redirect to a confirmation page later
-    //     // this.router.navigate(['/booking/confirmation', appointment.id]);
-    //   },
-    //   error: (error) => {
-    //     this.errorMessage = 'Failed to book appointment. Please try again.';
-    //     this.isSubmitting = false;
-    //     console.error('Error booking appointment:', error);
-    //   }
-    // });
+  // Helper method to create a temporary customer ID (for demo purposes only)
+  createTemporaryCustomerId(): string {
+    return 'temp-' + Math.random().toString(36).substring(2, 11);
   }
 
-  selectTimeSlot(time: string): void {
-    this.bookingForm.get('time')?.setValue(time);
+  // Reset form after successful booking
+  resetForm(): void {
+    this.bookingForm.reset();
+    this.selectedService = null;
+    this.currentStep = 1;
+    this.bookingSuccess = false;
   }
 
-  isFieldInvalid(field: string): boolean {
-    const control = this.bookingForm.get(field);
-    return control ? control.invalid && control.touched : false;
-  }
-
-  isAddressFieldInvalid(field: string): boolean {
-    const control = this.bookingForm.get(`address.${field}`);
-    return control ? control.invalid && control.touched : false;
-  }
-
-  getErrorMessage(field: string): string {
-    const control = this.bookingForm.get(field);
-
-    if (!control) return '';
-
-    if (control.hasError('required')) {
-      return `This field is required`;
-    }
-
-    if (control.hasError('email')) {
-      return 'Please enter a valid email address';
-    }
-
-    return '';
-  }
-
+  // Mark all form controls as touched to trigger validation
   markFormGroupTouched(formGroup: FormGroup): void {
     Object.values(formGroup.controls).forEach(control => {
       control.markAsTouched();
@@ -305,32 +265,73 @@ export class BookingComponent implements OnInit {
     });
   }
 
-  datenow = new Date();
+  // Validation helpers
+  isFieldInvalid(field: string): boolean {
+    const control = this.bookingForm.get(field);
+    return control ? control.invalid && control.touched : false;
+  }
 
-  formatDateForInput(date: Date): string {
-    if (!(date instanceof Date)) {
-      date = new Date(); // Use current date as fallback
+  getErrorMessage(field: string): string {
+    const control = this.bookingForm.get(field);
+
+    if (!control) return '';
+
+    if (control.hasError('required')) {
+      return 'This field is required';
     }
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    return `${year}-${month}-${day}`;
+
+    if (control.hasError('email')) {
+      return 'Please enter a valid email address';
+    }
+
+    if (control.hasError('pattern')) {
+      if (field === 'phone') {
+        return 'Please enter a valid phone number';
+      }
+    }
+
+    return 'Invalid input';
   }
 
-  formatTime(timeString: string): string {
-    const [hours, minutes] = timeString.split(':');
-    const date = new Date();
-    date.setHours(parseInt(hours, 10));
-    date.setMinutes(parseInt(minutes, 10));
-
-    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-  }
-
+  // Formatting helpers
   formatCurrency(amount: number): string {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
       minimumFractionDigits: 2
     }).format(amount);
+  }
+
+  formatDuration(minutes: number): string {
+    if (minutes < 60) {
+      return `${minutes} min`;
+    }
+
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+
+    if (remainingMinutes === 0) {
+      return `${hours} hr`;
+    }
+
+    return `${hours} hr ${remainingMinutes} min`;
+  }
+
+  formatTimeForDisplay(timeString: string | null | undefined): string {
+    if (!timeString) return '';
+
+    const [hours, minutes] = timeString.split(':');
+    const date = new Date();
+    date.setHours(parseInt(hours, 10));
+    date.setMinutes(parseInt(minutes, 10));
+
+    return date.toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit'});
+  }
+
+  formatSummaryDate(dateString: string | null | undefined): string {
+    if (!dateString) return '';
+
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'});
   }
 }

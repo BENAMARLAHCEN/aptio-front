@@ -6,5 +6,5 @@ import { Component } from '@angular/core';
   templateUrl: './footer.component.html'
 })
 export class FooterComponent {
-  currentYear = new Date().getFullYear();
+  // Footer component doesn't need any logic for now
 }

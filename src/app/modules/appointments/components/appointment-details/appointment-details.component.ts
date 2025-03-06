@@ -39,6 +39,9 @@ export class AppointmentDetailsComponent implements OnInit {
 
     this.appointmentsService.getAppointmentById(id).subscribe({
       next: (appointment) => {
+        // We'll keep the original dates but create formatted versions for display
+        this.appointment = appointment;
+
         this.appointment = appointment;
         this.isLoading = false;
       },
@@ -114,12 +117,46 @@ export class AppointmentDetailsComponent implements OnInit {
   }
 
   formatTime(timeString: string): string {
+    if (!timeString || typeof timeString !== 'string') {
+      return '';
+    }
+
     const [hours, minutes] = timeString.split(':');
     const date = new Date();
     date.setHours(parseInt(hours, 10));
     date.setMinutes(parseInt(minutes, 10));
 
     return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  }
+
+  // Helper method to safely format dates for display
+  getFormattedDate(dateString: string): string {
+    if (!dateString) return 'Unknown';
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Invalid date';
+    }
+  }
+
+  // Helper to check if two dates should be considered different
+  areDifferentDates(date1: string, date2: string): boolean {
+    if (!date1 || !date2) return false;
+    try {
+      const d1 = new Date(date1).getTime();
+      const d2 = new Date(date2).getTime();
+      return d1 !== d2;
+    } catch (error) {
+      return false;
+    }
   }
 
   formatDateTime(dateString: string, timeString: string): string {
@@ -139,6 +176,10 @@ export class AppointmentDetailsComponent implements OnInit {
   }
 
   formatEndTime(timeString: string, durationMinutes: number): string {
+    if (!timeString || typeof timeString !== 'string') {
+      return '';
+    }
+
     const [hours, minutes] = timeString.split(':');
     const date = new Date();
     date.setHours(parseInt(hours, 10));

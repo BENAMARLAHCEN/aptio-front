@@ -1,3 +1,4 @@
+<!-- src/app/modules/appointments/components/appointment-calendar/appointment-calendar.component.html -->
 <div class="space-y-6">
   <!-- Page Title and Actions -->
   <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -66,19 +67,19 @@
               <!-- Add button for current month -->
               <button
                 *ngIf="day.isCurrentMonth"
-                (click)="createAppointment(day.date); $event.stopPropagation()"
+                (click)="createAppointment()"
                 class="text-xs text-neutral-dark hover:text-primary">
                 <span class="material-icons-outlined text-sm">add</span>
               </button>
             </div>
 
             <!-- Appointments for the day -->
-            <div *ngIf="day.appointments && day.appointments.length > 0" class="mt-1 space-y-1">
+            <div *ngIf="day.appointments.length > 0" class="mt-1 space-y-1">
               <div
                 *ngFor="let appointment of day.appointments | slice:0:3"
-                (click)="viewAppointmentDetails(appointment.id); $event.stopPropagation()"
-                class="text-xs p-1 rounded cursor-pointer"
-                [class]="getStatusClass(appointment.status)">
+                (click)="viewAppointmentDetails(appointment.id)"
+                [ngClass]="getStatusClass(appointment.status.toLowerCase())"
+                class="text-xs p-1 rounded cursor-pointer">
                 <div class="font-medium truncate">{{ formatTime(appointment.time) }}</div>
                 <div class="truncate">{{ appointment.customerName }}</div>
                 <div class="truncate text-[10px]">{{ appointment.serviceName }}</div>
@@ -89,23 +90,7 @@
                 +{{ day.appointments.length - 3 }} more
               </div>
             </div>
-
-            <!-- Empty state for days with no appointments -->
-            <div *ngIf="day.isCurrentMonth && (!day.appointments || day.appointments.length === 0)" class="mt-1 text-xs text-neutral italic text-center">
-              No appointments
-            </div>
           </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Calendar Legend -->
-    <div class="mt-6 pt-4 border-t border-neutral-light">
-      <h3 class="text-sm font-medium mb-2">Status Legend</h3>
-      <div class="flex flex-wrap gap-3">
-        <div class="flex items-center" *ngFor="let status of statusOptions">
-          <span class="w-3 h-3 rounded-full mr-1" [ngStyle]="{'background-color': status.color}"></span>
-          <span class="text-xs">{{ status.label }}</span>
         </div>
       </div>
     </div>

@@ -100,16 +100,16 @@ export class AppointmentCalendarComponent implements OnInit {
     // Loop through days from start to end date
     const currentDate = new Date(startDate);
     while (currentDate <= endDate) {
-      // For each day, find its appointments
-      // Compare the date strings to avoid time zone issues
-      const currentDateStr = this.formatDateForAPI(currentDate);
+      // For each day, check if it has appointments
       const dayAppointments = this.appointments.filter(appointment => {
-        return appointment.date === currentDateStr;
+        // Convert the appointment date string to a Date object for comparison
+        const appDate = new Date(appointment.date);
+        return (
+          appDate.getFullYear() === currentDate.getFullYear() &&
+          appDate.getMonth() === currentDate.getMonth() &&
+          appDate.getDate() === currentDate.getDate()
+        );
       });
-
-      // Sort appointments by time
-      dayAppointments.sort((a, b) => a.time.localeCompare(b.time));
-
       // Add day to the current week
       currentWeek.days.push({
         date: new Date(currentDate),

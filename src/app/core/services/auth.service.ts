@@ -87,6 +87,26 @@ export class AuthService {
       );
   }
 
+  /**
+   * Navigate based on user role
+   * Returns the appropriate route path based on the user's role
+   */
+  getHomeRouteBasedOnRole(): string {
+    const user = this.currentUserValue;
+    if (!user) {
+      return '/auth/login';
+    }
+
+    if (this.isAdmin()) {
+      return '/dashboard';
+    } else if (this.isStaff()) {
+      return '/dashboard/appointments';
+    } else {
+      // Regular user/customer
+      return '/dashboard';
+    }
+  }
+
   logout(): void {
     // Remove user from local storage and reset the subject
     localStorage.removeItem('currentUser');

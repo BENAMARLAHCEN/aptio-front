@@ -52,7 +52,8 @@ export class LoginComponent implements OnInit {
       this.authService.login(this.loginForm.value).subscribe({
         next: (response) => {
           this.authService.setToken(response.token);
-          this.router.navigate(['/dashboard']);
+          const redirectRoute = this.authService.getHomeRouteBasedOnRole();
+          this.router.navigate([redirectRoute]);
         },
         error: (error) => {
           this.errorMessage = error.error.message || 'An error occurred during sign in';

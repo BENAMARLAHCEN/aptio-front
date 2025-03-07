@@ -6,6 +6,14 @@ import { tap, catchError, map } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
 
+export interface AddressDTO {
+  street?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  country?: string;
+}
+
 export interface AuthenticationRequest {
   email: string;
   password: string;
@@ -18,6 +26,7 @@ export interface RegisterRequest {
   email: string;
   password: string;
   phone?: string;
+  address?: AddressDTO | null;
 }
 
 export interface AuthResponse {

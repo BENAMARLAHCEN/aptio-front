@@ -11,6 +11,7 @@ export class RegisterComponent implements OnInit {
   registerForm!: FormGroup;
   isLoading = false;
   errorMessage = '';
+  showAddressFields = false;
 
   constructor(
     private fb: FormBuilder,
@@ -25,8 +26,19 @@ export class RegisterComponent implements OnInit {
       username: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
-      phone: ['']
+      phone: [''],
+      address: this.fb.group({
+        street: [''],
+        city: [''],
+        state: [''],
+        zipCode: [''],
+        country: ['']
+      })
     });
+  }
+
+  toggleAddressFields(): void {
+    this.showAddressFields = !this.showAddressFields;
   }
 
   isFieldInvalid(field: string): boolean {
@@ -53,13 +65,25 @@ export class RegisterComponent implements OnInit {
       this.isLoading = true;
       this.errorMessage = '';
 
-      this.authService.register(this.registerForm.value).subscribe({
+      // Check if any address fields are filled
+      const addressGroup = this.registerForm.get('address');
+      const addressValues = addressGroup?.value;
+      const hasAddressData = Object.values(addressValues).some(value =>
+        typeof value === 'string' && value.trim() !== '');
+
+      // Remove address if all fields are empty
+      const formData = { ...this.registerForm.value };
+      if (!hasAddressData) {
+        formData.address = null;
+      }
+
+      this.authService.register(formData).subscribe({
         next: (response) => {
           this.authService.setToken(response.token);
           this.router.navigate(['/dashboard']);
         },
         error: (error) => {
-          this.errorMessage = error.error.message || 'An error occurred during registration';
+          this.errorMessage = error.error?.message || 'An error occurred during registration';
           this.isLoading = false;
         },
         complete: () => {

@@ -2,12 +2,11 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import {
-  ScheduleService,
+  ImprovedScheduleService,
   Staff,
   ScheduleEntry,
-  ScheduleSettings,
-  TimeSlot
-} from '../../../../core/services/schedule.service';
+  BusinessSettings
+} from '../../../../core/services/improved-schedule.service';
 
 interface ScheduleColumn {
   staff: Staff;
@@ -29,7 +28,7 @@ export class DailyScheduleComponent implements OnInit {
   selectedDate: Date = new Date();
   staff: Staff[] = [];
   scheduleEntries: ScheduleEntry[] = [];
-  scheduleSettings: ScheduleSettings | null = null;
+  businessSettings: BusinessSettings | null = null;
   scheduleColumns: ScheduleColumn[] = [];
   timeSlots: ScheduleTimeSlot[] = [];
 
@@ -38,7 +37,7 @@ export class DailyScheduleComponent implements OnInit {
   selectedStaffIds: string[] = []; // For filtering
 
   constructor(
-    private scheduleService: ScheduleService,
+    public scheduleService: ImprovedScheduleService,
     private router: Router
   ) {}
 
@@ -50,15 +49,14 @@ export class DailyScheduleComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = null;
 
-    // Load schedule settings
-    this.scheduleService.getScheduleSettings().subscribe({
+    // Load business settings and staff sequentially to avoid Promise.all issues
+    this.scheduleService.getBusinessSettings().subscribe({
       next: (settings) => {
-        this.scheduleSettings = settings;
+        this.businessSettings = settings;
 
-        // Load staff
         this.scheduleService.getStaff().subscribe({
-          next: (staff) => {
-            this.staff = staff.filter(s => s.isActive);
+          next: (staffMembers) => {
+            this.staff = staffMembers.filter(s => s.isActive);
 
             // If no staff is selected for filtering, select all
             if (this.selectedStaffIds.length === 0) {
@@ -71,20 +69,20 @@ export class DailyScheduleComponent implements OnInit {
           error: (error) => {
             this.errorMessage = 'Failed to load staff data.';
             this.isLoading = false;
-            console.error('Error loading staff:', error);
+            console.error('Error loading staff data:', error);
           }
         });
       },
       error: (error) => {
-        this.errorMessage = 'Failed to load schedule settings.';
+        this.errorMessage = 'Failed to load business settings.';
         this.isLoading = false;
-        console.error('Error loading schedule settings:', error);
+        console.error('Error loading business settings:', error);
       }
     });
   }
 
   loadDailySchedule(): void {
-    const dateStr = this.formatDateYYYYMMDD(this.selectedDate);
+    const dateStr = this.scheduleService.formatDateYYYYMMDD(this.selectedDate);
 
     this.scheduleService.getScheduleEntries(dateStr, dateStr).subscribe({
       next: (entries) => {
@@ -102,27 +100,25 @@ export class DailyScheduleComponent implements OnInit {
   }
 
   generateTimeSlots(): void {
-    if (!this.scheduleSettings) {
-      return;
-    }
+    if (!this.businessSettings) return;
 
     // Generate time slots from business hours
-    const startMinutes = this.parseTimeToMinutes(this.scheduleSettings.businessHours.startTime);
-    const endMinutes = this.parseTimeToMinutes(this.scheduleSettings.businessHours.endTime);
-    const interval = this.scheduleSettings.timeSlotInterval;
+    const startMinutes = this.scheduleService.parseTimeToMinutes(this.businessSettings.businessHoursStart);
+    const endMinutes = this.scheduleService.parseTimeToMinutes(this.businessSettings.businessHoursEnd);
+    const interval = this.businessSettings.timeSlotInterval;
 
     this.timeSlots = [];
 
     for (let minutes = startMinutes; minutes < endMinutes; minutes += interval) {
-      const time = this.formatMinutesToTime(minutes);
+      const time = this.scheduleService.formatMinutesToTime(minutes);
       const isHalfHour = minutes % 60 === 30;
       const isHour = minutes % 60 === 0;
 
       this.timeSlots.push({
         time: time,
-        displayTime: this.formatTimeForDisplay(time),
+        displayTime: this.scheduleService.formatTimeForDisplay(time),
         isHalfHour: isHalfHour,
-        hourLabel: isHour ? this.formatTimeForDisplay(time) : null
+        hourLabel: isHour ? this.scheduleService.formatTimeForDisplay(time) : null
       });
     }
   }
@@ -173,22 +169,23 @@ export class DailyScheduleComponent implements OnInit {
   }
 
   getAppointmentStyle(entry: ScheduleEntry, timeSlot: string): any {
-    const startMinutes = this.parseTimeToMinutes(entry.startTime);
-    const endMinutes = this.parseTimeToMinutes(entry.endTime);
-    const slotMinutes = this.parseTimeToMinutes(timeSlot);
-    const slotEndMinutes = slotMinutes + this.scheduleSettings!.timeSlotInterval;
+    if (!this.businessSettings || !entry || !entry.startTime || !entry.endTime || !timeSlot) return null;
+
+    const startMinutes = this.scheduleService.parseTimeToMinutes(entry.startTime);
+    const endMinutes = this.scheduleService.parseTimeToMinutes(entry.endTime);
+    const slotMinutes = this.scheduleService.parseTimeToMinutes(timeSlot);
+    const slotEndMinutes = slotMinutes + this.businessSettings.timeSlotInterval;
 
     // Check if the appointment overlaps with this time slot
     if (startMinutes < slotEndMinutes && endMinutes > slotMinutes) {
       // Calculate the position and height
-      const slotHeight = 48; // Height of each time slot in pixels
       const startOffset = Math.max(0, startMinutes - slotMinutes);
       const duration = Math.min(slotEndMinutes, endMinutes) - Math.max(slotMinutes, startMinutes);
 
       // Calculate top position as percentage of the slot height
-      const topPercentage = (startOffset / this.scheduleSettings!.timeSlotInterval) * 100;
+      const topPercentage = (startOffset / this.businessSettings.timeSlotInterval) * 100;
       // Calculate height as percentage of the slot height
-      const heightPercentage = (duration / this.scheduleSettings!.timeSlotInterval) * 100;
+      const heightPercentage = (duration / this.businessSettings.timeSlotInterval) * 100;
 
       const backgroundColor = entry.color || this.getTypeColor(entry.type);
 
@@ -198,16 +195,16 @@ export class DailyScheduleComponent implements OnInit {
         'height': `${heightPercentage}%`,
         'width': '90%',
         'left': '5%',
-        'background-color': backgroundColor,
-        'border-radius': '4px',
+        'backgroundColor': backgroundColor,
+        'borderRadius': '4px',
         'padding': '4px',
         'overflow': 'hidden',
-        'text-overflow': 'ellipsis',
-        'white-space': 'nowrap',
-        'font-size': '0.75rem',
+        'textOverflow': 'ellipsis',
+        'whiteSpace': 'nowrap',
+        'fontSize': '0.75rem',
         'color': this.getContrastColor(backgroundColor),
         'cursor': 'pointer',
-        'z-index': entry.type === 'appointment' ? 20 : 10
+        'zIndex': entry.type === 'APPOINTMENT' ? 20 : 10
       };
     }
 
@@ -215,12 +212,12 @@ export class DailyScheduleComponent implements OnInit {
   }
 
   getTypeColor(type: string): string {
-    switch (type) {
-      case 'appointment':
+    switch (type.toUpperCase()) {
+      case 'APPOINTMENT':
         return '#2196F3';
-      case 'break':
+      case 'BREAK':
         return '#FF9800';
-      case 'timeoff':
+      case 'TIMEOFF':
         return '#F44336';
       default:
         return '#9E9E9E';
@@ -228,6 +225,9 @@ export class DailyScheduleComponent implements OnInit {
   }
 
   getContrastColor(hexColor: string): string {
+    // Default to white if no color provided
+    if (!hexColor || !hexColor.startsWith('#')) return '#FFFFFF';
+
     // Convert hex to RGB
     const r = parseInt(hexColor.slice(1, 3), 16);
     const g = parseInt(hexColor.slice(3, 5), 16);
@@ -251,14 +251,6 @@ export class DailyScheduleComponent implements OnInit {
     this.router.navigate(['/dashboard/appointments/new']);
   }
 
-  // Format date as YYYY-MM-DD
-  formatDateYYYYMMDD(date: Date): string {
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  }
-
   // Format date for display
   formatDateForDisplay(date: Date): string {
     return date.toLocaleDateString('en-US', {
@@ -267,26 +259,5 @@ export class DailyScheduleComponent implements OnInit {
       month: 'long',
       day: 'numeric'
     });
-  }
-
-  // Parse time string (HH:MM) to minutes
-  parseTimeToMinutes(time: string): number {
-    const [hours, minutes] = time.split(':').map(Number);
-    return hours * 60 + minutes;
-  }
-
-  // Format minutes to time string (HH:MM)
-  formatMinutesToTime(minutes: number): string {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
-  }
-
-  // Format time for display
-  formatTimeForDisplay(time: string): string {
-    const [hours, minutes] = time.split(':').map(Number);
-    const period = hours >= 12 ? 'PM' : 'AM';
-    const displayHours = hours % 12 || 12;
-    return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
   }
 }

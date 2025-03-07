@@ -1,3 +1,4 @@
+<!-- src/app/modules/schedule/components/weekly-schedule/weekly-schedule.component.html -->
 <div class="space-y-4">
   <!-- Week Navigation and Staff Selector -->
   <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-2 md:space-y-0">
@@ -89,7 +90,7 @@
           <div
             *ngFor="let entry of day.entries"
             class="p-2 rounded-lg cursor-pointer"
-            [class]="getEntryTypeClass(entry.type)"
+            [ngClass]="scheduleService.getEntryTypeClass(entry.type || '')"
             (click)="viewAppointment(entry.id)">
             <div class="font-medium text-sm">{{ entry.title }}</div>
             <div class="text-xs">{{ formatTimeRange(entry.startTime, entry.endTime) }}</div>
@@ -97,6 +98,11 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- No Schedule Data Message -->
+  <div *ngIf="!isLoading && !errorMessage && weekDays.length === 0" class="bg-white rounded-lg shadow-sm p-8 text-center">
+    <div class="text-neutral">No schedule data available.</div>
   </div>
 
   <!-- Create Appointment Button -->

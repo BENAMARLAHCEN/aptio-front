@@ -44,6 +44,11 @@ const routes: Routes = [
         loadChildren: () => import('../user-appointments/user-appointments.module').then(m => m.UserAppointmentsModule),
         data: { roles: ['ROLE_USER', 'ROLE_ADMIN', 'ROLE_STAFF'] }
       },
+      {
+        path: 'booking',
+        loadChildren: () => import('../booking/booking.module').then(m => m.BookingModule),
+        data: { roles: ['ROLE_USER'] }
+      },
       { path: 'staff',
         loadChildren: () => import('../staff/staff.module').then(m => m.StaffModule) ,
         data: { roles: ['ROLE_ADMIN'] }

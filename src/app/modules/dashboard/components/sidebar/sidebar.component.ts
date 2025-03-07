@@ -51,6 +51,12 @@ export class SidebarComponent implements OnInit {
       roles: ['ROLE_USER']
     },
     {
+      icon: 'event_available',
+      label: 'Book Appointment',
+      route: '/dashboard/booking',
+      roles: ['ROLE_USER']
+    },
+    {
       icon: 'assignment',
       label: 'Services',
       route: '/dashboard/services',

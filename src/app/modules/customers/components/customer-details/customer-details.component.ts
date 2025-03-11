@@ -68,10 +68,10 @@ export class CustomerDetailsComponent implements OnInit {
     this.isLoadingAppointments = true;
 
     // Assuming we have a method to get customer appointments
-    this.appointmentsService.getAppointments().subscribe({
+    this.appointmentsService.getAppointmentsByCustomerId(customerId).subscribe({
       next: (appointments) => {
         // Filter appointments for this customer
-        this.appointments = appointments.filter(a => a.customerId === customerId);
+        this.appointments = appointments;
         this.isLoadingAppointments = false;
       },
       error: (error) => {
@@ -176,20 +176,23 @@ export class CustomerDetailsComponent implements OnInit {
     });
   }
 
-  formatTime(timeString: string): string {
-    const [hours, minutes] = timeString.split(':');
-    const date = new Date();
-    date.setHours(parseInt(hours, 10));
-    date.setMinutes(parseInt(minutes, 10));
+  formatDateTime(dateString: string, timeString: string | undefined): string {
+    if (!dateString) return 'Unknown date';
 
-    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-  }
-
-  formatDateTime(dateString: string, timeString: string): string {
     const date = new Date(dateString);
-    const [hours, minutes] = timeString.split(':');
-    date.setHours(parseInt(hours, 10));
-    date.setMinutes(parseInt(minutes, 10));
+
+    // Handle the case where timeString might not be a string
+    if (typeof timeString === 'string' && timeString) {
+      const timeParts = timeString.split(':');
+      if (timeParts.length >= 2) {
+        const hours = parseInt(timeParts[0], 10);
+        const minutes = parseInt(timeParts[1], 10);
+        if (!isNaN(hours) && !isNaN(minutes)) {
+          date.setHours(hours);
+          date.setMinutes(minutes);
+        }
+      }
+    }
 
     return date.toLocaleString('en-US', {
       weekday: 'short',
@@ -202,6 +205,8 @@ export class CustomerDetailsComponent implements OnInit {
   }
 
   formatCurrency(amount: number): string {
+    if (amount === undefined || amount === null) return '$0.00';
+
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',

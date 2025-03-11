@@ -1,65 +1,117 @@
 // src/app/modules/booking/components/booking-confirmation/booking-confirmation.component.ts
 import { Component, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AppointmentsService, Appointment } from '../../../../core/services/appointments.service';
+import { ServicesService, Service } from '../../../../core/services/services.service';
+import { AppointmentsService } from '../../../../core/services/appointments.service';
 
 @Component({
   selector: 'app-booking-confirmation',
   templateUrl: './booking-confirmation.component.html'
 })
 export class BookingConfirmationComponent implements OnInit {
-  appointment: Appointment | null = null;
+  serviceId: string | null = null;
+  selectedService: Service | null = null;
+  selectedDate: string | null = null;
+  selectedTime: string | null = null;
+
+  bookingForm: FormGroup;
+
   isLoading = true;
+  isSubmitting = false;
   errorMessage: string | null = null;
+  bookingSuccess = false;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
+    private fb: FormBuilder,
+    private servicesService: ServicesService,
     private appointmentsService: AppointmentsService
-  ) {}
-
-  ngOnInit(): void {
-    this.loadAppointment();
+  ) {
+    this.bookingForm = this.fb.group({
+      notes: ['']
+    });
   }
 
-  loadAppointment(): void {
-    this.isLoading = true;
-    this.errorMessage = null;
+  ngOnInit(): void {
+    // Get parameters from route
+    this.serviceId = this.route.snapshot.paramMap.get('serviceId');
+    this.selectedDate = this.route.snapshot.paramMap.get('date');
+    const encodedTime = this.route.snapshot.paramMap.get('time');
 
-    const id = this.route.snapshot.paramMap.get('id');
-    if (!id) {
-      this.errorMessage = 'Appointment ID is missing';
+    if (encodedTime) {
+      this.selectedTime = decodeURIComponent(encodedTime);
+    }
+
+    if (!this.serviceId || !this.selectedDate || !this.selectedTime) {
+      this.errorMessage = 'Missing required booking information';
       this.isLoading = false;
       return;
     }
 
-    this.appointmentsService.getAppointmentById(id).subscribe({
-      next: (appointment) => {
-        this.appointment = appointment;
+    this.loadServiceDetails();
+  }
+
+  loadServiceDetails(): void {
+    this.isLoading = true;
+    this.errorMessage = null;
+
+    if (!this.serviceId) return;
+
+    this.servicesService.getServiceById(this.serviceId).subscribe({
+      next: (service) => {
+        this.selectedService = service;
         this.isLoading = false;
       },
       error: (error) => {
-        this.errorMessage = 'Failed to load appointment details. Please try again.';
+        console.error('Error loading service details:', error);
+        this.errorMessage = 'Failed to load service details. Please try again.';
         this.isLoading = false;
-        console.error('Error loading appointment:', error);
       }
     });
   }
 
-  viewBookings(): void {
-    this.router.navigate(['/dashboard/appointments']);
+  confirmBooking(): void {
+    if (!this.serviceId || !this.selectedDate || !this.selectedTime) {
+      this.errorMessage = 'Missing required booking information';
+      return;
+    }
+
+    this.isSubmitting = true;
+    this.errorMessage = null;
+
+    const appointmentData = {
+      serviceId: this.serviceId,
+      date: this.selectedDate,
+      time: this.selectedTime,
+      notes: this.bookingForm.value.notes
+    };
+
+    this.appointmentsService.createUserAppointment(appointmentData).subscribe({
+      next: (appointment) => {
+        this.isSubmitting = false;
+        this.bookingSuccess = true;
+      },
+      error: (error) => {
+        console.error('Error booking appointment:', error);
+        this.errorMessage = 'Failed to book appointment. Please try again.';
+        this.isSubmitting = false;
+      }
+    });
   }
 
-  bookAnother(): void {
-    this.router.navigate(['/dashboard/booking']);
+  cancelBooking(): void {
+    if (confirm('Are you sure you want to cancel this booking?')) {
+      this.router.navigate(['/dashboard']);
+    }
   }
 
-  goToDashboard(): void {
-    this.router.navigate(['/dashboard']);
-  }
+  formatDateLong(dateString: string | null): string {
+    if (!dateString) return '';
 
-  formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
@@ -67,21 +119,28 @@ export class BookingConfirmationComponent implements OnInit {
     });
   }
 
-  formatTime(timeString: string): string {
-    const [hours, minutes] = timeString.split(':');
-    const date = new Date();
-    date.setHours(parseInt(hours, 10));
-    date.setMinutes(parseInt(minutes, 10));
+  formatTime(timeString: string | null): string {
+    if (!timeString) return '';
 
-    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    try {
+      const [hours, minutes] = timeString.split(':').map(Number);
+      const date = new Date();
+      date.setHours(hours, minutes);
+      return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    } catch (error) {
+      return timeString;
+    }
   }
 
-  formatEndTime(timeString: string, durationMinutes: number): string {
-    const [hours, minutes] = timeString.split(':');
-    const date = new Date();
-    date.setHours(parseInt(hours, 10));
-    date.setMinutes(parseInt(minutes, 10) + durationMinutes);
+  goBack(): void {
+    if (this.serviceId) {
+      this.router.navigate(['/dashboard/booking/time', this.serviceId]);
+    } else {
+      this.router.navigate(['/dashboard/booking/service']);
+    }
+  }
 
-    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  viewAppointments(): void {
+    this.router.navigate(['/dashboard/my-appointments']);
   }
 }

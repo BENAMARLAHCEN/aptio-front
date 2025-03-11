@@ -1,11 +1,11 @@
 // src/app/modules/user-appointments/user-appointments-routing.module.ts
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { UserAppointmentsComponent } from './components/user-appointments/user-appointments.component';
+import { UserAppointmentsListComponent } from './components/user-appointments-list/user-appointments-list.component';
 import { UserAppointmentDetailsComponent } from './components/user-appointment-details/user-appointment-details.component';
 
 const routes: Routes = [
-  { path: '', component: UserAppointmentsComponent },
+  { path: '', component: UserAppointmentsListComponent },
   { path: ':id', component: UserAppointmentDetailsComponent }
 ];
 

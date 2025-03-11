@@ -128,7 +128,7 @@ export class AppointmentsService {
    * @returns Observable with list of user's appointments
    */
   getUserAppointments(status?: string): Observable<Appointment[]> {
-    let url = `${this.apiUrl}/appointments/user/appointments`;
+    let url = `${this.apiUrl}/user/appointments`;
     if (status) {
       url += `?status=${status}`;
     }
@@ -142,7 +142,7 @@ export class AppointmentsService {
    * @returns Observable with appointment details
    */
   getUserAppointmentById(id: string): Observable<Appointment> {
-    return this.http.get<Appointment>(`${this.apiUrl}/appointments/user/appointments/${id}`)
+    return this.http.get<Appointment>(`${this.apiUrl}/user/appointments/${id}`)
         .pipe(catchError(this.handleError<Appointment>('getUserAppointmentById')));
   }
 
@@ -152,12 +152,12 @@ export class AppointmentsService {
    * @returns Observable with updated appointment
    */
   cancelUserAppointment(id: string): Observable<Appointment> {
-    return this.http.patch<Appointment>(`${this.apiUrl}/appointments/user/appointments/${id}/status`, { status: 'CANCELLED' })
+    return this.http.patch<Appointment>(`${this.apiUrl}/user/appointments/${id}/cancel`, {})
         .pipe(catchError(this.handleError<Appointment>('cancelUserAppointment')));
   }
 
   createUserAppointment(appointmentData: Partial<AppointmentFormData>): Observable<Appointment> {
-    return this.http.post<Appointment>(`${this.apiUrl}/appointments/user/appointments`, appointmentData)
+    return this.http.post<Appointment>(`${this.apiUrl}/user/appointments`, appointmentData)
         .pipe(catchError(this.handleError<Appointment>('createUserAppointment')));
   }
 

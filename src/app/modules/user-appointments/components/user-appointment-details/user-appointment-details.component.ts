@@ -98,9 +98,7 @@ export class UserAppointmentDetailsComponent implements OnInit {
   }
 
   formatTime(timeString: string): string {
-    if (typeof timeString !== 'string' || !timeString.includes(':')) {
-      return '';
-    }
+
 
     const [hours, minutes] = timeString.split(':');
     const date = new Date();
@@ -111,10 +109,6 @@ export class UserAppointmentDetailsComponent implements OnInit {
   }
 
   formatEndTime(timeString: string, durationMinutes: number): string {
-    if (typeof timeString !== 'string' || !timeString.includes(':')) {
-      return '';
-    }
-
     const [hours, minutes] = timeString.split(':');
     const date = new Date();
     date.setHours(parseInt(hours, 10));

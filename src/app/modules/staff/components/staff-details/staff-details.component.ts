@@ -119,7 +119,7 @@ export class StaffDetailsComponent implements OnInit {
     return `${this.staff.firstName} ${this.staff.lastName}`;
   }
 
-  setActiveTab(tab: 'details' | 'schedule' | 'appointments'): void {
+  setActiveTab(tab: 'details' | 'schedule'): void {
     this.activeTab = tab;
   }
 

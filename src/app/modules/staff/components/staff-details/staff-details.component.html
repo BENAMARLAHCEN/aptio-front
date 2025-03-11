@@ -133,16 +133,6 @@
           (click)="setActiveTab('schedule')">
           Schedule
         </button>
-        <button
-          [class.text-primary]="activeTab === 'appointments'"
-          [class.border-primary]="activeTab === 'appointments'"
-          [class.font-medium]="activeTab === 'appointments'"
-          [class.text-neutral]="activeTab !== 'appointments'"
-          [class.border-transparent]="activeTab !== 'appointments'"
-          class="px-1 py-3 border-b-2 text-sm"
-          (click)="setActiveTab('appointments')">
-          Appointments
-        </button>
       </nav>
     </div>
 
@@ -247,24 +237,6 @@
       </div>
     </div>
 
-    <!-- Appointments Tab -->
-    <div *ngIf="activeTab === 'appointments'" class="bg-white rounded-card shadow-card p-6">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-medium text-neutral-dark">Appointments</h3>
-        <button
-          (click)="editStaff()"
-          class="flex items-center px-4 py-2 bg-white border border-neutral-light rounded-lg text-neutral-dark hover:bg-neutral-light">
-          <span class="material-icons-outlined mr-1 text-sm">add</span>
-          New Appointment
-        </button>
-      </div>
-
-      <!-- Placeholder for appointment list - in a real implementation, this would fetch from appointment service -->
-      <div class="bg-neutral-light p-4 rounded-lg text-center">
-        <p class="text-neutral-dark">No appointments found for this staff member</p>
-        <p class="text-sm text-neutral mt-1">Appointments assigned to this staff member will appear here</p>
-      </div>
-    </div>
 
     <!-- Delete Button (Danger Zone) -->
     <div class="mt-8 p-6 bg-red-50 border border-red-200 rounded-lg">

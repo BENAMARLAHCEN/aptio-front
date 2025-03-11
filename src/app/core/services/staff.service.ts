@@ -192,16 +192,10 @@ export class StaffService {
   }
 
   // Format time for display
-  formatTime(time: string): string {
-    if (!time) return '';
-
-    const [hours, minutes] = time.split(':');
-    const hour = parseInt(hours, 10);
-    const minute = parseInt(minutes, 10);
-
-    const period = hour >= 12 ? 'PM' : 'AM';
-    const formattedHour = hour % 12 === 0 ? 12 : hour % 12;
-
-    return `${formattedHour}:${minute.toString().padStart(2, '0')} ${period}`;
+  formatTime(time: any): string {
+    const date = new Date();
+    date.setHours(time[0]);
+    date.setMinutes(time[1]);
+    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
   }
 }

@@ -1,4 +1,4 @@
-// src/app/core/services/appointments.service.ts
+
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
@@ -60,8 +60,6 @@ export interface AppointmentFormData {
 })
 export class AppointmentsService {
   private apiUrl = environment.apiUrl;
-
-  // Status options for appointments
   readonly statusOptions: AppointmentStatus[] = [
     { value: 'pending', label: 'Pending', color: '#FFC107' },
     { value: 'confirmed', label: 'Confirmed', color: '#4CAF50' },
@@ -70,62 +68,38 @@ export class AppointmentsService {
   ];
 
   constructor(private http: HttpClient) {}
-
-  // Get all appointments
   getAppointments(): Observable<Appointment[]> {
     return this.http.get<Appointment[]>(`${this.apiUrl}/appointments`)
         .pipe(catchError(this.handleError<Appointment[]>('getAppointments', [])));
   }
-
-  // Get appointment by ID
   getAppointmentById(id: string): Observable<Appointment> {
     return this.http.get<Appointment>(`${this.apiUrl}/appointments/${id}`)
         .pipe(catchError(this.handleError<Appointment>('getAppointmentById')));
   }
-
-  // Create new appointment
   createAppointment(appointmentData: AppointmentFormData): Observable<Appointment> {
     return this.http.post<Appointment>(`${this.apiUrl}/appointments`, appointmentData)
         .pipe(catchError(this.handleError<Appointment>('createAppointment')));
   }
-
-  // Update existing appointment
   updateAppointment(id: string, appointmentData: Partial<AppointmentFormData>): Observable<Appointment> {
     return this.http.put<Appointment>(`${this.apiUrl}/appointments/${id}`, appointmentData)
         .pipe(catchError(this.handleError<Appointment>('updateAppointment')));
   }
-
-  // Delete appointment
   deleteAppointment(id: string): Observable<any> {
     return this.http.delete(`${this.apiUrl}/appointments/${id}`)
         .pipe(catchError(this.handleError<any>('deleteAppointment')));
   }
-
-  // Change appointment status
   updateAppointmentStatus(id: string, status: AppointmentStatus['value']): Observable<Appointment> {
     return this.http.patch<Appointment>(`${this.apiUrl}/appointments/${id}/status`, { status })
         .pipe(catchError(this.handleError<Appointment>('updateAppointmentStatus')));
   }
-
-  // Get all services
   getServices(): Observable<Service[]> {
     return this.http.get<Service[]>(`${this.apiUrl}/services`)
         .pipe(catchError(this.handleError<Service[]>('getServices', [])));
   }
-
-  // Get all customers
   getCustomers(): Observable<Customer[]> {
     return this.http.get<Customer[]>(`${this.apiUrl}/customers`)
         .pipe(catchError(this.handleError<Customer[]>('getCustomers', [])));
   }
-
-  // Get appointment status by value
-  getStatusDetails(statusValue: AppointmentStatus['value']): AppointmentStatus {
-    const status = this.statusOptions.find(s => s.value === statusValue);
-    return status || this.statusOptions[0];
-  }
-
-  // Get available time slots for a specific date
   getAvailableTimeSlots(date: string, serviceId: string, staffId?: string): Observable<string[]> {
     let url = `${this.apiUrl}/appointments/available-slots?date=${date}&serviceId=${serviceId}`;
     if (staffId) {
@@ -134,15 +108,10 @@ export class AppointmentsService {
     return this.http.get<string[]>(url)
         .pipe(catchError(this.handleError<string[]>('getAvailableTimeSlots', [])));
   }
-
-
-  // Get appointments by date range
   getAppointmentsByDateRange(startDate: string, endDate: string): Observable<Appointment[]> {
     return this.http.get<Appointment[]>(`${this.apiUrl}/appointments?startDate=${startDate}&endDate=${endDate}`)
         .pipe(catchError(this.handleError<Appointment[]>('getAppointmentsByDateRange', [])));
   }
-
-  // Get appointments for a specific date
   getAppointmentsByDate(date: string): Observable<Appointment[]> {
     return this.http.get<Appointment[]>(`${this.apiUrl}/appointments?date=${date}`)
         .pipe(catchError(this.handleError<Appointment[]>('getAppointmentsByDate', [])));
@@ -152,8 +121,6 @@ export class AppointmentsService {
     return this.http.get<Appointment[]>(`${this.apiUrl}/appointments?customerId=${customerId}`)
         .pipe(catchError(this.handleError<Appointment[]>('getAppointmentsByCustomerId', [])));
   }
-
-  // Add these methods to the AppointmentsService class in appointments.service.ts
 
   /**
    * Get appointments for the current authenticated user
@@ -189,27 +156,14 @@ export class AppointmentsService {
         .pipe(catchError(this.handleError<Appointment>('cancelUserAppointment')));
   }
 
-  /**
-   * Create an appointment for the current user
-   * @param appointmentData Appointment data
-   * @returns Observable with created appointment
-   */
   createUserAppointment(appointmentData: Partial<AppointmentFormData>): Observable<Appointment> {
     return this.http.post<Appointment>(`${this.apiUrl}/appointments/user/appointments`, appointmentData)
         .pipe(catchError(this.handleError<Appointment>('createUserAppointment')));
   }
 
-  /**
-   * Handle Http operation that failed.
-   * Let the app continue.
-   * @param operation - name of the operation that failed
-   * @param result - optional value to return as the observable result
-   */
   private handleError<T>(operation = 'operation', result?: T) {
     return (error: any): Observable<T> => {
       console.error(`${operation} failed: ${error.message}`);
-
-      // Let the app keep running by returning an empty result
       return of(result as T);
     };
   }

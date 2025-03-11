@@ -148,18 +148,9 @@ export class ImprovedScheduleService {
   }
 
   // Parse time string (HH:MM) to minutes
-  parseTimeToMinutes(time: string): number {
-    if (!time || typeof time !== 'string') {
-      console.warn('Invalid time value provided to parseTimeToMinutes:', time);
-      return 0;
-    }
-
+  parseTimeToMinutes(time: any): number {
     try {
-      const [hours, minutes] = time.split(':').map(Number);
-      if (isNaN(hours) || isNaN(minutes)) {
-        return 0;
-      }
-      return hours * 60 + minutes;
+      return time[0] * 60 + time[1];
     } catch (err) {
       console.error('Error parsing time to minutes:', time, err);
       return 0;

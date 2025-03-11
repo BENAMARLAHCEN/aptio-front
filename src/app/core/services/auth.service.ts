@@ -102,8 +102,7 @@ export class AuthService {
     } else if (this.isStaff()) {
       return '/dashboard/appointments';
     } else {
-      // Regular user/customer
-      return '/dashboard';
+      return '/dashboard/profile';
     }
   }
 

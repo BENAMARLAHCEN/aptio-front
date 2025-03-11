@@ -39,9 +39,7 @@ export class AppointmentDetailsComponent implements OnInit {
 
     this.appointmentsService.getAppointmentById(id).subscribe({
       next: (appointment) => {
-        // We'll keep the original dates but create formatted versions for display
-        this.appointment = appointment;
-
+        console.log('Loaded appointment:', appointment);
         this.appointment = appointment;
         this.isLoading = false;
       },
@@ -107,6 +105,8 @@ export class AppointmentDetailsComponent implements OnInit {
   }
 
   formatDate(dateString: string): string {
+    if (!dateString) return 'N/A';
+
     const options: Intl.DateTimeFormatOptions = {
       weekday: 'long',
       year: 'numeric',
@@ -116,24 +116,36 @@ export class AppointmentDetailsComponent implements OnInit {
     return new Date(dateString).toLocaleDateString('en-US', options);
   }
 
-  formatTime(timeString: string): string {
-    if (!timeString || typeof timeString !== 'string') {
-      return '';
+  formatTime(time: any): string {
+    // If time is null or undefined
+    if (time == null) return 'N/A';
+
+    try {
+      if (typeof time === 'object') {
+        const date = new Date();
+        date.setHours(time[0]);
+        date.setMinutes(time[1]);
+        return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+      }
+      console.warn('Unrecognized time format:', time);
+      return String(time);
+    } catch (error) {
+      console.error('Error formatting time:', error, time);
+      return 'Invalid time';
     }
-
-    const [hours, minutes] = timeString.split(':');
-    const date = new Date();
-    date.setHours(parseInt(hours, 10));
-    date.setMinutes(parseInt(minutes, 10));
-
-    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
   }
 
   // Helper method to safely format dates for display
-  getFormattedDate(dateString: string): string {
+  getFormattedDate(dateString: any): string {
     if (!dateString) return 'Unknown';
-    try {
-      const date = new Date(dateString);
+      const date = new Date();
+      date.setFullYear(dateString[0]);
+      date.setMonth(dateString[1]);
+      date.setDate(dateString[2]);
+      date.setHours(dateString[3]);
+      date.setMinutes(dateString[4]);
+      date.setSeconds(dateString[5]);
+      date.setMilliseconds(dateString[6]);
       return date.toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric',
@@ -141,15 +153,13 @@ export class AppointmentDetailsComponent implements OnInit {
         hour: 'numeric',
         minute: '2-digit'
       });
-    } catch (error) {
-      console.error('Error formatting date:', error);
-      return 'Invalid date';
-    }
+
   }
 
   // Helper to check if two dates should be considered different
-  areDifferentDates(date1: string, date2: string): boolean {
+  areDifferentDates(date1: any, date2: any): boolean {
     if (!date1 || !date2) return false;
+
     try {
       const d1 = new Date(date1).getTime();
       const d2 = new Date(date2).getTime();
@@ -159,33 +169,29 @@ export class AppointmentDetailsComponent implements OnInit {
     }
   }
 
-  formatDateTime(dateString: string, timeString: string): string {
-    const date = new Date(dateString);
-    const [hours, minutes] = timeString.split(':');
-    date.setHours(parseInt(hours, 10));
-    date.setMinutes(parseInt(minutes, 10));
+  formatEndTime(time: any, durationMinutes: number): string {
+    if (time == null) return 'N/A';
 
-    return date.toLocaleString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit'
-    });
-  }
+    try {
+      let startDate = new Date();
 
-  formatEndTime(timeString: string, durationMinutes: number): string {
-    if (!timeString || typeof timeString !== 'string') {
-      return '';
+      if (typeof time === 'object') {
+        startDate.setHours(time[0]);
+        startDate.setMinutes(time[1]);
+      } else {
+        console.log('Unrecognized time format for end time:', time);
+        return String(time);
+      }
+
+      // Calculate end time
+      const endDate = new Date(startDate);
+      endDate.setMinutes(endDate.getMinutes() + durationMinutes);
+
+      return endDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    } catch (error) {
+      console.error('Error formatting end time:', error, time);
+      return 'Invalid time';
     }
-
-    const [hours, minutes] = timeString.split(':');
-    const date = new Date();
-    date.setHours(parseInt(hours, 10));
-    date.setMinutes(parseInt(minutes, 10) + durationMinutes);
-
-    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
   }
 
   goBack(): void {

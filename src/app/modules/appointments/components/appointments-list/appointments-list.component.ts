@@ -99,19 +99,7 @@ export class AppointmentsListComponent implements OnInit {
       return true;
     });
 
-    // Sort by date and time
-    this.filteredAppointments.sort((a, b) => {
-      // Convert dates to strings if they are not already
-      const dateA = a.date.toString();
-      const dateB = b.date.toString();
 
-      // Sort by date first
-      if (dateA !== dateB) {
-        return dateA.localeCompare(dateB);
-      }
-      // Then by time
-      return a.time.localeCompare(b.time);
-    });
   }
 
   onFilterChange(): void {

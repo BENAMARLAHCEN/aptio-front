@@ -1,10 +1,18 @@
 // src/app/core/services/profile.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { Observable, throwError } from 'rxjs';
+import { catchError, tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import { Address } from './customers.service';
+import { NotificationService } from './notification.service';
+
+export interface Address {
+  street?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  country?: string;
+}
 
 export interface UserProfile {
   id: string;
@@ -16,6 +24,7 @@ export interface UserProfile {
   birthDate?: string;
   profilePhoto?: string;
   roles: string[];
+  active: boolean;
 }
 
 export interface PasswordUpdate {
@@ -30,39 +39,55 @@ export interface PasswordUpdate {
 export class ProfileService {
   private apiUrl = environment.apiUrl;
 
-  constructor(private http: HttpClient) {}
-
-  // Get current user profile
-  getCurrentProfile(): Observable<UserProfile> {
-    return this.http.get<UserProfile>(`${this.apiUrl}/users/me`)
-      .pipe(catchError(this.handleError<UserProfile>('getCurrentProfile')));
-  }
-
-  // Update user profile
-  updateProfile(profileData: Partial<UserProfile>): Observable<UserProfile> {
-    return this.http.put<UserProfile>(`${this.apiUrl}/users/me`, profileData)
-      .pipe(catchError(this.handleError<UserProfile>('updateProfile')));
-  }
-
-  // Change password
-  changePassword(passwordData: PasswordUpdate): Observable<any> {
-    return this.http.post(`${this.apiUrl}/users/change-password`, passwordData)
-      .pipe(catchError(this.handleError<any>('changePassword')));
-  }
-
+  constructor(
+    private http: HttpClient,
+    private notificationService: NotificationService
+  ) {}
 
   /**
-   * Handle Http operation that failed.
-   * Let the app continue.
-   * @param operation - name of the operation that failed
-   * @param result - optional value to return as the observable result
+   * Get current user's profile
    */
-  private handleError<T>(operation = 'operation', result?: T) {
-    return (error: any): Observable<T> => {
-      console.error(`${operation} failed: ${error.message}`);
-
-      // Let the app keep running by returning an empty result
-      return of(result as T);
-    };
+  getCurrentProfile(): Observable<UserProfile> {
+    return this.http.get<UserProfile>(`${this.apiUrl}/users/me`)
+      .pipe(
+        catchError(error => {
+          this.notificationService.error('Failed to load profile. Please try again.');
+          return throwError(() => error);
+        })
+      );
   }
+
+  /**
+   * Update current user's profile
+   */
+  updateProfile(profileData: Partial<UserProfile>): Observable<UserProfile> {
+    return this.http.put<UserProfile>(`${this.apiUrl}/users/me`, profileData)
+      .pipe(
+        tap(result => {
+          this.notificationService.success('Profile updated successfully!');
+        }),
+        catchError(error => {
+          this.notificationService.error(`Failed to update profile. ${error.error?.message || 'Please try again.'}`);
+          return throwError(() => error);
+        })
+      );
+  }
+
+  /**
+   * Change user's password
+   */
+  changePassword(passwordData: PasswordUpdate): Observable<any> {
+    return this.http.post(`${this.apiUrl}/users/change-password`, passwordData)
+      .pipe(
+        tap(result => {
+          this.notificationService.success('Password changed successfully!');
+        }),
+        catchError(error => {
+          this.notificationService.error(`Failed to change password. ${error.error?.message || 'Please try again.'}`);
+          return throwError(() => error);
+        })
+      );
+  }
+
+
 }

@@ -1,9 +1,10 @@
 // src/app/core/services/settings.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { Observable, throwError } from 'rxjs';
+import { catchError, tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
+import { NotificationService } from './notification.service';
 
 export interface BusinessSettings {
   id?: number;
@@ -26,70 +27,66 @@ export interface BusinessSettings {
 })
 export class SettingsService {
   private apiUrl = environment.apiUrl;
+  private readonly daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private notificationService: NotificationService
+  ) {}
 
-  // Get business settings
+  /**
+   * Get business settings
+   */
   getBusinessSettings(): Observable<BusinessSettings> {
     return this.http.get<BusinessSettings>(`${this.apiUrl}/settings/business`)
-      .pipe(catchError(this.handleError<BusinessSettings>('getBusinessSettings', this.getDefaultSettings())));
+      .pipe(
+        catchError(error => {
+          this.notificationService.error('Failed to load business settings. Please try again.');
+          return throwError(() => error);
+        })
+      );
   }
 
-  // Update business settings
+  /**
+   * Update business settings
+   */
   updateBusinessSettings(settings: BusinessSettings): Observable<BusinessSettings> {
     return this.http.put<BusinessSettings>(`${this.apiUrl}/settings/business`, settings)
-      .pipe(catchError(this.handleError<BusinessSettings>('updateBusinessSettings')));
+      .pipe(
+        tap(result => {
+          this.notificationService.success('Business settings updated successfully!');
+        }),
+        catchError(error => {
+          this.notificationService.error(`Failed to update business settings. ${error.error?.message || 'Please try again.'}`);
+          return throwError(() => error);
+        })
+      );
   }
 
-  // Convert daysOpen array to string format
-  daysOpenArrayToString(daysArray: boolean[]): string {
-    return daysArray.map(day => day ? '1' : '0').join('');
+  /**
+   * Get list of days of the week
+   */
+  getDaysOfWeek(): string[] {
+    return this.daysOfWeek;
   }
 
-  // Convert daysOpen string to array format
-  daysOpenStringToArray(daysString: string): boolean[] {
+  /**
+   * Convert daysOpen string to array of booleans
+   * @param daysOpen 7-character string of '0' and '1'
+   */
+  daysOpenStringToArray(daysOpen: string): boolean[] {
     const result: boolean[] = [];
     for (let i = 0; i < 7; i++) {
-      result.push(i < daysString.length ? daysString.charAt(i) === '1' : false);
+      result.push(i < daysOpen.length ? daysOpen.charAt(i) === '1' : false);
     }
     return result;
   }
 
-  // Get days of week as string array
-  getDaysOfWeek(): string[] {
-    return ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  }
-
-  // Get default settings if API fails
-  private getDefaultSettings(): BusinessSettings {
-    return {
-      businessName: 'Aptio Appointment System',
-      businessHoursStart: '09:00',
-      businessHoursEnd: '18:00',
-      daysOpen: '0111110', // Mon-Fri
-      defaultAppointmentDuration: 30,
-      timeSlotInterval: 15,
-      allowOverlappingAppointments: false,
-      bufferTimeBetweenAppointments: 5,
-      address: '123 Business St, City, State 12345',
-      phone: '555-123-4567',
-      email: 'contact@aptio.com',
-      website: 'https://aptio.com'
-    };
-  }
-
   /**
-   * Handle Http operation that failed.
-   * Let the app continue.
-   * @param operation - name of the operation that failed
-   * @param result - optional value to return as the observable result
+   * Convert array of booleans to daysOpen string
+   * @param daysOpen Array of 7 boolean values
    */
-  private handleError<T>(operation = 'operation', result?: T) {
-    return (error: any): Observable<T> => {
-      console.error(`${operation} failed: ${error.message}`);
-
-      // Let the app keep running by returning an empty result
-      return of(result as T);
-    };
+  daysOpenArrayToString(daysOpen: boolean[]): string {
+    return daysOpen.map(isOpen => isOpen ? '1' : '0').join('');
   }
 }

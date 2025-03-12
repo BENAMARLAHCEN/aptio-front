@@ -6,6 +6,7 @@ import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { AuthInterceptor } from './interceptors/auth.interceptor';
 import { AuthGuard } from './guards/auth.guard';
 import {NoAuthGuard} from "./guards/no-auth.guard";
+import {ErrorInterceptor} from "./interceptors/error.interceptor";
 
 @NgModule({
   declarations: [],
@@ -19,6 +20,11 @@ import {NoAuthGuard} from "./guards/no-auth.guard";
     {
       provide: HTTP_INTERCEPTORS,
       useClass: AuthInterceptor,
+      multi: true
+    },
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: ErrorInterceptor,
       multi: true
     }
   ]

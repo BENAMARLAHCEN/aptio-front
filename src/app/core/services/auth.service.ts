@@ -1,10 +1,11 @@
 // src/app/core/services/auth.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject, of } from 'rxjs';
-import { tap, catchError, map } from 'rxjs/operators';
+import { Observable, BehaviorSubject, throwError } from 'rxjs';
+import { tap, catchError } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
+import { NotificationService } from './notification.service';
 
 export interface AddressDTO {
   street?: string;
@@ -48,7 +49,8 @@ export class AuthService {
 
   constructor(
     private http: HttpClient,
-    private router: Router
+    private router: Router,
+    private notificationService: NotificationService
   ) {
     const storedUser = localStorage.getItem('currentUser');
     this.currentUserSubject = new BehaviorSubject<AuthResponse | null>(
@@ -69,8 +71,12 @@ export class AuthService {
           localStorage.setItem('currentUser', JSON.stringify(response));
           localStorage.setItem('token', response.token);
           this.currentUserSubject.next(response);
+          this.notificationService.success(`Welcome back, ${response.firstName}!`);
         }),
-        catchError(this.handleError<AuthResponse>('login'))
+        catchError(error => {
+          this.notificationService.error(`Login failed: ${error.error?.message || 'Invalid username or password'}`);
+          return throwError(() => error);
+        })
       );
   }
 
@@ -82,8 +88,12 @@ export class AuthService {
           localStorage.setItem('currentUser', JSON.stringify(response));
           localStorage.setItem('token', response.token);
           this.currentUserSubject.next(response);
+          this.notificationService.success(`Welcome to Aptio, ${response.firstName}! Your account has been created.`);
         }),
-        catchError(this.handleError<AuthResponse>('register'))
+        catchError(error => {
+          this.notificationService.error(`Registration failed: ${error.error?.message || 'Please check your information and try again'}`);
+          return throwError(() => error);
+        })
       );
   }
 
@@ -111,6 +121,7 @@ export class AuthService {
     localStorage.removeItem('currentUser');
     localStorage.removeItem('token');
     this.currentUserSubject.next(null);
+    this.notificationService.info('You have been logged out successfully');
     this.router.navigate(['/auth/login']);
   }
 
@@ -137,20 +148,5 @@ export class AuthService {
 
   isStaff(): boolean {
     return this.hasRole('ROLE_STAFF') || this.isAdmin();
-  }
-
-  /**
-   * Handle Http operation that failed.
-   * Let the app continue.
-   * @param operation - name of the operation that failed
-   * @param result - optional value to return as the observable result
-   */
-  private handleError<T>(operation = 'operation', result?: T) {
-    return (error: any): Observable<T> => {
-      console.error(`${operation} failed: ${error.message}`);
-
-      // Let the app keep running by returning an empty result
-      return of(result as T);
-    };
   }
 }

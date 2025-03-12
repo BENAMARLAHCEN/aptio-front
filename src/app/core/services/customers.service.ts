@@ -1,9 +1,10 @@
 // src/app/core/services/customers.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { Observable, throwError } from 'rxjs';
+import { catchError, tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
+import { NotificationService } from './notification.service';
 
 export interface Address {
   street: string;
@@ -27,7 +28,7 @@ export interface Customer {
   email: string;
   phone: string;
   address?: Address;
-  birthDate?: string;
+  birthDate?: any;
   gender?: string;
   notes?: CustomerNote[];
   profileImage?: string;
@@ -55,74 +56,123 @@ export interface CustomerFormData {
 export class CustomersService {
   private apiUrl = environment.apiUrl;
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private notificationService: NotificationService
+  ) {}
 
   // Get all customers
   getCustomers(): Observable<Customer[]> {
     return this.http.get<Customer[]>(`${this.apiUrl}/customers`)
-      .pipe(catchError(this.handleError<Customer[]>('getCustomers', [])));
+      .pipe(
+        catchError(error => {
+          this.notificationService.error('Failed to load customers. Please try again.');
+          return throwError(() => error);
+        })
+      );
   }
 
   // Get customer by ID
   getCustomerById(id: string): Observable<Customer> {
     return this.http.get<Customer>(`${this.apiUrl}/customers/${id}`)
-      .pipe(catchError(this.handleError<Customer>('getCustomerById')));
+      .pipe(
+        catchError(error => {
+          this.notificationService.error(`Failed to load customer details. ${error.error?.message || 'Please try again.'}`);
+          return throwError(() => error);
+        })
+      );
   }
 
   // Create new customer
   createCustomer(customerData: CustomerFormData): Observable<Customer> {
     return this.http.post<Customer>(`${this.apiUrl}/customers`, customerData)
-      .pipe(catchError(this.handleError<Customer>('createCustomer')));
+      .pipe(
+        tap(result => {
+          this.notificationService.success('Customer created successfully!');
+        }),
+        catchError(error => {
+          this.notificationService.error(`Failed to create customer. ${error.error?.message || 'Please try again.'}`);
+          return throwError(() => error);
+        })
+      );
   }
 
   // Update existing customer
   updateCustomer(id: string, customerData: Partial<CustomerFormData>): Observable<Customer> {
     return this.http.put<Customer>(`${this.apiUrl}/customers/${id}`, customerData)
-      .pipe(catchError(this.handleError<Customer>('updateCustomer')));
+      .pipe(
+        tap(result => {
+          this.notificationService.success('Customer updated successfully!');
+        }),
+        catchError(error => {
+          this.notificationService.error(`Failed to update customer. ${error.error?.message || 'Please try again.'}`);
+          return throwError(() => error);
+        })
+      );
   }
 
   // Delete customer
   deleteCustomer(id: string): Observable<any> {
     return this.http.delete(`${this.apiUrl}/customers/${id}`)
-      .pipe(catchError(this.handleError<any>('deleteCustomer')));
+      .pipe(
+        tap(result => {
+          this.notificationService.success('Customer deleted successfully!');
+        }),
+        catchError(error => {
+          this.notificationService.error(`Failed to delete customer. ${error.error?.message || 'Please try again.'}`);
+          return throwError(() => error);
+        })
+      );
   }
 
   // Toggle customer active status
   toggleCustomerStatus(id: string, active: boolean): Observable<Customer> {
     return this.http.patch<Customer>(`${this.apiUrl}/customers/${id}/status`, { active })
-      .pipe(catchError(this.handleError<Customer>('toggleCustomerStatus')));
+      .pipe(
+        tap(result => {
+          const status = active ? 'activated' : 'deactivated';
+          this.notificationService.success(`Customer ${status} successfully!`);
+        }),
+        catchError(error => {
+          this.notificationService.error(`Failed to update customer status. ${error.error?.message || 'Please try again.'}`);
+          return throwError(() => error);
+        })
+      );
   }
 
   // Search customers
   searchCustomers(query: string): Observable<Customer[]> {
     return this.http.get<Customer[]>(`${this.apiUrl}/customers/search?query=${query}`)
-      .pipe(catchError(this.handleError<Customer[]>('searchCustomers', [])));
+      .pipe(
+        catchError(error => {
+          this.notificationService.error('Failed to search customers. Please try again.');
+          return throwError(() => error);
+        })
+      );
   }
 
   // Add a note to customer
   addCustomerNote(customerId: string, content: string): Observable<CustomerNote> {
     return this.http.post<CustomerNote>(`${this.apiUrl}/customers/${customerId}/notes`, { content })
-      .pipe(catchError(this.handleError<CustomerNote>('addCustomerNote')));
+      .pipe(
+        tap(result => {
+          this.notificationService.success('Note added successfully!');
+        }),
+        catchError(error => {
+          this.notificationService.error(`Failed to add note. ${error.error?.message || 'Please try again.'}`);
+          return throwError(() => error);
+        })
+      );
   }
 
   // Get customer notes
   getCustomerNotes(customerId: string): Observable<CustomerNote[]> {
     return this.http.get<CustomerNote[]>(`${this.apiUrl}/customers/${customerId}/notes`)
-      .pipe(catchError(this.handleError<CustomerNote[]>('getCustomerNotes', [])));
-  }
-
-  /**
-   * Handle Http operation that failed.
-   * Let the app continue.
-   * @param operation - name of the operation that failed
-   * @param result - optional value to return as the observable result
-   */
-  private handleError<T>(operation = 'operation', result?: T) {
-    return (error: any): Observable<T> => {
-      console.error(`${operation} failed: ${error.message}`);
-
-      // Let the app keep running by returning an empty result
-      return of(result as T);
-    };
+      .pipe(
+        catchError(error => {
+          this.notificationService.error('Failed to load customer notes. Please try again.');
+          return throwError(() => error);
+        })
+      );
   }
 }

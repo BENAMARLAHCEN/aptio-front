@@ -73,12 +73,19 @@ export class CustomerFormComponent implements OnInit {
   }
 
   populateForm(customer: Customer): void {
+    let formattedDateParts = '';
+    if (customer.birthDate) {
+      formattedDateParts = customer.birthDate.map((part: number, index: number) => {
+        return index > 0 ? part.toString().padStart(2, '0') : part;
+      }).join('-');
+    }
+    console.log(formattedDateParts);
     this.customerForm.patchValue({
       firstName: customer.firstName,
       lastName: customer.lastName,
       email: customer.email,
       phone: customer.phone,
-      birthDate: customer.birthDate,
+      birthDate: formattedDateParts,
       gender: customer.gender,
       'address.street': customer.address?.street || '',
       'address.city': customer.address?.city || '',

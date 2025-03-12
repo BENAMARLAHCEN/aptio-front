@@ -100,9 +100,10 @@ export class AppointmentFormComponent implements OnInit {
         this.appointment = appointment;
         this.populateForm(appointment);
         this.isLoading = false;
-
-        // Load available time slots for the selected date
-        this.loadTimeSlots(appointment.date, appointment.serviceId);
+        const formattedDateParts = appointment.date.map((part:number, index:number) => {
+          return index > 0 ? part.toString().padStart(2, '0') : part;
+        }).join('-');
+        this.loadTimeSlots(formattedDateParts, appointment.serviceId);
       },
       error: (error) => {
         this.errorMessage = 'Failed to load appointment details. Please try again.';
@@ -113,10 +114,16 @@ export class AppointmentFormComponent implements OnInit {
   }
 
   populateForm(appointment: Appointment): void {
+    // Format the date parts with leading zeros
+    const formattedDateParts = appointment.date.map((part:number, index:number) => {
+      // Index 0 is year (keep as is), index 1 is month, index 2 is day (pad these)
+      return index > 0 ? part.toString().padStart(2, '0') : part;
+    }).join('-');
+    // Now displays: Populating form with: 2025-03-21
     this.appointmentForm.patchValue({
       customerId: appointment.customerId,
       serviceId: appointment.serviceId,
-      date: appointment.date,
+      date: formattedDateParts,
       time: appointment.time,
       notes: appointment.notes || ''
     });
@@ -175,7 +182,6 @@ export class AppointmentFormComponent implements OnInit {
     if (date && serviceId) {
       this.loadTimeSlots(date, serviceId);
     } else if (date) {
-      // If no service selected yet, just clear time slots
       this.availableTimeSlots = [];
       this.appointmentForm.get('time')?.setValue('');
     }
@@ -250,12 +256,10 @@ export class AppointmentFormComponent implements OnInit {
     return this.services.find(service => service.id === id);
   }
 
-  formatTimeForDisplay(timeString: string): string {
-    const [hours, minutes] = timeString.split(':');
+  formatTimeForDisplay(time: any): string {
     const date = new Date();
-    date.setHours(parseInt(hours, 10));
-    date.setMinutes(parseInt(minutes, 10));
-
+    date.setHours(time[0]);
+    date.setMinutes(time[1]);
     return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
   }
 

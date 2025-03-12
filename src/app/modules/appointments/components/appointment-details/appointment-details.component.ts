@@ -2,6 +2,8 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AppointmentsService, Appointment, AppointmentStatus } from '../../../../core/services/appointments.service';
+import { ConfirmDialogService } from "../../../../core/services/confirm-dialog.service";
+import { NotificationService } from "../../../../core/services/notification.service";
 
 @Component({
   selector: 'app-appointment-details',
@@ -17,7 +19,9 @@ export class AppointmentDetailsComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private appointmentsService: AppointmentsService
+    private appointmentsService: AppointmentsService,
+    private confirmDialogService: ConfirmDialogService,
+    private notificationService: NotificationService
   ) {
     this.statusOptions = this.appointmentsService.statusOptions;
   }
@@ -33,20 +37,20 @@ export class AppointmentDetailsComponent implements OnInit {
     const id = this.route.snapshot.paramMap.get('id');
     if (!id) {
       this.errorMessage = 'Appointment ID is missing';
+      this.notificationService.error('Appointment ID is missing');
       this.isLoading = false;
       return;
     }
 
     this.appointmentsService.getAppointmentById(id).subscribe({
       next: (appointment) => {
-        console.log('Loaded appointment:', appointment);
         this.appointment = appointment;
         this.isLoading = false;
       },
       error: (error) => {
         this.errorMessage = 'Failed to load appointment details. Please try again.';
+        this.notificationService.error('Failed to load appointment details. Please try again.');
         this.isLoading = false;
-        console.error('Error loading appointment:', error);
       }
     });
   }
@@ -57,8 +61,19 @@ export class AppointmentDetailsComponent implements OnInit {
     }
   }
 
-  updateStatus(status: AppointmentStatus['value']): void {
+  async updateStatus(status: AppointmentStatus['value']): Promise<void> {
     if (!this.appointment) return;
+
+    const statusLabel = this.statusOptions.find(s => s.value === status)?.label || status;
+
+    // Get confirmation before updating status
+    const confirmResult = await this.confirmDialogService.confirmStatusChange(
+      status,
+      statusLabel,
+      'appointment'
+    );
+
+    if (!confirmResult) return;
 
     this.isUpdatingStatus = true;
 
@@ -68,23 +83,27 @@ export class AppointmentDetailsComponent implements OnInit {
         this.isUpdatingStatus = false;
       },
       error: (error) => {
-        console.error('Error updating appointment status:', error);
         this.isUpdatingStatus = false;
-        // Show error notification
+        this.notificationService.error(`Failed to update appointment status: ${error.error?.message || 'Please try again'}`);
       }
     });
   }
 
-  deleteAppointment(): void {
-    if (!this.appointment || !confirm('Are you sure you want to delete this appointment?')) return;
+  async deleteAppointment(): Promise<void> {
+    if (!this.appointment) return;
+
+    const result = await this.confirmDialogService.confirmDelete('appointment');
+
+    if (!result) return;
 
     this.appointmentsService.deleteAppointment(this.appointment.id).subscribe({
       next: () => {
+        // Notification is already handled in the service
         this.router.navigate(['/dashboard/appointments']);
       },
       error: (error) => {
-        console.error('Error deleting appointment:', error);
-        // Show error notification
+        // Keep error notification as fallback
+        this.notificationService.error(`Failed to delete appointment: ${error.error?.message || 'Please try again'}`);
       }
     });
   }
@@ -127,10 +146,10 @@ export class AppointmentDetailsComponent implements OnInit {
         date.setMinutes(time[1]);
         return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
       }
-      console.warn('Unrecognized time format:', time);
+      this.notificationService.warning('Unrecognized time format encountered');
       return String(time);
     } catch (error) {
-      console.error('Error formatting time:', error, time);
+      this.notificationService.error('Error formatting time value');
       return 'Invalid time';
     }
   }
@@ -138,6 +157,7 @@ export class AppointmentDetailsComponent implements OnInit {
   // Helper method to safely format dates for display
   getFormattedDate(dateString: any): string {
     if (!dateString) return 'Unknown';
+    try {
       const date = new Date();
       date.setFullYear(dateString[0]);
       date.setMonth(dateString[1]);
@@ -153,7 +173,10 @@ export class AppointmentDetailsComponent implements OnInit {
         hour: 'numeric',
         minute: '2-digit'
       });
-
+    } catch (error) {
+      this.notificationService.warning('Error formatting date');
+      return 'Invalid date';
+    }
   }
 
   // Helper to check if two dates should be considered different
@@ -179,7 +202,7 @@ export class AppointmentDetailsComponent implements OnInit {
         startDate.setHours(time[0]);
         startDate.setMinutes(time[1]);
       } else {
-        console.log('Unrecognized time format for end time:', time);
+        this.notificationService.warning('Unrecognized time format for end time calculation');
         return String(time);
       }
 
@@ -189,7 +212,7 @@ export class AppointmentDetailsComponent implements OnInit {
 
       return endDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
     } catch (error) {
-      console.error('Error formatting end time:', error, time);
+      this.notificationService.error('Error calculating appointment end time');
       return 'Invalid time';
     }
   }

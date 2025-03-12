@@ -13,7 +13,7 @@ export interface Appointment {
   serviceName: string;
   staffId?: string;
   staffName?: string;
-  date: string;
+  date: any;
   time: string;
   duration: number;
   status: string;

@@ -1,9 +1,9 @@
-// src/app/core/services/dashboard.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
+import { NotificationService } from './notification.service';
 
 export interface DashboardStats {
   totalAppointments: number;
@@ -19,7 +19,10 @@ export interface DashboardStats {
 export class DashboardService {
   private apiUrl = environment.apiUrl;
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private notificationService: NotificationService
+  ) {}
 
   /**
    * Get dashboard statistics including appointment counts, customer counts, etc.
@@ -27,13 +30,10 @@ export class DashboardService {
    */
   getDashboardStats(): Observable<DashboardStats> {
     return this.http.get<DashboardStats>(`${this.apiUrl}/dashboard/stats`).pipe(
-      catchError(this.handleError<DashboardStats>('getDashboardStats', {
-        totalAppointments: 0,
-        newCustomers: 0,
-        utilizationRate: 0,
-        averageFeedback: 0,
-        recentAppointments: []
-      }))
+      catchError(error => {
+        this.notificationService.error('Failed to load dashboard statistics. Please try again.');
+        return throwError(() => error);
+      })
     );
   }
 
@@ -46,7 +46,10 @@ export class DashboardService {
     const today = new Date().toISOString().split('T')[0];
     return this.http.get<any[]>(`${this.apiUrl}/appointments?date=${today}`).pipe(
       map(appointments => appointments.slice(0, limit)),
-      catchError(this.handleError<any[]>('getRecentAppointments', []))
+      catchError(error => {
+        this.notificationService.error('Failed to load recent appointments. Please try again.');
+        return throwError(() => error);
+      })
     );
   }
 
@@ -63,22 +66,10 @@ export class DashboardService {
     const endDate = nextWeek.toISOString().split('T')[0];
 
     return this.http.get<any[]>(`${this.apiUrl}/appointments?startDate=${startDate}&endDate=${endDate}`).pipe(
-      catchError(this.handleError<any[]>('getUpcomingAppointments', []))
+      catchError(error => {
+        this.notificationService.error('Failed to load upcoming appointments. Please try again.');
+        return throwError(() => error);
+      })
     );
-  }
-
-  /**
-   * Handle Http operation that failed.
-   * Let the app continue.
-   * @param operation - name of the operation that failed
-   * @param result - optional value to return as the observable result
-   */
-  private handleError<T>(operation = 'operation', result?: T) {
-    return (error: any): Observable<T> => {
-      console.error(`${operation} failed: ${error.message}`);
-
-      // Let the app keep running by returning an empty result
-      return of(result as T);
-    };
   }
 }

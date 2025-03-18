@@ -86,12 +86,19 @@ export class ProfileEditComponent implements OnInit {
   }
 
   populateForm(profile: UserProfile): void {
+    let formattedDate = profile.birthDate;
+    if (profile.birthDate){
+      formattedDate = profile.birthDate.map((part: number, index: number) => {
+        return index > 0 ? part.toString().padStart(2, '0') : part;
+      }).join('-');
+    }
+    console.log(formattedDate)
     this.profileForm.patchValue({
       firstName: profile.firstName,
       lastName: profile.lastName,
       email: profile.email,
       phone: profile.phone || '',
-      birthDate: profile.birthDate || '',
+      birthDate: formattedDate || '',
       'address.street': profile.address?.street || '',
       'address.city': profile.address?.city || '',
       'address.state': profile.address?.state || '',

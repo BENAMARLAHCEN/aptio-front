@@ -1,9 +1,9 @@
-
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { Observable, throwError } from 'rxjs';
+import { catchError, tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
+import { NotificationService } from './notification.service';
 
 export interface Appointment {
   id: string;
@@ -67,59 +67,145 @@ export class AppointmentsService {
     { value: 'completed', label: 'Completed', color: '#2196F3' }
   ];
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private notificationService: NotificationService
+  ) {}
+
   getAppointments(): Observable<Appointment[]> {
     return this.http.get<Appointment[]>(`${this.apiUrl}/appointments`)
-        .pipe(catchError(this.handleError<Appointment[]>('getAppointments', [])));
+      .pipe(
+        catchError(error => {
+          this.notificationService.error('Failed to load appointments. Please try again.');
+          return throwError(() => error);
+        })
+      );
   }
+
   getAppointmentById(id: string): Observable<Appointment> {
     return this.http.get<Appointment>(`${this.apiUrl}/appointments/${id}`)
-        .pipe(catchError(this.handleError<Appointment>('getAppointmentById')));
+      .pipe(
+        catchError(error => {
+          this.notificationService.error(`Failed to load appointment details. ${error.error?.message || 'Please try again.'}`);
+          return throwError(() => error);
+        })
+      );
   }
+
   createAppointment(appointmentData: AppointmentFormData): Observable<Appointment> {
     return this.http.post<Appointment>(`${this.apiUrl}/appointments`, appointmentData)
-        .pipe(catchError(this.handleError<Appointment>('createAppointment')));
+      .pipe(
+        tap(() => {
+          this.notificationService.success('Appointment created successfully!');
+        }),
+        catchError(error => {
+          this.notificationService.error(`Failed to create appointment. ${error.error?.message || 'Please try again.'}`);
+          return throwError(() => error);
+        })
+      );
   }
+
   updateAppointment(id: string, appointmentData: Partial<AppointmentFormData>): Observable<Appointment> {
     return this.http.put<Appointment>(`${this.apiUrl}/appointments/${id}`, appointmentData)
-        .pipe(catchError(this.handleError<Appointment>('updateAppointment')));
+      .pipe(
+        tap(() => {
+          this.notificationService.success('Appointment updated successfully!');
+        }),
+        catchError(error => {
+          this.notificationService.error(`Failed to update appointment. ${error.error?.message || 'Please try again.'}`);
+          return throwError(() => error);
+        })
+      );
   }
+
   deleteAppointment(id: string): Observable<any> {
     return this.http.delete(`${this.apiUrl}/appointments/${id}`)
-        .pipe(catchError(this.handleError<any>('deleteAppointment')));
+      .pipe(
+        tap(() => {
+          this.notificationService.success('Appointment deleted successfully!');
+        }),
+        catchError(error => {
+          this.notificationService.error(`Failed to delete appointment. ${error.error?.message || 'Please try again.'}`);
+          return throwError(() => error);
+        })
+      );
   }
+
   updateAppointmentStatus(id: string, status: AppointmentStatus['value']): Observable<Appointment> {
     return this.http.patch<Appointment>(`${this.apiUrl}/appointments/${id}/status`, { status })
-        .pipe(catchError(this.handleError<Appointment>('updateAppointmentStatus')));
+      .pipe(
+        tap(() => {
+          this.notificationService.success(`Appointment status updated to ${status}!`);
+        }),
+        catchError(error => {
+          this.notificationService.error(`Failed to update appointment status. ${error.error?.message || 'Please try again.'}`);
+          return throwError(() => error);
+        })
+      );
   }
+
   getServices(): Observable<Service[]> {
     return this.http.get<Service[]>(`${this.apiUrl}/services`)
-        .pipe(catchError(this.handleError<Service[]>('getServices', [])));
+      .pipe(
+        catchError(error => {
+          this.notificationService.error('Failed to load services. Please try again.');
+          return throwError(() => error);
+        })
+      );
   }
+
   getCustomers(): Observable<Customer[]> {
     return this.http.get<Customer[]>(`${this.apiUrl}/customers`)
-        .pipe(catchError(this.handleError<Customer[]>('getCustomers', [])));
+      .pipe(
+        catchError(error => {
+          this.notificationService.error('Failed to load customers. Please try again.');
+          return throwError(() => error);
+        })
+      );
   }
+
   getAvailableTimeSlots(date: string, serviceId: string, staffId?: string): Observable<string[]> {
     let url = `${this.apiUrl}/appointments/available-slots?date=${date}&serviceId=${serviceId}`;
     if (staffId) {
       url += `&staffId=${staffId}`;
     }
     return this.http.get<string[]>(url)
-        .pipe(catchError(this.handleError<string[]>('getAvailableTimeSlots', [])));
+      .pipe(
+        catchError(error => {
+          this.notificationService.error('Failed to load available time slots. Please try again.');
+          return throwError(() => error);
+        })
+      );
   }
+
   getAppointmentsByDateRange(startDate: string, endDate: string): Observable<Appointment[]> {
     return this.http.get<Appointment[]>(`${this.apiUrl}/appointments?startDate=${startDate}&endDate=${endDate}`)
-        .pipe(catchError(this.handleError<Appointment[]>('getAppointmentsByDateRange', [])));
+      .pipe(
+        catchError(error => {
+          this.notificationService.error('Failed to load appointments for the selected date range. Please try again.');
+          return throwError(() => error);
+        })
+      );
   }
+
   getAppointmentsByDate(date: string): Observable<Appointment[]> {
     return this.http.get<Appointment[]>(`${this.apiUrl}/appointments?date=${date}`)
-        .pipe(catchError(this.handleError<Appointment[]>('getAppointmentsByDate', [])));
+      .pipe(
+        catchError(error => {
+          this.notificationService.error('Failed to load appointments for the selected date. Please try again.');
+          return throwError(() => error);
+        })
+      );
   }
 
   getAppointmentsByCustomerId(customerId: string): Observable<Appointment[]> {
     return this.http.get<Appointment[]>(`${this.apiUrl}/appointments?customerId=${customerId}`)
-        .pipe(catchError(this.handleError<Appointment[]>('getAppointmentsByCustomerId', [])));
+      .pipe(
+        catchError(error => {
+          this.notificationService.error('Failed to load customer appointments. Please try again.');
+          return throwError(() => error);
+        })
+      );
   }
 
   /**
@@ -133,7 +219,12 @@ export class AppointmentsService {
       url += `?status=${status}`;
     }
     return this.http.get<Appointment[]>(url)
-        .pipe(catchError(this.handleError<Appointment[]>('getUserAppointments', [])));
+      .pipe(
+        catchError(error => {
+          this.notificationService.error('Failed to load your appointments. Please try again.');
+          return throwError(() => error);
+        })
+      );
   }
 
   /**
@@ -143,7 +234,12 @@ export class AppointmentsService {
    */
   getUserAppointmentById(id: string): Observable<Appointment> {
     return this.http.get<Appointment>(`${this.apiUrl}/user/appointments/${id}`)
-        .pipe(catchError(this.handleError<Appointment>('getUserAppointmentById')));
+      .pipe(
+        catchError(error => {
+          this.notificationService.error(`Failed to load appointment details. ${error.error?.message || 'Please try again.'}`);
+          return throwError(() => error);
+        })
+      );
   }
 
   /**
@@ -153,18 +249,27 @@ export class AppointmentsService {
    */
   cancelUserAppointment(id: string): Observable<Appointment> {
     return this.http.patch<Appointment>(`${this.apiUrl}/user/appointments/${id}/cancel`, {})
-        .pipe(catchError(this.handleError<Appointment>('cancelUserAppointment')));
+      .pipe(
+        tap(() => {
+          this.notificationService.success('Your appointment has been cancelled successfully.');
+        }),
+        catchError(error => {
+          this.notificationService.error(`Failed to cancel appointment. ${error.error?.message || 'Please try again.'}`);
+          return throwError(() => error);
+        })
+      );
   }
 
   createUserAppointment(appointmentData: Partial<AppointmentFormData>): Observable<Appointment> {
     return this.http.post<Appointment>(`${this.apiUrl}/user/appointments`, appointmentData)
-        .pipe(catchError(this.handleError<Appointment>('createUserAppointment')));
-  }
-
-  private handleError<T>(operation = 'operation', result?: T) {
-    return (error: any): Observable<T> => {
-      console.error(`${operation} failed: ${error.message}`);
-      return of(result as T);
-    };
+      .pipe(
+        tap(() => {
+          this.notificationService.success('Your appointment has been scheduled successfully!');
+        }),
+        catchError(error => {
+          this.notificationService.error(`Failed to schedule appointment. ${error.error?.message || 'Please try again.'}`);
+          return throwError(() => error);
+        })
+      );
   }
 }

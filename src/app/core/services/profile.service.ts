@@ -21,7 +21,7 @@ export interface UserProfile {
   email: string;
   phone?: string;
   address?: Address;
-  birthDate?: string;
+  birthDate?: any;
   profilePhoto?: string;
   roles: string[];
   active: boolean;

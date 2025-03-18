@@ -1,8 +1,9 @@
-// src/app/core/services/staff.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, throwError } from 'rxjs';
+import { map, catchError, tap } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
+import { NotificationService } from './notification.service';
 
 export interface TimeSlot {
   id?: string;
@@ -68,35 +69,54 @@ interface ApiStaff {
   providedIn: 'root'
 })
 export class StaffService {
-  private apiUrl = 'http://localhost:8080/api/v1/staff';
+  private apiUrl = environment.apiUrl + '/staff';
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private notificationService: NotificationService
+  ) {}
 
   // Get all staff members
   getStaff(): Observable<Staff[]> {
     return this.http.get<ApiStaff[]>(this.apiUrl).pipe(
-      map(staff => staff.map(s => this.mapApiStaffToStaff(s)))
+      map(staff => staff.map(s => this.mapApiStaffToStaff(s))),
+      catchError(error => {
+        this.notificationService.error('Failed to load staff members. Please try again.');
+        return throwError(() => error);
+      })
     );
   }
 
   // Get active staff members
   getActiveStaff(): Observable<Staff[]> {
     return this.http.get<ApiStaff[]>(`${this.apiUrl}?active=true`).pipe(
-      map(staff => staff.map(s => this.mapApiStaffToStaff(s)))
+      map(staff => staff.map(s => this.mapApiStaffToStaff(s))),
+      catchError(error => {
+        this.notificationService.error('Failed to load active staff members. Please try again.');
+        return throwError(() => error);
+      })
     );
   }
 
   // Get staff by ID
   getStaffById(id: string): Observable<Staff> {
     return this.http.get<ApiStaff>(`${this.apiUrl}/${id}`).pipe(
-      map(staff => this.mapApiStaffToStaff(staff))
+      map(staff => this.mapApiStaffToStaff(staff)),
+      catchError(error => {
+        this.notificationService.error(`Failed to load staff details. ${error.error?.message || 'Please try again.'}`);
+        return throwError(() => error);
+      })
     );
   }
 
   // Get staff by specialty
   getStaffBySpecialty(specialty: string): Observable<Staff[]> {
     return this.http.get<ApiStaff[]>(`${this.apiUrl}?specialty=${specialty}`).pipe(
-      map(staff => staff.map(s => this.mapApiStaffToStaff(s)))
+      map(staff => staff.map(s => this.mapApiStaffToStaff(s))),
+      catchError(error => {
+        this.notificationService.error(`Failed to load staff with specialty ${specialty}. Please try again.`);
+        return throwError(() => error);
+      })
     );
   }
 
@@ -109,7 +129,14 @@ export class StaffService {
     };
 
     return this.http.post<ApiStaff>(this.apiUrl, apiStaffData).pipe(
-      map(staff => this.mapApiStaffToStaff(staff))
+      map(staff => this.mapApiStaffToStaff(staff)),
+      tap(() => {
+        this.notificationService.success('Staff member created successfully!');
+      }),
+      catchError(error => {
+        this.notificationService.error(`Failed to create staff member. ${error.error?.message || 'Please try again.'}`);
+        return throwError(() => error);
+      })
     );
   }
 
@@ -122,26 +149,56 @@ export class StaffService {
     };
 
     return this.http.put<ApiStaff>(`${this.apiUrl}/${id}`, apiStaffData).pipe(
-      map(staff => this.mapApiStaffToStaff(staff))
+      map(staff => this.mapApiStaffToStaff(staff)),
+      tap(() => {
+        this.notificationService.success('Staff member updated successfully!');
+      }),
+      catchError(error => {
+        this.notificationService.error(`Failed to update staff member. ${error.error?.message || 'Please try again.'}`);
+        return throwError(() => error);
+      })
     );
   }
 
   // Delete staff
   deleteStaff(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+    return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
+      tap(() => {
+        this.notificationService.success('Staff member deleted successfully!');
+      }),
+      catchError(error => {
+        this.notificationService.error(`Failed to delete staff member. ${error.error?.message || 'Please try again.'}`);
+        return throwError(() => error);
+      })
+    );
   }
 
   // Toggle staff active status
   toggleStaffStatus(id: string, active: boolean): Observable<Staff> {
     return this.http.patch<ApiStaff>(`${this.apiUrl}/${id}/status`, { active }).pipe(
-      map(staff => this.mapApiStaffToStaff(staff))
+      map(staff => this.mapApiStaffToStaff(staff)),
+      tap(() => {
+        const status = active ? 'activated' : 'deactivated';
+        this.notificationService.success(`Staff member ${status} successfully!`);
+      }),
+      catchError(error => {
+        this.notificationService.error(`Failed to update staff status. ${error.error?.message || 'Please try again.'}`);
+        return throwError(() => error);
+      })
     );
   }
 
   // Update staff work hours
   updateWorkHours(id: string, workHours: WorkHours[]): Observable<Staff> {
     return this.http.put<ApiStaff>(`${this.apiUrl}/${id}/schedule`, { workHours }).pipe(
-      map(staff => this.mapApiStaffToStaff(staff))
+      map(staff => this.mapApiStaffToStaff(staff)),
+      tap(() => {
+        this.notificationService.success('Work schedule updated successfully!');
+      }),
+      catchError(error => {
+        this.notificationService.error(`Failed to update work schedule. ${error.error?.message || 'Please try again.'}`);
+        return throwError(() => error);
+      })
     );
   }
 
@@ -193,9 +250,16 @@ export class StaffService {
 
   // Format time for display
   formatTime(time: any): string {
-    const date = new Date();
-    date.setHours(time[0]);
-    date.setMinutes(time[1]);
-    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    if (!time) return '';
+
+    try {
+      const date = new Date();
+      date.setHours(time[0]);
+      date.setMinutes(time[1]);
+      return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    } catch (err) {
+      console.error('Error formatting time:', time, err);
+      return String(time);
+    }
   }
 }

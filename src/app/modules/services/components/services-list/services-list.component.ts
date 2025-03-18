@@ -128,9 +128,13 @@ export class ServicesListComponent implements OnInit {
   toggleServiceStatus(id: string, event: Event): void {
     event.stopPropagation(); // Prevent the parent click event from firing
 
-    this.servicesService.toggleServiceStatus(id).subscribe({
+    // Find the service to get its current active status
+    const service = this.services.find(s => s.id === id);
+    if (!service) return;
+
+    // Toggle the active status (pass the opposite of current status)
+    this.servicesService.toggleServiceStatus(id, !service.active).subscribe({
       next: (updatedService) => {
-        // Update service in local array
         const index = this.services.findIndex(s => s.id === id);
         if (index !== -1) {
           this.services[index] = updatedService;

@@ -1,11 +1,11 @@
-// src/app/core/services/booking.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { Observable, throwError } from 'rxjs';
+import { catchError, tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { AppointmentsService, Appointment } from './appointments.service';
 import { ServicesService, Service } from './services.service';
+import { NotificationService } from './notification.service';
 
 @Injectable({
   providedIn: 'root'
@@ -16,7 +16,8 @@ export class BookingService {
   constructor(
     private http: HttpClient,
     private appointmentsService: AppointmentsService,
-    private servicesService: ServicesService
+    private servicesService: ServicesService,
+    private notificationService: NotificationService
   ) {}
 
   /**
@@ -25,7 +26,10 @@ export class BookingService {
    */
   getAvailableServices(): Observable<Service[]> {
     return this.servicesService.getServices().pipe(
-      catchError(this.handleError<Service[]>('getAvailableServices', []))
+      catchError(error => {
+        this.notificationService.error('Failed to load available services. Please try again.');
+        return throwError(() => error);
+      })
     );
   }
 
@@ -34,7 +38,10 @@ export class BookingService {
    */
   getAvailableTimeSlots(date: string, serviceId: string): Observable<string[]> {
     return this.appointmentsService.getAvailableTimeSlots(date, serviceId).pipe(
-      catchError(this.handleError<string[]>('getAvailableTimeSlots', []))
+      catchError(error => {
+        this.notificationService.error('Failed to load available time slots. Please try again.');
+        return throwError(() => error);
+      })
     );
   }
 
@@ -43,20 +50,13 @@ export class BookingService {
    */
   createBooking(bookingData: any): Observable<Appointment> {
     return this.appointmentsService.createUserAppointment(bookingData).pipe(
-      catchError(this.handleError<Appointment>('createBooking'))
+      tap(() => {
+        this.notificationService.success('Your appointment has been booked successfully!');
+      }),
+      catchError(error => {
+        this.notificationService.error(`Booking failed. ${error.error?.message || 'Please try again.'}`);
+        return throwError(() => error);
+      })
     );
-  }
-
-  /**
-   * Handle Http operation that failed.
-   * Let the app continue.
-   * @param operation - name of the operation that failed
-   * @param result - optional value to return as the observable result
-   */
-  private handleError<T>(operation = 'operation', result?: T) {
-    return (error: any): Observable<T> => {
-      console.error(`${operation} failed: ${error.message}`);
-      return of(result as T);
-    };
   }
 }

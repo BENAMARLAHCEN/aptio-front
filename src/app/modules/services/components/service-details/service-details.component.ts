@@ -55,7 +55,8 @@ export class ServiceDetailsComponent implements OnInit {
   toggleServiceStatus(): void {
     if (!this.service) return;
 
-    this.servicesService.toggleServiceStatus(this.service.id).subscribe({
+    // Toggle the current active status (pass the opposite of current status)
+    this.servicesService.toggleServiceStatus(this.service.id, !this.service.active).subscribe({
       next: (updatedService) => {
         this.service = updatedService;
       },

@@ -1,8 +1,9 @@
-// src/app/core/services/improved-schedule.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
+import { catchError, tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
+import { NotificationService } from './notification.service';
 
 export interface BusinessSettings {
   id?: number;
@@ -74,51 +75,111 @@ export interface TimeSlot {
 export class ImprovedScheduleService {
   private apiUrl = environment.apiUrl;
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private notificationService: NotificationService
+  ) {}
 
   // Get business settings
   getBusinessSettings(): Observable<BusinessSettings> {
-    return this.http.get<BusinessSettings>(`${this.apiUrl}/settings/business`);
+    return this.http.get<BusinessSettings>(`${this.apiUrl}/settings/business`).pipe(
+      catchError(error => {
+        this.notificationService.error('Failed to load business settings. Please try again.');
+        return throwError(() => error);
+      })
+    );
   }
 
   // Update business settings
   updateBusinessSettings(settings: BusinessSettings): Observable<BusinessSettings> {
-    return this.http.put<BusinessSettings>(`${this.apiUrl}/settings/business`, settings);
+    return this.http.put<BusinessSettings>(`${this.apiUrl}/settings/business`, settings).pipe(
+      tap(() => {
+        this.notificationService.success('Business settings updated successfully!');
+      }),
+      catchError(error => {
+        this.notificationService.error(`Failed to update business settings. ${error.error?.message || 'Please try again.'}`);
+        return throwError(() => error);
+      })
+    );
   }
 
   // Get all staff
   getStaff(): Observable<Staff[]> {
-    return this.http.get<Staff[]>(`${this.apiUrl}/staff?active=true`);
+    return this.http.get<Staff[]>(`${this.apiUrl}/staff?active=true`).pipe(
+      catchError(error => {
+        this.notificationService.error('Failed to load staff members. Please try again.');
+        return throwError(() => error);
+      })
+    );
   }
 
   // Get staff member by ID
   getStaffById(id: string): Observable<Staff> {
-    return this.http.get<Staff>(`${this.apiUrl}/staff/${id}`);
+    return this.http.get<Staff>(`${this.apiUrl}/staff/${id}`).pipe(
+      catchError(error => {
+        this.notificationService.error('Failed to load staff details. Please try again.');
+        return throwError(() => error);
+      })
+    );
   }
 
   // Get schedule entries for a specific date range
   getScheduleEntries(startDate: string, endDate: string): Observable<ScheduleEntry[]> {
-    return this.http.get<ScheduleEntry[]>(`${this.apiUrl}/schedule/range?startDate=${startDate}&endDate=${endDate}`);
+    return this.http.get<ScheduleEntry[]>(`${this.apiUrl}/schedule/range?startDate=${startDate}&endDate=${endDate}`).pipe(
+      catchError(error => {
+        this.notificationService.error('Failed to load schedule entries. Please try again.');
+        return throwError(() => error);
+      })
+    );
   }
 
   // Get schedule entries for a specific staff member
   getStaffSchedule(staffId: string, startDate: string, endDate: string): Observable<ScheduleEntry[]> {
-    return this.http.get<ScheduleEntry[]>(`${this.apiUrl}/schedule/staff/${staffId}?startDate=${startDate}&endDate=${endDate}`);
+    return this.http.get<ScheduleEntry[]>(`${this.apiUrl}/schedule/staff/${staffId}?startDate=${startDate}&endDate=${endDate}`).pipe(
+      catchError(error => {
+        this.notificationService.error('Failed to load staff schedule. Please try again.');
+        return throwError(() => error);
+      })
+    );
   }
 
   // Create a new schedule entry
   createScheduleEntry(entry: Partial<ScheduleEntry>): Observable<ScheduleEntry> {
-    return this.http.post<ScheduleEntry>(`${this.apiUrl}/schedule`, entry);
+    return this.http.post<ScheduleEntry>(`${this.apiUrl}/schedule`, entry).pipe(
+      tap(() => {
+        this.notificationService.success('Schedule entry created successfully!');
+      }),
+      catchError(error => {
+        this.notificationService.error(`Failed to create schedule entry. ${error.error?.message || 'Please try again.'}`);
+        return throwError(() => error);
+      })
+    );
   }
 
   // Update an existing schedule entry
   updateScheduleEntry(id: string, entry: Partial<ScheduleEntry>): Observable<ScheduleEntry> {
-    return this.http.put<ScheduleEntry>(`${this.apiUrl}/schedule/${id}`, entry);
+    return this.http.put<ScheduleEntry>(`${this.apiUrl}/schedule/${id}`, entry).pipe(
+      tap(() => {
+        this.notificationService.success('Schedule entry updated successfully!');
+      }),
+      catchError(error => {
+        this.notificationService.error(`Failed to update schedule entry. ${error.error?.message || 'Please try again.'}`);
+        return throwError(() => error);
+      })
+    );
   }
 
   // Delete a schedule entry
   deleteScheduleEntry(id: string): Observable<any> {
-    return this.http.delete(`${this.apiUrl}/schedule/${id}`);
+    return this.http.delete(`${this.apiUrl}/schedule/${id}`).pipe(
+      tap(() => {
+        this.notificationService.success('Schedule entry deleted successfully!');
+      }),
+      catchError(error => {
+        this.notificationService.error(`Failed to delete schedule entry. ${error.error?.message || 'Please try again.'}`);
+        return throwError(() => error);
+      })
+    );
   }
 
   // Get available time slots for a specific date, service, and staff
@@ -127,7 +188,12 @@ export class ImprovedScheduleService {
     if (staffId) {
       url += `&staffId=${staffId}`;
     }
-    return this.http.get<string[]>(url);
+    return this.http.get<string[]>(url).pipe(
+      catchError(error => {
+        this.notificationService.error('Failed to load available time slots. Please try again.');
+        return throwError(() => error);
+      })
+    );
   }
 
   // Convert daysOpen string to array

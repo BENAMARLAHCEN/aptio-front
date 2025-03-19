@@ -14,7 +14,6 @@ interface NavItem {
 })
 export class ScheduleComponent {
   navItems: NavItem[] = [
-    { label: 'Daily View', route: '/dashboard/schedule/daily', icon: 'today' },
     { label: 'Weekly View', route: '/dashboard/schedule/weekly', icon: 'view_week' }
   ];
 

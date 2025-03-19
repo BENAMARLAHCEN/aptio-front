@@ -18,12 +18,16 @@ export class SidebarComponent implements OnInit {
   @Input() isOpen: boolean = true;
 
   allNavItems: NavItem[] = [
-    { icon: 'dashboard', label: 'Dashboard', route: '/dashboard' },
+    {
+      icon: 'dashboard',
+      label: 'Dashboard',
+      route: '/dashboard',
+      roles: ['ROLE_ADMIN', 'ROLE_STAFF']
+    },
     {
       icon: 'calendar_today',
       label: 'Appointments',
       route: '/dashboard/appointments',
-      // badge: 3,
       roles: ['ROLE_ADMIN', 'ROLE_STAFF']
     },
     {
@@ -61,12 +65,6 @@ export class SidebarComponent implements OnInit {
       label: 'Services',
       route: '/dashboard/services',
       roles: ['ROLE_ADMIN']
-    },
-    {
-      icon: 'bar_chart',
-      label: 'Reports',
-      route: '/dashboard/reports',
-      roles: ['ROLE_ADMIN']
     }
   ];
 
@@ -75,10 +73,9 @@ export class SidebarComponent implements OnInit {
     {
       icon: 'settings',
       label: 'Settings',
-      route: '/dashboard/settings',
+      route: '/dashboard/settings/business',
       roles: ['ROLE_ADMIN']
     },
-    { icon: 'help', label: 'Help', route: '/dashboard/help' }
   ];
 
   // Filtered nav items based on user roles

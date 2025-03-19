@@ -4,6 +4,8 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CustomersService, Customer, CustomerNote } from '../../../../core/services/customers.service';
 import { AppointmentsService } from '../../../../core/services/appointments.service';
+import { ConfirmDialogService } from '../../../../core/services/confirm-dialog.service';
+import {NotificationService} from "../../../../core/services/notification.service";
 
 @Component({
   selector: 'app-customer-details',
@@ -28,7 +30,9 @@ export class CustomerDetailsComponent implements OnInit {
     private router: Router,
     private fb: FormBuilder,
     private customersService: CustomersService,
-    private appointmentsService: AppointmentsService
+    private appointmentsService: AppointmentsService,
+    private notificationHelper: NotificationService,
+    private confirmDialogService: ConfirmDialogService
   ) {
     this.noteForm = this.fb.group({
       content: ['', Validators.required]
@@ -47,6 +51,7 @@ export class CustomerDetailsComponent implements OnInit {
     if (!id) {
       this.errorMessage = 'Customer ID is missing';
       this.isLoading = false;
+      this.notificationHelper.error('Customer ID is missing');
       return;
     }
 
@@ -54,12 +59,13 @@ export class CustomerDetailsComponent implements OnInit {
       next: (customer) => {
         this.customer = customer;
         this.isLoading = false;
+        this.notificationHelper.success(`Loaded customer details for ${customer.firstName} ${customer.lastName}`);
         this.loadCustomerAppointments(id);
       },
       error: (error) => {
         this.errorMessage = 'Failed to load customer details. Please try again.';
         this.isLoading = false;
-        console.error('Error loading customer:', error);
+        this.notificationHelper.handleError(error, 'Failed to load customer details');
       }
     });
   }
@@ -75,7 +81,7 @@ export class CustomerDetailsComponent implements OnInit {
         this.isLoadingAppointments = false;
       },
       error: (error) => {
-        console.error('Error loading appointments:', error);
+        this.notificationHelper.handleError(error, 'Failed to load customer appointments');
         this.isLoadingAppointments = false;
       }
     });
@@ -87,30 +93,52 @@ export class CustomerDetailsComponent implements OnInit {
     }
   }
 
-  toggleCustomerStatus(): void {
+  async toggleCustomerStatus(): Promise<void> {
     if (!this.customer) return;
+
+    const newStatus = !this.customer.active;
+    const statusText = newStatus ? 'activate' : 'deactivate';
+
+    const confirmed = await this.confirmDialogService.confirm({
+      id: 'toggle-status',
+      title: `Confirm Status Change`,
+      message: `Are you sure you want to ${statusText} this customer?`,
+      confirmText: 'Yes, Proceed',
+      cancelText: 'Cancel',
+      type: newStatus ? 'primary' : 'warning'
+    });
+
+    if (!confirmed) return;
+
+    this.notificationHelper.info(`Processing status change...`);
 
     this.customersService.toggleCustomerStatus(this.customer.id, !this.customer.active).subscribe({
       next: (updatedCustomer) => {
         this.customer = updatedCustomer;
+        const statusMessage = updatedCustomer.active ? 'activated' : 'deactivated';
       },
       error: (error) => {
-        console.error('Error updating customer status:', error);
-        // Show error notification
+        this.notificationHelper.handleError(error, 'Failed to update customer status');
       }
     });
   }
 
-  deleteCustomer(): void {
-    if (!this.customer || !confirm('Are you sure you want to delete this customer?')) return;
+  async deleteCustomer(): Promise<void> {
+    if (!this.customer) return;
+
+    const confirmed = await this.confirmDialogService.confirmDelete('customer');
+
+    if (!confirmed) return;
+
+    this.notificationHelper.info('Processing deletion request...');
 
     this.customersService.deleteCustomer(this.customer.id).subscribe({
       next: () => {
+        this.notificationHelper.deleted('customer');
         this.router.navigate(['/dashboard/customers']);
       },
       error: (error) => {
-        console.error('Error deleting customer:', error);
-        // Show error notification
+        this.notificationHelper.handleError(error, 'Failed to delete customer');
       }
     });
   }
@@ -119,6 +147,7 @@ export class CustomerDetailsComponent implements OnInit {
     if (!this.customer || !this.noteForm.valid) return;
 
     this.isAddingNote = true;
+    this.notificationHelper.info('Adding note...');
 
     this.customersService.addCustomerNote(this.customer.id, this.noteForm.value.content).subscribe({
       next: (newNote) => {
@@ -131,11 +160,11 @@ export class CustomerDetailsComponent implements OnInit {
         // Reset form
         this.noteForm.reset();
         this.isAddingNote = false;
+        this.notificationHelper.success('Note added successfully');
       },
       error: (error) => {
-        console.error('Error adding note:', error);
         this.isAddingNote = false;
-        // Show error notification
+        this.notificationHelper.handleError(error, 'Failed to add note');
       }
     });
   }
@@ -146,11 +175,13 @@ export class CustomerDetailsComponent implements OnInit {
       this.router.navigate(['/dashboard/appointments/new'], {
         queryParams: { customerId: this.customer.id }
       });
+      this.notificationHelper.info(`Creating new appointment for ${this.customer.firstName} ${this.customer.lastName}`);
     }
   }
 
   setActiveTab(tab: 'details' | 'appointments' | 'notes'): void {
     this.activeTab = tab;
+    this.notificationHelper.info(`Viewing ${tab} tab`);
   }
 
   getFullName(): string {
@@ -216,5 +247,6 @@ export class CustomerDetailsComponent implements OnInit {
 
   goBack(): void {
     this.router.navigate(['/dashboard/customers']);
+    this.notificationHelper.info('Returning to customers list');
   }
 }

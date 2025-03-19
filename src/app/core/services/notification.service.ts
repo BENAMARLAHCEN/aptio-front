@@ -1,6 +1,7 @@
 // src/app/core/services/notification.service.ts
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
+import {HttpErrorResponse} from "@angular/common/http";
 
 export type NotificationType = 'success' | 'error' | 'warning' | 'info';
 
@@ -19,6 +20,28 @@ export class NotificationService {
   public readonly notifications$ = this.notifications.asObservable();
 
   constructor() {}
+
+  handleError(error: any, defaultMessage: string = 'An error occurred. Please try again.'): void {
+    console.error('API Error:', error);
+
+    let errorMessage = defaultMessage;
+
+    if (error instanceof HttpErrorResponse) {
+      if (error.status === 0) {
+        errorMessage = 'Cannot connect to the server. Please check your internet connection.';
+      } else if (error.error?.message) {
+        errorMessage = error.error.message;
+      } else if (error.statusText) {
+        errorMessage = `${error.status} - ${error.statusText}`;
+      }
+    } else if (typeof error === 'string') {
+      errorMessage = error;
+    } else if (error?.message) {
+      errorMessage = error.message;
+    }
+
+    this.error(errorMessage);
+  }
 
   /**
    * Show a success notification
@@ -54,6 +77,67 @@ export class NotificationService {
    */
   info(message: string, duration: number = 5000): void {
     this.addNotification('info', message, duration);
+  }
+
+  /**
+   * Notify about item creation
+   * @param itemType Type of item created (e.g., 'appointment', 'customer')
+   */
+  created(itemType: string): void {
+    this.success(`${itemType.charAt(0).toUpperCase() + itemType.slice(1)} created successfully!`);
+  }
+
+  /**
+   * Notify about item update
+   * @param itemType Type of item updated (e.g., 'appointment', 'customer')
+   */
+  updated(itemType: string): void {
+    this.success(`${itemType.charAt(0).toUpperCase() + itemType.slice(1)} updated successfully!`);
+  }
+
+  /**
+   * Notify about item deletion
+   * @param itemType Type of item deleted (e.g., 'appointment', 'customer')
+   */
+  deleted(itemType: string): void {
+    this.success(`${itemType.charAt(0).toUpperCase() + itemType.slice(1)} deleted successfully!`);
+  }
+
+  /**
+   * Notify about loading failure
+   * @param itemType Type of item that failed to load (e.g., 'appointments', 'customers')
+   */
+  loadFailed(itemType: string): void {
+    this.error(`Failed to load ${itemType}. Please try again.`);
+  }
+
+  /**
+   * Notify about saving failure
+   * @param itemType Type of item that failed to save (e.g., 'appointment', 'customer')
+   */
+  saveFailed(itemType: string): void {
+    this.error(`Failed to save ${itemType}. Please try again.`);
+  }
+
+  /**
+   * Notify about deletion failure
+   * @param itemType Type of item that failed to delete (e.g., 'appointment', 'customer')
+   */
+  deleteFailed(itemType: string): void {
+    this.error(`Failed to delete ${itemType}. Please try again.`);
+  }
+
+  /**
+   * Notify about successful data loading
+   * @param itemType Type of items loaded (e.g., 'appointments', 'customers')
+   * @param count Number of items loaded
+   */
+  loadedItems(itemType: string, count: number): void {
+    if (count === 0) {
+      this.info(`No ${itemType} found.`);
+    } else {
+      this.success(`Successfully loaded ${count} ${itemType}.`);
+    }
   }
 
   /**

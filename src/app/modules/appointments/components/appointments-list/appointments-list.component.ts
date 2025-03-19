@@ -2,6 +2,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AppointmentsService, Appointment, AppointmentStatus } from '../../../../core/services/appointments.service';
+import {NotificationService} from "../../../../core/services/notification.service";
 
 interface FilterOptions {
   status: string | null;
@@ -34,7 +35,8 @@ export class AppointmentsListComponent implements OnInit {
 
   constructor(
     private appointmentsService: AppointmentsService,
-    private router: Router
+    private router: Router,
+    private notificationHelper: NotificationService
   ) {
     this.statusOptions = this.appointmentsService.statusOptions;
   }
@@ -53,11 +55,13 @@ export class AppointmentsListComponent implements OnInit {
         this.extractDateOptions();
         this.applyFilters();
         this.isLoading = false;
+        this.notificationHelper.loadedItems('appointments', appointments.length);
       },
       error: (error) => {
         this.errorMessage = 'Failed to load appointments. Please try again.';
         this.isLoading = false;
         console.error('Error loading appointments:', error);
+        this.notificationHelper.loadFailed('appointments');
       }
     });
   }
@@ -73,11 +77,8 @@ export class AppointmentsListComponent implements OnInit {
   }
 
   applyFilters(): void {
-    console.log('appointments:', this.appointments);
-
     this.filteredAppointments = this.appointments.filter(appointment => {
       // Status filter
-
       if (this.filterOptions.status && appointment.status !== this.filterOptions.status) {
         return false;
       }
@@ -88,7 +89,6 @@ export class AppointmentsListComponent implements OnInit {
       }
 
       // Search filter (case-insensitive)
-
       if (this.filterOptions.search) {
         const searchLower = this.filterOptions.search.toLowerCase();
         return appointment.customerName.toLowerCase().includes(searchLower) ||
@@ -99,7 +99,17 @@ export class AppointmentsListComponent implements OnInit {
       return true;
     });
 
+    // Notify about filter results
+    if (this.filterOptions.status || this.filterOptions.date || this.filterOptions.search) {
+      const filterCount = this.filteredAppointments.length;
+      const totalCount = this.appointments.length;
 
+      if (filterCount === 0) {
+        this.notificationHelper.info('No appointments match the current filters.');
+      } else {
+        this.notificationHelper.info(`Showing ${filterCount} of ${totalCount} appointments.`);
+      }
+    }
   }
 
   onFilterChange(): void {
@@ -113,6 +123,7 @@ export class AppointmentsListComponent implements OnInit {
       search: ''
     };
     this.applyFilters();
+    this.notificationHelper.info('Filters cleared.');
   }
 
   viewAppointmentDetails(id: string): void {
@@ -126,6 +137,7 @@ export class AppointmentsListComponent implements OnInit {
 
   createAppointment(): void {
     this.router.navigate(['/dashboard/appointments/new']);
+    this.notificationHelper.info('Creating a new appointment');
   }
 
   getStatusClass(status: string): string {
@@ -175,11 +187,15 @@ export class AppointmentsListComponent implements OnInit {
         if (index !== -1) {
           this.appointments[index].status = status;
           this.applyFilters();
+
+          // Show success notification
+          const statusLabel = this.statusOptions.find(s => s.value === status)?.label || status;
+          this.notificationHelper.success(`Appointment status updated to ${statusLabel}`);
         }
       },
       error: (error) => {
         console.error('Error updating appointment status:', error);
-        // Show error notification
+        this.notificationHelper.error(`Failed to update appointment status. Please try again.`);
       }
     });
   }

@@ -5,14 +5,12 @@ import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 
 import { ScheduleRoutingModule } from './schedule-routing.module';
 import { ScheduleComponent } from './components/schedule/schedule.component';
-import { DailyScheduleComponent } from './components/daily-schedule/daily-schedule.component';
 import { WeeklyScheduleComponent } from './components/weekly-schedule/weekly-schedule.component';
 import { ImprovedScheduleService } from '../../core/services/improved-schedule.service';
 
 @NgModule({
   declarations: [
     ScheduleComponent,
-    DailyScheduleComponent,
     WeeklyScheduleComponent
   ],
   imports: [

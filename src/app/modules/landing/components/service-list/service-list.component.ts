@@ -102,9 +102,7 @@ export class ServiceListComponent implements OnInit {
 
   navigateToBooking(serviceId?: string): void {
     if (serviceId) {
-      this.router.navigate(['/booking'], {
-        queryParams: { serviceId: serviceId }
-      });
+      this.router.navigate(['/dashboard/booking/time/'+serviceId]);
     } else {
       this.router.navigate(['/booking']);
     }

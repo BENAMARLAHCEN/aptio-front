@@ -231,11 +231,11 @@ export class ImprovedScheduleService {
   }
 
   // Format time for display (12-hour format)
-  formatTimeForDisplay(time: string): string {
+  formatTimeForDisplay(time: any): string {
     if (!time) return '';
-
+    console.log('time:', time); // Debugging line is  (2) [18, 0]
     try {
-      const [hours, minutes] = time.split(':').map(Number);
+      const [hours, minutes] = time.map(Number);
       const period = hours >= 12 ? 'PM' : 'AM';
       const displayHours = hours % 12 || 12;
       return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;

@@ -19,24 +19,7 @@
 
     <!-- Right side: Search and User menu -->
     <div class="flex items-center space-x-2">
-      <!-- Search -->
-      <div class="relative hidden md:block">
-        <input
-          type="search"
-          placeholder="Search..."
-          class="w-64 pl-10 pr-4 py-2 rounded-lg border border-neutral-light focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
-        <div class="absolute left-3 top-2.5 text-neutral">
-          <span class="material-icons-outlined">search</span>
-        </div>
-      </div>
 
-      <!-- Notifications -->
-      <button class="p-2 rounded-lg text-neutral relative hover:bg-neutral-light focus:outline-none focus:ring-2 focus:ring-neutral-light">
-        <span class="material-icons-outlined">notifications</span>
-        <span class="absolute top-1 right-1 h-2 w-2 rounded-full bg-status-error"></span>
-      </button>
-
-      <!-- User menu -->
       <div class="relative">
         <button
           (click)="toggleUserMenu()"

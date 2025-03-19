@@ -70,9 +70,7 @@ export class ServiceDetailsComponent implements OnInit {
 
   navigateToBooking(): void {
     if (this.service) {
-      this.router.navigate(['/booking'], {
-        queryParams: { serviceId: this.service.id }
-      });
+      this.router.navigate(['/dashboard/booking/time/'+ this.service.id]);
     } else {
       this.router.navigate(['/booking']);
     }

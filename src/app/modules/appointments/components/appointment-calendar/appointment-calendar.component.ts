@@ -2,6 +2,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AppointmentsService, Appointment, AppointmentStatus } from '../../../../core/services/appointments.service';
+import { DateUtilService } from '../../../../core/services/date-util.service';
 import { forkJoin, of } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
 
@@ -32,7 +33,8 @@ export class AppointmentCalendarComponent implements OnInit {
 
   constructor(
     private appointmentsService: AppointmentsService,
-    private router: Router
+    private router: Router,
+    private dateUtilService: DateUtilService
   ) {
     this.statusOptions = this.appointmentsService.statusOptions;
   }
@@ -50,8 +52,8 @@ export class AppointmentCalendarComponent implements OnInit {
     const endDate = this.getCalendarEndDate();
 
     // Format dates as YYYY-MM-DD for API
-    const startDateStr = this.formatDateForAPI(startDate);
-    const endDateStr = this.formatDateForAPI(endDate);
+    const startDateStr = this.dateUtilService.formatDateForAPI(startDate);
+    const endDateStr = this.dateUtilService.formatDateForAPI(endDate);
 
     // Use the date range endpoint to get all appointments for this calendar view
     this.appointmentsService.getAppointmentsByDateRange(startDateStr, endDateStr)
@@ -114,7 +116,7 @@ export class AppointmentCalendarComponent implements OnInit {
       currentWeek.days.push({
         date: new Date(currentDate),
         isCurrentMonth: currentDate.getMonth() === month,
-        isToday: this.isSameDay(currentDate, today),
+        isToday: this.dateUtilService.isSameDay(currentDate, today),
         appointments: dayAppointments
       });
 
@@ -151,7 +153,7 @@ export class AppointmentCalendarComponent implements OnInit {
   createAppointment(date?: Date): void {
     if (date) {
       // Format date for route parameter
-      const dateStr = this.formatDateForAPI(date);
+      const dateStr = this.dateUtilService.formatDateForAPI(date);
       this.router.navigate(['/dashboard/appointments/new'], {
         queryParams: { date: dateStr }
       });
@@ -176,16 +178,7 @@ export class AppointmentCalendarComponent implements OnInit {
   }
 
   formatTime(timeString: string): string {
-    if (!timeString || typeof timeString !== 'string') {
-      return '';
-    }
-
-    const [hours, minutes] = timeString.split(':');
-    const date = new Date();
-    date.setHours(parseInt(hours, 10));
-    date.setMinutes(parseInt(minutes, 10));
-
-    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    return this.dateUtilService.formatTime(timeString);
   }
 
   getDayClass(day: Day): string {
@@ -198,11 +191,6 @@ export class AppointmentCalendarComponent implements OnInit {
     }
 
     return classes;
-  }
-
-  // Helper to format date as YYYY-MM-DD for API requests
-  formatDateForAPI(date: Date): string {
-    return date.toISOString().split('T')[0];
   }
 
   // Helper to get the start date of the calendar view (first day of first week)
@@ -227,12 +215,5 @@ export class AppointmentCalendarComponent implements OnInit {
       endDate.setDate(lastDay.getDate() + (6 - lastDay.getDay()));
     }
     return endDate;
-  }
-
-  // Helper to compare dates without time
-  isSameDay(date1: Date, date2: Date): boolean {
-    return date1.getFullYear() === date2.getFullYear() &&
-      date1.getMonth() === date2.getMonth() &&
-      date1.getDate() === date2.getDate();
   }
 }

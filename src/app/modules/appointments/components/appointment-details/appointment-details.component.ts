@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AppointmentsService, Appointment, AppointmentStatus } from '../../../../core/services/appointments.service';
 import { ConfirmDialogService } from "../../../../core/services/confirm-dialog.service";
 import { NotificationService } from "../../../../core/services/notification.service";
+import { DateUtilService } from "../../../../core/services/date-util.service";
 
 @Component({
   selector: 'app-appointment-details',
@@ -21,7 +22,8 @@ export class AppointmentDetailsComponent implements OnInit {
     private router: Router,
     private appointmentsService: AppointmentsService,
     private confirmDialogService: ConfirmDialogService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private dateUtilService: DateUtilService
   ) {
     this.statusOptions = this.appointmentsService.statusOptions;
   }
@@ -124,59 +126,17 @@ export class AppointmentDetailsComponent implements OnInit {
   }
 
   formatDate(dateString: string): string {
-    if (!dateString) return 'N/A';
-
-    const options: Intl.DateTimeFormatOptions = {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    };
-    return new Date(dateString).toLocaleDateString('en-US', options);
+    return this.dateUtilService.formatDateLong(dateString);
   }
 
   formatTime(time: any): string {
-    // If time is null or undefined
-    if (time == null) return 'N/A';
-
-    try {
-      if (typeof time === 'object') {
-        const date = new Date();
-        date.setHours(time[0]);
-        date.setMinutes(time[1]);
-        return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-      }
-      this.notificationService.warning('Unrecognized time format encountered');
-      return String(time);
-    } catch (error) {
-      this.notificationService.error('Error formatting time value');
-      return 'Invalid time';
-    }
+    return this.dateUtilService.formatTime(time);
   }
 
   // Helper method to safely format dates for display
   getFormattedDate(dateString: any): string {
     if (!dateString) return 'Unknown';
-    try {
-      const date = new Date();
-      date.setFullYear(dateString[0]);
-      date.setMonth(dateString[1]);
-      date.setDate(dateString[2]);
-      date.setHours(dateString[3]);
-      date.setMinutes(dateString[4]);
-      date.setSeconds(dateString[5]);
-      date.setMilliseconds(dateString[6]);
-      return date.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit'
-      });
-    } catch (error) {
-      this.notificationService.warning('Error formatting date');
-      return 'Invalid date';
-    }
+    return this.dateUtilService.formatDateMedium(dateString);
   }
 
   // Helper to check if two dates should be considered different
@@ -193,28 +153,7 @@ export class AppointmentDetailsComponent implements OnInit {
   }
 
   formatEndTime(time: any, durationMinutes: number): string {
-    if (time == null) return 'N/A';
-
-    try {
-      let startDate = new Date();
-
-      if (typeof time === 'object') {
-        startDate.setHours(time[0]);
-        startDate.setMinutes(time[1]);
-      } else {
-        this.notificationService.warning('Unrecognized time format for end time calculation');
-        return String(time);
-      }
-
-      // Calculate end time
-      const endDate = new Date(startDate);
-      endDate.setMinutes(endDate.getMinutes() + durationMinutes);
-
-      return endDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-    } catch (error) {
-      this.notificationService.error('Error calculating appointment end time');
-      return 'Invalid time';
-    }
+    return this.dateUtilService.calculateEndTime(time, durationMinutes);
   }
 
   goBack(): void {

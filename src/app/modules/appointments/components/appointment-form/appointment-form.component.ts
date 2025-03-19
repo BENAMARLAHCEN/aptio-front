@@ -9,7 +9,7 @@ import {
   Customer,
   AppointmentFormData
 } from '../../../../core/services/appointments.service';
-import {NotificationService} from "../../../../core/services/notification.service";
+import { DateUtilService } from '../../../../core/services/date-util.service';
 
 @Component({
   selector: 'app-appointment-form',
@@ -37,13 +37,13 @@ export class AppointmentFormComponent implements OnInit {
     private appointmentsService: AppointmentsService,
     private route: ActivatedRoute,
     private router: Router,
-    private notificationHelper: NotificationService
+    private dateUtilService: DateUtilService
   ) {
     // Initialize form with default values
     this.appointmentForm = this.fb.group({
       customerId: ['', Validators.required],
       serviceId: ['', Validators.required],
-      date: [this.formatDateForInput(new Date()), Validators.required],
+      date: [this.dateUtilService.formatDateForInput(new Date()), Validators.required],
       time: ['', Validators.required],
       notes: ['']
     });
@@ -66,13 +66,11 @@ export class AppointmentFormComponent implements OnInit {
     this.appointmentsService.getCustomers().subscribe({
       next: (customers) => {
         this.customers = customers;
-        this.notificationHelper.info(`Loaded ${customers.length} customers`);
 
         // Load services
         this.appointmentsService.getServices().subscribe({
           next: (services) => {
             this.services = services;
-            this.notificationHelper.info(`Loaded ${services.length} services`);
 
             // If editing, load appointment details
             if (this.isEditMode && this.appointmentId) {
@@ -86,14 +84,14 @@ export class AppointmentFormComponent implements OnInit {
           error: (error) => {
             this.errorMessage = 'Failed to load services. Please try again.';
             this.isLoading = false;
-            this.notificationHelper.handleError(error, 'Failed to load services');
+            console.error('Error loading services:', error);
           }
         });
       },
       error: (error) => {
         this.errorMessage = 'Failed to load customers. Please try again.';
         this.isLoading = false;
-        this.notificationHelper.handleError(error, 'Failed to load customers');
+        console.error('Error loading customers:', error);
       }
     });
   }
@@ -104,8 +102,6 @@ export class AppointmentFormComponent implements OnInit {
         this.appointment = appointment;
         this.populateForm(appointment);
         this.isLoading = false;
-        this.notificationHelper.success('Appointment loaded successfully');
-
         const formattedDateParts = appointment.date.map((part:number, index:number) => {
           return index > 0 ? part.toString().padStart(2, '0') : part;
         }).join('-');
@@ -114,22 +110,20 @@ export class AppointmentFormComponent implements OnInit {
       error: (error) => {
         this.errorMessage = 'Failed to load appointment details. Please try again.';
         this.isLoading = false;
-        this.notificationHelper.handleError(error, 'Failed to load appointment details');
+        console.error('Error loading appointment:', error);
       }
     });
   }
 
   populateForm(appointment: Appointment): void {
-    // Format the date parts with leading zeros
-    const formattedDateParts = appointment.date.map((part:number, index:number) => {
-      // Index 0 is year (keep as is), index 1 is month, index 2 is day (pad these)
-      return index > 0 ? part.toString().padStart(2, '0') : part;
-    }).join('-');
+    // Use DateUtilService to format the date
+    const formattedDate = this.dateUtilService.formatDateFromArray(appointment.date);
 
+    // Now displays: Populating form with: 2025-03-21
     this.appointmentForm.patchValue({
       customerId: appointment.customerId,
       serviceId: appointment.serviceId,
-      date: formattedDateParts,
+      date: formattedDate,
       time: appointment.time,
       notes: appointment.notes || ''
     });
@@ -149,8 +143,6 @@ export class AppointmentFormComponent implements OnInit {
           next: () => {
             this.successMessage = 'Appointment updated successfully!';
             this.isSubmitting = false;
-            this.notificationHelper.updated('appointment');
-
             setTimeout(() => {
               this.router.navigate(['/dashboard/appointments', this.appointmentId]);
             }, 1500);
@@ -158,7 +150,7 @@ export class AppointmentFormComponent implements OnInit {
           error: (error) => {
             this.errorMessage = 'Failed to update appointment. Please try again.';
             this.isSubmitting = false;
-            this.notificationHelper.handleError(error, 'Failed to update appointment');
+            console.error('Error updating appointment:', error);
           }
         });
       } else {
@@ -167,8 +159,6 @@ export class AppointmentFormComponent implements OnInit {
           next: (newAppointment) => {
             this.successMessage = 'Appointment created successfully!';
             this.isSubmitting = false;
-            this.notificationHelper.created('appointment');
-
             setTimeout(() => {
               this.router.navigate(['/dashboard/appointments', newAppointment.id]);
             }, 1500);
@@ -176,13 +166,12 @@ export class AppointmentFormComponent implements OnInit {
           error: (error) => {
             this.errorMessage = 'Failed to create appointment. Please try again.';
             this.isSubmitting = false;
-            this.notificationHelper.handleError(error, 'Failed to create appointment');
+            console.error('Error creating appointment:', error);
           }
         });
       }
     } else {
       this.markFormGroupTouched(this.appointmentForm);
-      this.notificationHelper.warning('Please fill in all required fields');
     }
   }
 
@@ -195,22 +184,12 @@ export class AppointmentFormComponent implements OnInit {
     } else if (date) {
       this.availableTimeSlots = [];
       this.appointmentForm.get('time')?.setValue('');
-
-      if (!serviceId) {
-        this.notificationHelper.info('Please select a service to see available time slots');
-      }
     }
   }
 
   onServiceChange(): void {
     const date = this.appointmentForm.get('date')?.value;
     const serviceId = this.appointmentForm.get('serviceId')?.value;
-
-    // Find the selected service
-    const selectedService = this.services.find(s => s.id === serviceId);
-    if (selectedService) {
-      this.notificationHelper.info(`Selected service: ${selectedService.name} (${selectedService.duration} minutes)`);
-    }
 
     if (date && serviceId) {
       this.loadTimeSlots(date, serviceId);
@@ -220,17 +199,10 @@ export class AppointmentFormComponent implements OnInit {
   loadTimeSlots(date: string, serviceId: string): void {
     this.isLoadingTimeSlots = true;
     this.availableTimeSlots = [];
-    this.notificationHelper.info('Loading available time slots...');
 
     this.appointmentsService.getAvailableTimeSlots(date, serviceId).subscribe({
       next: (timeSlots) => {
         this.availableTimeSlots = timeSlots;
-
-        if (timeSlots.length === 0) {
-          this.notificationHelper.warning('No available time slots for the selected date and service');
-        } else {
-          this.notificationHelper.success(`Found ${timeSlots.length} available time slots`);
-        }
 
         // If editing, check if current time slot is not in available slots
         // (this can happen if we're keeping the same slot when editing)
@@ -239,7 +211,6 @@ export class AppointmentFormComponent implements OnInit {
           // Add the current time slot to the available slots
           this.availableTimeSlots.push(currentTime);
           this.availableTimeSlots.sort();
-          this.notificationHelper.info('Added current time slot to available options');
         } else if (!timeSlots.includes(currentTime)) {
           // Clear the time selection if the currently selected time is no longer available
           this.appointmentForm.get('time')?.setValue('');
@@ -248,7 +219,7 @@ export class AppointmentFormComponent implements OnInit {
         this.isLoadingTimeSlots = false;
       },
       error: (error) => {
-        this.notificationHelper.handleError(error, 'Failed to load available time slots');
+        console.error('Error loading time slots:', error);
         this.isLoadingTimeSlots = false;
       }
     });
@@ -286,17 +257,7 @@ export class AppointmentFormComponent implements OnInit {
   }
 
   formatTimeForDisplay(time: any): string {
-    const date = new Date();
-    date.setHours(time[0]);
-    date.setMinutes(time[1]);
-    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-  }
-
-  formatDateForInput(date: Date): string {
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    return `${year}-${month}-${day}`;
+    return this.dateUtilService.formatTime(time);
   }
 
   cancel(): void {
@@ -305,6 +266,5 @@ export class AppointmentFormComponent implements OnInit {
     } else {
       this.router.navigate(['/dashboard/appointments']);
     }
-    this.notificationHelper.info('Form changes cancelled');
   }
 }

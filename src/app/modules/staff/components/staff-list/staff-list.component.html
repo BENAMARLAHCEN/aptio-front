@@ -1,0 +1,213 @@
+<div class="space-y-6">
+  <!-- Page Title and Actions -->
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <h1 class="text-2xl font-bold text-neutral-dark">Staff</h1>
+
+    <button (click)="createStaff()" class="btn btn-primary flex items-center">
+      <span class="material-icons-outlined mr-1 text-sm">person_add</span>
+      New Staff Member
+    </button>
+  </div>
+
+  <!-- Filters and Search -->
+  <div class="bg-white rounded-card shadow-card p-4">
+    <div class="flex flex-col md:flex-row md:items-center gap-4">
+      <!-- Search -->
+      <div class="relative flex-1">
+        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-neutral">
+          <span class="material-icons-outlined text-sm">search</span>
+        </span>
+        <input
+          type="text"
+          placeholder="Search staff..."
+          (input)="onSearch($event)"
+          class="w-full pl-10 pr-4 py-2 border border-neutral-light rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+      </div>
+
+      <!-- Position Filter -->
+      <div class="w-full md:w-44">
+        <select
+          [(ngModel)]="positionFilter"
+          (ngModelChange)="applyFilters()"
+          class="w-full px-4 py-2 border border-neutral-light rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+          <option [ngValue]="null">All Positions</option>
+          <option *ngFor="let position of uniquePositions" [value]="position">
+            {{ position }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Status Filter -->
+      <div class="flex items-center">
+        <span class="text-sm text-neutral-dark mr-2">Status:</span>
+        <button
+          (click)="setActiveFilter('all')"
+          [class.bg-primary]="activeFilter === 'all'"
+          [class.text-white]="activeFilter === 'all'"
+          [class.bg-white]="activeFilter !== 'all'"
+          [class.border-neutral-light]="activeFilter !== 'all'"
+          [class.text-neutral-dark]="activeFilter !== 'all'"
+          class="px-3 py-1 rounded-l-lg border">
+          All
+        </button>
+        <button
+          (click)="setActiveFilter('active')"
+          [class.bg-primary]="activeFilter === 'active'"
+          [class.text-white]="activeFilter === 'active'"
+          [class.bg-white]="activeFilter !== 'active'"
+          [class.border-neutral-light]="activeFilter !== 'active'"
+          [class.text-neutral-dark]="activeFilter !== 'active'"
+          class="px-3 py-1 border-t border-b">
+          Active
+        </button>
+        <button
+          (click)="setActiveFilter('inactive')"
+          [class.bg-primary]="activeFilter === 'inactive'"
+          [class.text-white]="activeFilter === 'inactive'"
+          [class.bg-white]="activeFilter !== 'inactive'"
+          [class.border-neutral-light]="activeFilter !== 'inactive'"
+          [class.text-neutral-dark]="activeFilter !== 'inactive'"
+          class="px-3 py-1 rounded-r-lg border">
+          Inactive
+        </button>
+      </div>
+
+      <!-- Clear Filters -->
+      <button
+        *ngIf="activeFilter !== 'all' || positionFilter !== null || searchTerm"
+        (click)="clearFilters()"
+        class="flex items-center justify-center px-4 py-2 border border-neutral-light rounded-lg text-neutral-dark hover:bg-neutral-light">
+        <span class="material-icons-outlined mr-1 text-sm">clear</span>
+        Clear Filters
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="flex justify-center p-8">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="p-4 bg-red-100 border border-red-300 text-red-700 rounded-lg">
+    {{ errorMessage }}
+    <button (click)="loadStaff()" class="ml-2 text-primary hover:underline">Try Again</button>
+  </div>
+
+  <!-- Staff Grid -->
+  <div *ngIf="!isLoading && !errorMessage" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div *ngFor="let staffMember of filteredStaff"
+         (click)="viewStaffDetails(staffMember.id)"
+         class="bg-white rounded-card shadow-card overflow-hidden cursor-pointer hover:shadow-lg transition-shadow">
+      <div class="p-4 border-b border-neutral-light">
+        <div class="flex items-center">
+          <!-- Avatar -->
+          <div class="flex-shrink-0 mr-4">
+            <div *ngIf="staffMember.avatar" class="h-16 w-16 rounded-full overflow-hidden">
+              <img [src]="staffMember.avatar" [alt]="getFullName(staffMember)" class="h-full w-full object-cover">
+            </div>
+            <div *ngIf="!staffMember.avatar" class="h-16 w-16 rounded-full flex items-center justify-center"
+                 [style.background-color]="staffMember.color">
+              <span class="text-white text-xl font-medium">
+                {{ staffMember.firstName[0] }}{{ staffMember.lastName[0] }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Details -->
+          <div class="flex-1">
+            <h3 class="text-lg font-medium text-neutral-dark">
+              {{ getFullName(staffMember) }}
+            </h3>
+            <p class="text-sm text-neutral">{{ staffMember.position }}</p>
+            <span class="mt-1 inline-block px-2 py-0.5 text-xs rounded-full"
+                  [style.background-color]="staffMember.isActive ? '#E8F5E9' : '#FFEBEE'"
+                  [style.color]="staffMember.isActive ? '#2E7D32' : '#D32F2F'">
+              {{ staffMember.isActive ? 'Active' : 'Inactive' }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contact Info -->
+      <div class="p-4">
+        <div class="grid grid-cols-1 gap-2">
+          <div class="text-sm">
+            <div class="flex items-center">
+              <span class="material-icons-outlined text-neutral mr-2 text-sm">email</span>
+              <span class="text-neutral-dark truncate">{{ staffMember.email }}</span>
+            </div>
+          </div>
+          <div class="text-sm">
+            <div class="flex items-center">
+              <span class="material-icons-outlined text-neutral mr-2 text-sm">phone</span>
+              <span class="text-neutral-dark">{{ staffMember.phone }}</span>
+            </div>
+          </div>
+          <div class="text-sm">
+            <div class="flex items-start">
+              <span class="material-icons-outlined text-neutral mr-2 text-sm mt-0.5">stars</span>
+              <span class="text-neutral-dark">
+                <span class="font-medium">Specialties:</span>
+                <span class="line-clamp-1">{{ getSpecialtiesList(staffMember) }}</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="p-4 border-t border-neutral-light bg-neutral-light/30">
+        <div class="flex items-center justify-between">
+          <button
+            (click)="viewSchedule(staffMember.id, $event)"
+            class="text-neutral-dark hover:text-primary focus:outline-none flex items-center text-sm">
+            <span class="material-icons-outlined text-sm mr-1">schedule</span>
+            Schedule
+          </button>
+
+          <div class="flex items-center space-x-2">
+            <!-- Toggle Status -->
+            <button
+              (click)="toggleStaffStatus(staffMember.id, staffMember.isActive, $event)"
+              class="text-neutral-dark hover:text-primary focus:outline-none"
+              [title]="staffMember.isActive ? 'Deactivate' : 'Activate'">
+              <span class="material-icons-outlined text-sm">
+                {{ staffMember.isActive ? 'toggle_on' : 'toggle_off' }}
+              </span>
+            </button>
+
+            <!-- Edit -->
+            <button
+              (click)="editStaff(staffMember.id, $event)"
+              class="text-neutral-dark hover:text-primary focus:outline-none"
+              title="Edit">
+              <span class="material-icons-outlined text-sm">edit</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="filteredStaff.length === 0" class="md:col-span-2 lg:col-span-3 bg-white rounded-card shadow-card p-8">
+      <div class="flex flex-col items-center justify-center space-y-3">
+        <span class="material-icons-outlined text-4xl text-neutral-light">people</span>
+        <h3 class="text-lg font-medium text-neutral-dark">No staff members found</h3>
+        <p class="text-sm text-neutral">
+          <span *ngIf="searchTerm || activeFilter !== 'all' || positionFilter">
+            Try adjusting your filters or
+            <button (click)="clearFilters()" class="text-primary hover:underline">clear all filters</button>
+          </span>
+          <span *ngIf="!searchTerm && activeFilter === 'all' && !positionFilter">
+            Add your first staff member to get started
+          </span>
+        </p>
+        <button
+          *ngIf="!searchTerm && activeFilter === 'all' && !positionFilter"
+          (click)="createStaff()"
+          class="btn btn-primary mt-2">
+          Add Staff Member
+        </button>
+      </div>
+    </div>

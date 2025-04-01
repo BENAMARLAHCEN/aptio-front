@@ -1,0 +1,100 @@
+<div class="space-y-6">
+  <!-- Page Title -->
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-bold text-neutral-dark">My Appointments</h1>
+    <button
+      routerLink="/dashboard/booking"
+      class="btn btn-primary flex items-center">
+      <span class="material-icons-outlined mr-1 text-sm">add</span>
+      Book New Appointment
+    </button>
+  </div>
+
+  <!-- Tabs -->
+  <div class="border-b border-neutral-light">
+    <nav class="flex space-x-8">
+      <button
+        (click)="filterAppointments('upcoming')"
+        [class.text-primary]="activeFilter === 'upcoming'"
+        [class.border-primary]="activeFilter === 'upcoming'"
+        [class.font-medium]="activeFilter === 'upcoming'"
+        [class.text-neutral]="activeFilter !== 'upcoming'"
+        [class.border-transparent]="activeFilter !== 'upcoming'"
+        class="px-1 py-4 border-b-2 text-sm">
+        Upcoming
+      </button>
+      <button
+        (click)="filterAppointments('past')"
+        [class.text-primary]="activeFilter === 'past'"
+        [class.border-primary]="activeFilter === 'past'"
+        [class.font-medium]="activeFilter === 'past'"
+        [class.text-neutral]="activeFilter !== 'past'"
+        [class.border-transparent]="activeFilter !== 'past'"
+        class="px-1 py-4 border-b-2 text-sm">
+        Past
+      </button>
+      <button
+        (click)="filterAppointments('cancelled')"
+        [class.text-primary]="activeFilter === 'cancelled'"
+        [class.border-primary]="activeFilter === 'cancelled'"
+        [class.font-medium]="activeFilter === 'cancelled'"
+        [class.text-neutral]="activeFilter !== 'cancelled'"
+        [class.border-transparent]="activeFilter !== 'cancelled'"
+        class="px-1 py-4 border-b-2 text-sm">
+        Cancelled
+      </button>
+    </nav>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="flex justify-center p-8">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="p-4 bg-red-100 border border-red-300 text-red-700 rounded-lg">
+    {{ errorMessage }}
+    <button (click)="loadAppointments()" class="ml-2 text-primary hover:underline">Try Again</button>
+  </div>
+
+  <!-- Appointments List -->
+  <div *ngIf="!isLoading && filteredAppointments.length > 0">
+    <div class="bg-white rounded-card shadow-card divide-y divide-neutral-light">
+      <div *ngFor="let appointment of filteredAppointments"
+           (click)="viewAppointmentDetails(appointment)"
+           class="p-4 hover:bg-neutral-light cursor-pointer">
+        <div class="flex items-start justify-between">
+          <div>
+            <h3 class="font-medium text-lg">{{ appointment.serviceName }}</h3>
+            <p class="text-neutral text-sm">{{ formatDateTime(appointment.date, appointment.time) }}</p>
+          </div>
+          <span
+            class="px-2 py-1 text-xs font-medium rounded-full"
+            [ngClass]="getStatusClass(appointment.status)">
+                {{ appointment.status | titlecase }}
+              </span>
+        </div>
+        <div class="mt-2 flex items-center justify-between">
+          <div class="text-sm flex items-center">
+            <span class="material-icons-outlined text-neutral mr-1 text-base">schedule</span>
+            {{ appointment.duration }} minutes
+          </div>
+          <div class="text-primary font-medium">${{ appointment.price.toFixed(2) }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- No Appointments -->
+  <div *ngIf="!isLoading && filteredAppointments.length === 0" class="text-center p-8 bg-neutral-light rounded-lg">
+    <span class="material-icons-outlined text-6xl text-neutral mb-2">event_busy</span>
+    <p class="text-neutral-dark mb-2">No {{ activeFilter }} appointments found.</p>
+    <p *ngIf="activeFilter === 'upcoming'" class="text-neutral mb-4">Book your first appointment today!</p>
+    <button
+      *ngIf="activeFilter === 'upcoming'"
+      routerLink="/dashboard/booking"
+      class="btn btn-primary">
+      Book an Appointment
+    </button>
+  </div>
+</div>

@@ -2,6 +2,9 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AppointmentsService, Appointment, AppointmentStatus } from '../../../../core/services/appointments.service';
+import { DateUtilService } from '../../../../core/services/date-util.service';
+import { forkJoin, of } from 'rxjs';
+import { catchError, finalize } from 'rxjs/operators';
 
 interface Day {
   date: Date;
@@ -30,7 +33,8 @@ export class AppointmentCalendarComponent implements OnInit {
 
   constructor(
     private appointmentsService: AppointmentsService,
-    private router: Router
+    private router: Router,
+    private dateUtilService: DateUtilService
   ) {
     this.statusOptions = this.appointmentsService.statusOptions;
   }
@@ -43,18 +47,30 @@ export class AppointmentCalendarComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = null;
 
-    this.appointmentsService.getAppointments().subscribe({
-      next: (appointments) => {
+    // Get the start and end date of the month view to fetch all needed appointments
+    const startDate = this.getCalendarStartDate();
+    const endDate = this.getCalendarEndDate();
+
+    // Format dates as YYYY-MM-DD for API
+    const startDateStr = this.dateUtilService.formatDateForAPI(startDate);
+    const endDateStr = this.dateUtilService.formatDateForAPI(endDate);
+
+    // Use the date range endpoint to get all appointments for this calendar view
+    this.appointmentsService.getAppointmentsByDateRange(startDateStr, endDateStr)
+      .pipe(
+        catchError(error => {
+          this.errorMessage = 'Failed to load appointments. Please try again.';
+          console.error('Error loading appointments:', error);
+          return of([]);
+        }),
+        finalize(() => {
+          this.isLoading = false;
+        })
+      )
+      .subscribe(appointments => {
         this.appointments = appointments;
         this.generateCalendar();
-        this.isLoading = false;
-      },
-      error: (error) => {
-        this.errorMessage = 'Failed to load appointments. Please try again.';
-        this.isLoading = false;
-        console.error('Error loading appointments:', error);
-      }
-    });
+      });
   }
 
   generateCalendar(): void {
@@ -88,19 +104,19 @@ export class AppointmentCalendarComponent implements OnInit {
     while (currentDate <= endDate) {
       // For each day, check if it has appointments
       const dayAppointments = this.appointments.filter(appointment => {
-        const appointmentDate = new Date(appointment.date);
+        // Convert the appointment date string to a Date object for comparison
+        const appDate = new Date(appointment.date);
         return (
-          appointmentDate.getFullYear() === currentDate.getFullYear() &&
-          appointmentDate.getMonth() === currentDate.getMonth() &&
-          appointmentDate.getDate() === currentDate.getDate()
+          appDate.getFullYear() === currentDate.getFullYear() &&
+          appDate.getMonth() === currentDate.getMonth() &&
+          appDate.getDate() === currentDate.getDate()
         );
       });
-
       // Add day to the current week
       currentWeek.days.push({
         date: new Date(currentDate),
         isCurrentMonth: currentDate.getMonth() === month,
-        isToday: currentDate.getTime() === today.getTime(),
+        isToday: this.dateUtilService.isSameDay(currentDate, today),
         appointments: dayAppointments
       });
 
@@ -122,20 +138,28 @@ export class AppointmentCalendarComponent implements OnInit {
 
   prevMonth(): void {
     this.currentMonth.setMonth(this.currentMonth.getMonth() - 1);
-    this.generateCalendar();
+    this.loadAppointments();
   }
 
   nextMonth(): void {
     this.currentMonth.setMonth(this.currentMonth.getMonth() + 1);
-    this.generateCalendar();
+    this.loadAppointments();
   }
 
   viewAppointmentDetails(id: string): void {
     this.router.navigate(['/dashboard/appointments', id]);
   }
 
-  createAppointment(): void {
-    this.router.navigate(['/dashboard/appointments/new']);
+  createAppointment(date?: Date): void {
+    if (date) {
+      // Format date for route parameter
+      const dateStr = this.dateUtilService.formatDateForAPI(date);
+      this.router.navigate(['/dashboard/appointments/new'], {
+        queryParams: { date: dateStr }
+      });
+    } else {
+      this.router.navigate(['/dashboard/appointments/new']);
+    }
   }
 
   getStatusClass(status: string): string {
@@ -154,12 +178,7 @@ export class AppointmentCalendarComponent implements OnInit {
   }
 
   formatTime(timeString: string): string {
-    const [hours, minutes] = timeString.split(':');
-    const date = new Date();
-    date.setHours(parseInt(hours, 10));
-    date.setMinutes(parseInt(minutes, 10));
-
-    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    return this.dateUtilService.formatTime(timeString);
   }
 
   getDayClass(day: Day): string {
@@ -173,5 +192,28 @@ export class AppointmentCalendarComponent implements OnInit {
 
     return classes;
   }
-}
 
+  // Helper to get the start date of the calendar view (first day of first week)
+  getCalendarStartDate(): Date {
+    const year = this.currentMonth.getFullYear();
+    const month = this.currentMonth.getMonth();
+    const firstDay = new Date(year, month, 1);
+
+    const startDate = new Date(firstDay);
+    startDate.setDate(firstDay.getDate() - firstDay.getDay());
+    return startDate;
+  }
+
+  // Helper to get the end date of the calendar view (last day of last week)
+  getCalendarEndDate(): Date {
+    const year = this.currentMonth.getFullYear();
+    const month = this.currentMonth.getMonth();
+    const lastDay = new Date(year, month + 1, 0);
+
+    const endDate = new Date(lastDay);
+    if (lastDay.getDay() < 6) {
+      endDate.setDate(lastDay.getDate() + (6 - lastDay.getDay()));
+    }
+    return endDate;
+  }
+}

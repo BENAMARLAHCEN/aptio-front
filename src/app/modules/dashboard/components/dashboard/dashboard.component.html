@@ -1,15 +1,31 @@
+<!-- src/app/modules/dashboard/components/dashboard/dashboard.component.html -->
 <div class="space-y-6">
   <!-- Page Title -->
   <div class="flex items-center justify-between">
     <h1 class="text-2xl font-bold text-neutral-dark">Dashboard</h1>
     <div class="flex items-center space-x-2">
-      <span class="text-sm text-neutral">Today: {{ '2025-02-25' | date:'EEEE, MMMM d, y' }}</span>
+      <span class="text-sm text-neutral">Today: {{ currentDate | date:'EEEE, MMMM d, y' }}</span>
     </div>
   </div>
 
   <!-- Stats Cards -->
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-    <app-stats-card *ngFor="let card of statsCards" [card]="card"></app-stats-card>
+    <!-- Loading State -->
+    <div *ngIf="isLoadingStats" class="md:col-span-4 flex justify-center p-4">
+      <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="statsError" class="md:col-span-4 p-4 bg-red-100 border border-red-300 text-red-700 rounded-lg">
+      {{ statsError }}
+      <button (click)="loadDashboardData()" class="ml-2 text-primary hover:underline">Try Again</button>
+    </div>
+
+    <!-- Stats Cards -->
+      <app-stats-card
+        *ngFor="let card of statsCards"
+        [card]="card">
+      </app-stats-card>
   </div>
 
   <!-- Main Content Area -->
@@ -22,7 +38,19 @@
           <a routerLink="/dashboard/appointments" class="text-primary text-sm hover:underline">View All</a>
         </div>
 
-        <div class="overflow-x-auto">
+        <!-- Loading State -->
+        <div *ngIf="isLoadingAppointments" class="flex justify-center p-4">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+
+        <!-- Error State -->
+        <div *ngIf="appointmentsError" class="p-4 bg-red-100 border border-red-300 text-red-700 rounded-lg">
+          {{ appointmentsError }}
+          <button (click)="loadUpcomingAppointments()" class="ml-2 text-primary hover:underline">Try Again</button>
+        </div>
+
+        <!-- Appointments Table -->
+        <div *ngIf="!isLoadingAppointments && !appointmentsError" class="overflow-x-auto">
           <table class="min-w-full">
             <thead class="bg-neutral-light">
             <tr>
@@ -34,26 +62,34 @@
             </tr>
             </thead>
             <tbody class="divide-y divide-neutral-light">
-            <tr *ngFor="let appointment of upcomingAppointments" class="hover:bg-neutral-light">
+            <tr *ngFor="let appointment of upcomingAppointments"
+                [routerLink]="['/dashboard/appointments', appointment.id]"
+                class="hover:bg-neutral-light cursor-pointer">
               <td class="px-4 py-3 whitespace-nowrap">
                 <div class="text-sm font-medium text-neutral-dark">{{ appointment.customerName }}</div>
               </td>
               <td class="px-4 py-3 whitespace-nowrap">
-                <div class="text-sm text-neutral-dark">{{ appointment.service }}</div>
+                <div class="text-sm text-neutral-dark">{{ appointment.serviceName }}</div>
               </td>
               <td class="px-4 py-3 whitespace-nowrap">
-                <div class="text-sm text-neutral-dark">{{ appointment.date }}</div>
+                <div class="text-sm text-neutral-dark">{{ formatDate(appointment.date) }}</div>
               </td>
               <td class="px-4 py-3 whitespace-nowrap">
-                <div class="text-sm text-neutral-dark">{{ appointment.time }}</div>
+                <div class="text-sm text-neutral-dark">{{ formatTime(appointment.time) }}</div>
               </td>
               <td class="px-4 py-3 whitespace-nowrap">
-                  <span class="badge" [ngClass]="getStatusClass(appointment.status)">
-                    {{ appointment.status | titlecase }}
-                  </span>
+                <span class="px-2 py-1 text-xs font-medium rounded-full"
+                      [ngClass]="{
+                        'bg-green-100 text-green-800': appointment.status === 'confirmed',
+                        'bg-yellow-100 text-yellow-800': appointment.status === 'pending',
+                        'bg-red-100 text-red-800': appointment.status === 'cancelled',
+                        'bg-blue-100 text-blue-800': appointment.status === 'completed'
+                      }">
+                  {{ appointment.status | titlecase }}
+                </span>
               </td>
             </tr>
-            <tr *ngIf="upcomingAppointments.length === 0">
+            <tr *ngIf="upcomingAppointments.length === 0 && !isLoadingAppointments">
               <td colspan="5" class="px-4 py-3 text-center text-sm text-neutral">
                 No upcoming appointments
               </td>
@@ -89,19 +125,16 @@
           <div class="bg-neutral-light rounded-lg p-4">
             <div class="flex justify-between items-center mb-4">
               <button class="text-neutral">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
-                </svg>
+                <span class="material-icons-outlined">chevron_left</span>
               </button>
-              <span class="font-medium">February 2025</span>
+              <span class="font-medium">{{ currentDate | date:'MMMM yyyy' }}</span>
               <button class="text-neutral">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                </svg>
+                <span class="material-icons-outlined">chevron_right</span>
               </button>
             </div>
 
             <div class="grid grid-cols-7 gap-1 text-center text-sm">
+              <!-- Days of week -->
               <div class="text-neutral font-medium">S</div>
               <div class="text-neutral font-medium">M</div>
               <div class="text-neutral font-medium">T</div>
@@ -110,56 +143,20 @@
               <div class="text-neutral font-medium">F</div>
               <div class="text-neutral font-medium">S</div>
 
+              <!-- Calendar grid - will be dynamically generated in a real implementation -->
+              <!-- For now, showing a static grid for the current month with today highlighted -->
               <!-- Empty cells for previous month -->
-              <div class="h-8 text-neutral opacity-50 flex items-center justify-center">26</div>
-              <div class="h-8 text-neutral opacity-50 flex items-center justify-center">27</div>
-              <div class="h-8 text-neutral opacity-50 flex items-center justify-center">28</div>
-              <div class="h-8 text-neutral opacity-50 flex items-center justify-center">29</div>
-              <div class="h-8 text-neutral opacity-50 flex items-center justify-center">30</div>
-              <div class="h-8 text-neutral opacity-50 flex items-center justify-center">31</div>
-              <div class="h-8 text-neutral-dark flex items-center justify-center">1</div>
-
-              <!-- February dates -->
-              <div class="h-8 text-neutral-dark flex items-center justify-center">2</div>
-              <div class="h-8 text-neutral-dark flex items-center justify-center">3</div>
-              <div class="h-8 text-neutral-dark flex items-center justify-center">4</div>
-              <div class="h-8 text-neutral-dark flex items-center justify-center">5</div>
-              <div class="h-8 text-neutral-dark flex items-center justify-center">6</div>
-              <div class="h-8 text-neutral-dark flex items-center justify-center">7</div>
-              <div class="h-8 text-neutral-dark flex items-center justify-center">8</div>
-
-              <div class="h-8 text-neutral-dark flex items-center justify-center">9</div>
-              <div class="h-8 text-neutral-dark flex items-center justify-center">10</div>
-              <div class="h-8 text-neutral-dark flex items-center justify-center">11</div>
-              <div class="h-8 text-neutral-dark flex items-center justify-center">12</div>
-              <div class="h-8 text-neutral-dark flex items-center justify-center">13</div>
-              <div class="h-8 text-neutral-dark flex items-center justify-center">14</div>
-              <div class="h-8 text-neutral-dark flex items-center justify-center">15</div>
-
-              <div class="h-8 text-neutral-dark flex items-center justify-center">16</div>
-              <div class="h-8 text-neutral-dark flex items-center justify-center">17</div>
-              <div class="h-8 text-neutral-dark flex items-center justify-center">18</div>
-              <div class="h-8 text-neutral-dark flex items-center justify-center">19</div>
-              <div class="h-8 text-neutral-dark flex items-center justify-center">20</div>
-              <div class="h-8 text-neutral-dark flex items-center justify-center">21</div>
-              <div class="h-8 text-neutral-dark flex items-center justify-center">22</div>
-
-              <div class="h-8 text-neutral-dark flex items-center justify-center">23</div>
-              <div class="h-8 text-neutral-dark flex items-center justify-center">24</div>
-              <div class="h-8 text-neutral-dark bg-primary-light text-primary font-medium rounded-full flex items-center justify-center">25</div>
-              <div class="h-8 text-neutral-dark flex items-center justify-center">26</div>
-              <div class="h-8 text-neutral-dark flex items-center justify-center">27</div>
-              <div class="h-8 text-neutral-dark flex items-center justify-center">28</div>
-
-              <!-- Empty cells for next month -->
-              <div class="h-8 text-neutral opacity-50 flex items-center justify-center">1</div>
-              <div class="h-8 text-neutral opacity-50 flex items-center justify-center">2</div>
-              <div class="h-8 text-neutral opacity-50 flex items-center justify-center">3</div>
-              <div class="h-8 text-neutral opacity-50 flex items-center justify-center">4</div>
-              <div class="h-8 text-neutral opacity-50 flex items-center justify-center">5</div>
-              <div class="h-8 text-neutral opacity-50 flex items-center justify-center">6</div>
-              <div class="h-8 text-neutral opacity-50 flex items-center justify-center">7</div>
-              <div class="h-8 text-neutral opacity-50 flex items-center justify-center">8</div>
+              <ng-container *ngFor="let day of [26, 27, 28, 29, 30, 31, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 1, 2, 3, 4, 5, 6, 7, 8]; let i = index">
+                <div *ngIf="i < 6 || i >= 34" class="h-8 text-neutral opacity-50 flex items-center justify-center">
+                  {{ day }}
+                </div>
+                <div *ngIf="i >= 6 && i < 34"
+                     class="h-8 flex items-center justify-center"
+                     [ngClass]="{'text-neutral-dark': true,
+                                'bg-primary-light text-primary font-medium rounded-full': day === currentDate.getDate() && i >= 6 && i < 34}">
+                  {{ day }}
+                </div>
+              </ng-container>
             </div>
           </div>
         </div>

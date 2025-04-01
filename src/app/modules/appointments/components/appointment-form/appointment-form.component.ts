@@ -9,6 +9,7 @@ import {
   Customer,
   AppointmentFormData
 } from '../../../../core/services/appointments.service';
+import { DateUtilService } from '../../../../core/services/date-util.service';
 
 @Component({
   selector: 'app-appointment-form',
@@ -35,13 +36,14 @@ export class AppointmentFormComponent implements OnInit {
     private fb: FormBuilder,
     private appointmentsService: AppointmentsService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private dateUtilService: DateUtilService
   ) {
     // Initialize form with default values
     this.appointmentForm = this.fb.group({
       customerId: ['', Validators.required],
       serviceId: ['', Validators.required],
-      date: [this.formatDateForInput(new Date()), Validators.required],
+      date: [this.dateUtilService.formatDateForInput(new Date()), Validators.required],
       time: ['', Validators.required],
       notes: ['']
     });
@@ -100,9 +102,10 @@ export class AppointmentFormComponent implements OnInit {
         this.appointment = appointment;
         this.populateForm(appointment);
         this.isLoading = false;
-
-        // Load available time slots for the selected date
-        this.loadTimeSlots(appointment.date, appointment.serviceId);
+        const formattedDateParts = appointment.date.map((part:number, index:number) => {
+          return index > 0 ? part.toString().padStart(2, '0') : part;
+        }).join('-');
+        this.loadTimeSlots(formattedDateParts, appointment.serviceId);
       },
       error: (error) => {
         this.errorMessage = 'Failed to load appointment details. Please try again.';
@@ -113,10 +116,14 @@ export class AppointmentFormComponent implements OnInit {
   }
 
   populateForm(appointment: Appointment): void {
+    // Use DateUtilService to format the date
+    const formattedDate = this.dateUtilService.formatDateFromArray(appointment.date);
+
+    // Now displays: Populating form with: 2025-03-21
     this.appointmentForm.patchValue({
       customerId: appointment.customerId,
       serviceId: appointment.serviceId,
-      date: appointment.date,
+      date: formattedDate,
       time: appointment.time,
       notes: appointment.notes || ''
     });
@@ -175,7 +182,6 @@ export class AppointmentFormComponent implements OnInit {
     if (date && serviceId) {
       this.loadTimeSlots(date, serviceId);
     } else if (date) {
-      // If no service selected yet, just clear time slots
       this.availableTimeSlots = [];
       this.appointmentForm.get('time')?.setValue('');
     }
@@ -250,20 +256,8 @@ export class AppointmentFormComponent implements OnInit {
     return this.services.find(service => service.id === id);
   }
 
-  formatTimeForDisplay(timeString: string): string {
-    const [hours, minutes] = timeString.split(':');
-    const date = new Date();
-    date.setHours(parseInt(hours, 10));
-    date.setMinutes(parseInt(minutes, 10));
-
-    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-  }
-
-  formatDateForInput(date: Date): string {
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    return `${year}-${month}-${day}`;
+  formatTimeForDisplay(time: any): string {
+    return this.dateUtilService.formatTime(time);
   }
 
   cancel(): void {

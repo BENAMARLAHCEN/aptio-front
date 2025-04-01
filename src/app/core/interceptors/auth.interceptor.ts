@@ -1,4 +1,4 @@
-// src/app/core/interceptors/auth.interceptor.ts
+
 import { Injectable } from '@angular/core';
 import {
   HttpRequest,
@@ -23,19 +23,27 @@ export class AuthInterceptor implements HttpInterceptor {
     const token = this.authService.getToken();
 
     if (token) {
-      request = request.clone({
-        setHeaders: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+      if (!request.url.includes('/auth/')) {
+        request = request.clone({
+          setHeaders: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+      }
     }
 
     return next.handle(request).pipe(
       catchError((error: HttpErrorResponse) => {
         if (error.status === 401) {
           this.authService.logout();
-          this.router.navigate(['/auth/login']);
+          this.router.navigate(['/auth/login'], {
+            queryParams: { returnUrl: this.router.url }
+          });
         }
+        if (error.status === 403) {
+          this.router.navigate(['/forbidden']);
+        }
+
         return throwError(() => error);
       })
     );

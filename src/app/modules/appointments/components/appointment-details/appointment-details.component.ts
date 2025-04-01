@@ -2,6 +2,9 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AppointmentsService, Appointment, AppointmentStatus } from '../../../../core/services/appointments.service';
+import { ConfirmDialogService } from "../../../../core/services/confirm-dialog.service";
+import { NotificationService } from "../../../../core/services/notification.service";
+import { DateUtilService } from "../../../../core/services/date-util.service";
 
 @Component({
   selector: 'app-appointment-details',
@@ -17,7 +20,10 @@ export class AppointmentDetailsComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private appointmentsService: AppointmentsService
+    private appointmentsService: AppointmentsService,
+    private confirmDialogService: ConfirmDialogService,
+    private notificationService: NotificationService,
+    private dateUtilService: DateUtilService
   ) {
     this.statusOptions = this.appointmentsService.statusOptions;
   }
@@ -33,6 +39,7 @@ export class AppointmentDetailsComponent implements OnInit {
     const id = this.route.snapshot.paramMap.get('id');
     if (!id) {
       this.errorMessage = 'Appointment ID is missing';
+      this.notificationService.error('Appointment ID is missing');
       this.isLoading = false;
       return;
     }
@@ -44,8 +51,8 @@ export class AppointmentDetailsComponent implements OnInit {
       },
       error: (error) => {
         this.errorMessage = 'Failed to load appointment details. Please try again.';
+        this.notificationService.error('Failed to load appointment details. Please try again.');
         this.isLoading = false;
-        console.error('Error loading appointment:', error);
       }
     });
   }
@@ -56,8 +63,19 @@ export class AppointmentDetailsComponent implements OnInit {
     }
   }
 
-  updateStatus(status: AppointmentStatus['value']): void {
+  async updateStatus(status: AppointmentStatus['value']): Promise<void> {
     if (!this.appointment) return;
+
+    const statusLabel = this.statusOptions.find(s => s.value === status)?.label || status;
+
+    // Get confirmation before updating status
+    const confirmResult = await this.confirmDialogService.confirmStatusChange(
+      status,
+      statusLabel,
+      'appointment'
+    );
+
+    if (!confirmResult) return;
 
     this.isUpdatingStatus = true;
 
@@ -67,36 +85,40 @@ export class AppointmentDetailsComponent implements OnInit {
         this.isUpdatingStatus = false;
       },
       error: (error) => {
-        console.error('Error updating appointment status:', error);
         this.isUpdatingStatus = false;
-        // Show error notification
+        this.notificationService.error(`Failed to update appointment status: ${error.error?.message || 'Please try again'}`);
       }
     });
   }
 
-  deleteAppointment(): void {
-    if (!this.appointment || !confirm('Are you sure you want to delete this appointment?')) return;
+  async deleteAppointment(): Promise<void> {
+    if (!this.appointment) return;
+
+    const result = await this.confirmDialogService.confirmDelete('appointment');
+
+    if (!result) return;
 
     this.appointmentsService.deleteAppointment(this.appointment.id).subscribe({
       next: () => {
+        // Notification is already handled in the service
         this.router.navigate(['/dashboard/appointments']);
       },
       error: (error) => {
-        console.error('Error deleting appointment:', error);
-        // Show error notification
+        // Keep error notification as fallback
+        this.notificationService.error(`Failed to delete appointment: ${error.error?.message || 'Please try again'}`);
       }
     });
   }
 
   getStatusClass(status: string): string {
     switch (status) {
-      case 'confirmed':
+      case 'CONFIRMED':
         return 'bg-green-100 text-green-800';
-      case 'pending':
+      case 'PENDING':
         return 'bg-yellow-100 text-yellow-800';
-      case 'cancelled':
+      case 'CANCELLED':
         return 'bg-red-100 text-red-800';
-      case 'completed':
+      case 'COMPLETED':
         return 'bg-blue-100 text-blue-800';
       default:
         return 'bg-gray-100 text-gray-800';
@@ -104,47 +126,34 @@ export class AppointmentDetailsComponent implements OnInit {
   }
 
   formatDate(dateString: string): string {
-    const options: Intl.DateTimeFormatOptions = {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    };
-    return new Date(dateString).toLocaleDateString('en-US', options);
+    return this.dateUtilService.formatDateLong(dateString);
   }
 
-  formatTime(timeString: string): string {
-    const [hours, minutes] = timeString.split(':');
-    const date = new Date();
-    date.setHours(parseInt(hours, 10));
-    date.setMinutes(parseInt(minutes, 10));
-
-    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  formatTime(time: any): string {
+    return this.dateUtilService.formatTime(time);
   }
 
-  formatDateTime(dateString: string, timeString: string): string {
-    const date = new Date(dateString);
-    const [hours, minutes] = timeString.split(':');
-    date.setHours(parseInt(hours, 10));
-    date.setMinutes(parseInt(minutes, 10));
-
-    return date.toLocaleString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit'
-    });
+  // Helper method to safely format dates for display
+  getFormattedDate(dateString: any): string {
+    if (!dateString) return 'Unknown';
+    return this.dateUtilService.formatDateMedium(dateString);
   }
 
-  formatEndTime(timeString: string, durationMinutes: number): string {
-    const [hours, minutes] = timeString.split(':');
-    const date = new Date();
-    date.setHours(parseInt(hours, 10));
-    date.setMinutes(parseInt(minutes, 10) + durationMinutes);
+  // Helper to check if two dates should be considered different
+  areDifferentDates(date1: any, date2: any): boolean {
+    if (!date1 || !date2) return false;
 
-    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    try {
+      const d1 = new Date(date1).getTime();
+      const d2 = new Date(date2).getTime();
+      return d1 !== d2;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  formatEndTime(time: any, durationMinutes: number): string {
+    return this.dateUtilService.calculateEndTime(time, durationMinutes);
   }
 
   goBack(): void {

@@ -1,53 +1,51 @@
-// src/app/modules/profile/components/profile/profile.component.ts
 import { Component, OnInit } from '@angular/core';
-import { UserService, User } from '../../../../core/services/user.service';
+import { Router } from '@angular/router';
+import { ProfileService, UserProfile } from '../../../../core/services/profile.service';
 
 @Component({
   selector: 'app-profile',
   templateUrl: './profile.component.html'
 })
 export class ProfileComponent implements OnInit {
-  user: User | null = null;
+  profile: UserProfile | null = null;
   isLoading = true;
   errorMessage: string | null = null;
 
-  constructor(private userService: UserService) {}
+  constructor(
+      private profileService: ProfileService,
+      private router: Router
+  ) {}
 
   ngOnInit(): void {
-    this.loadUserProfile();
+    this.loadProfile();
   }
 
-  loadUserProfile(): void {
+  loadProfile(): void {
     this.isLoading = true;
     this.errorMessage = null;
 
-    this.userService.getCurrentUser().subscribe({
-      next: (user) => {
-        this.user = user;
+    this.profileService.getCurrentProfile().subscribe({
+      next: (profile) => {
+        this.profile = profile;
         this.isLoading = false;
       },
       error: (error) => {
         this.errorMessage = 'Failed to load profile. Please try again.';
         this.isLoading = false;
-        console.error('Error loading user profile:', error);
+        console.error('Error loading profile:', error);
       }
     });
   }
 
-  getFullName(): string {
-    if (!this.user) return '';
-    return `${this.user.firstName} ${this.user.lastName}`;
+  editProfile(): void {
+    this.router.navigate(['/dashboard/profile/edit']);
   }
 
-  getFullAddress(): string {
-    if (!this.user || !this.user.address) return '';
-    const address = this.user.address;
-    return `${address.street}, ${address.city}, ${address.postalCode}`;
-  }
+  formatDate(dateString: string | undefined): string {
+    if (!dateString) return 'Not provided';
 
-  formatDate(date: Date | undefined): string {
-    if (!date) return '';
-    return new Date(date).toLocaleDateString('en-US', {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'

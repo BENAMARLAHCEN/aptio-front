@@ -1,0 +1,21 @@
+<div class="fixed top-0 right-0 p-4 z-50 max-w-md w-full">
+  <div
+    *ngFor="let notification of notifications"
+    [@notificationAnimation]
+    class="mb-3 p-4 rounded-lg shadow-lg flex items-start"
+    [ngClass]="getNotificationClass(notification.type)"
+  >
+        <span class="material-icons-outlined mr-3 flex-shrink-0">
+          {{ getNotificationIcon(notification.type) }}
+        </span>
+    <div class="flex-grow mr-2">
+      <p class="text-sm whitespace-pre-wrap">{{ notification.message }}</p>
+    </div>
+    <button
+      (click)="dismissNotification(notification.id)"
+      class="flex-shrink-0 ml-auto text-current opacity-70 hover:opacity-100 focus:outline-none"
+    >
+      <span class="material-icons-outlined text-sm">close</span>
+    </button>
+  </div>
+</div>

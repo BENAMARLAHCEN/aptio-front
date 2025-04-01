@@ -1,3 +1,4 @@
+<!-- src/app/modules/appointments/components/appointment-calendar/appointment-calendar.component.html -->
 <div class="space-y-6">
   <!-- Page Title and Actions -->
   <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -77,8 +78,8 @@
               <div
                 *ngFor="let appointment of day.appointments | slice:0:3"
                 (click)="viewAppointmentDetails(appointment.id)"
-                class="text-xs p-1 rounded cursor-pointer"
-                [class]="getStatusClass(appointment.status)">
+                [ngClass]="getStatusClass(appointment.status.toLowerCase())"
+                class="text-xs p-1 rounded cursor-pointer">
                 <div class="font-medium truncate">{{ formatTime(appointment.time) }}</div>
                 <div class="truncate">{{ appointment.customerName }}</div>
                 <div class="truncate text-[10px]">{{ appointment.serviceName }}</div>

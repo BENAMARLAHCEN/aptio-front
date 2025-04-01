@@ -120,7 +120,7 @@
               View Details
             </button>
             <button
-              (click)="navigateToBooking()"
+              (click)="navigateToBooking(service.id); $event.stopPropagation()"
               class="flex-1 inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-dark focus:outline-none">
               Book Now
             </button>

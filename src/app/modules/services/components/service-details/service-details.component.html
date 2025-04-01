@@ -13,8 +13,8 @@
         (click)="toggleServiceStatus()"
         class="flex items-center px-4 py-2 bg-white border border-neutral-light rounded-lg hover:bg-neutral-light"
         *ngIf="service">
-        <span class="material-icons-outlined mr-1 text-sm">{{ service?.active ? 'toggle_off' : 'toggle_on' }}</span>
-        {{ service?.active ? 'Deactivate' : 'Activate' }}
+        <span class="material-icons-outlined mr-1 text-sm">{{ service.active ? 'toggle_off' : 'toggle_on' }}</span>
+        {{ service.active ? 'Deactivate' : 'Activate' }}
       </button>
       <button
         (click)="editService()"

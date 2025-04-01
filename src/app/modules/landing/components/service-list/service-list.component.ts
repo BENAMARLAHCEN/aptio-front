@@ -100,8 +100,12 @@ export class ServiceListComponent implements OnInit {
     this.router.navigate(['/services', id]);
   }
 
-  navigateToBooking(): void {
-    this.router.navigate(['/booking']);
+  navigateToBooking(serviceId?: string): void {
+    if (serviceId) {
+      this.router.navigate(['/dashboard/booking/time/'+serviceId]);
+    } else {
+      this.router.navigate(['/booking']);
+    }
   }
 
   formatCurrency(amount: number): string {

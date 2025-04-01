@@ -1,0 +1,85 @@
+<div>
+  <div class="flex items-start justify-between mb-6">
+    <div>
+      <h2 class="text-lg font-medium mb-1">Select a Date & Time</h2>
+      <p *ngIf="selectedService" class="text-neutral">
+        For: {{ selectedService.name }} ({{ selectedService.duration }} min - ${{ selectedService.price.toFixed(2) }})
+      </p>
+    </div>
+    <button
+      (click)="goBack()"
+      class="flex items-center text-primary hover:underline">
+      <span class="material-icons-outlined text-sm mr-1">arrow_back</span>
+      Change Service
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoadingService || isLoadingTimeSlots" class="flex justify-center p-8">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="p-4 bg-red-100 border border-red-300 text-red-700 rounded-lg mb-4">
+    {{ errorMessage }}
+    <button (click)="initialize()" class="ml-2 text-primary hover:underline">Try Again</button>
+  </div>
+
+  <!-- Date Selection -->
+  <div *ngIf="!isLoadingService && !isLoadingTimeSlots && !errorMessage" class="mb-6">
+    <h3 class="text-md font-medium mb-3">Select Date</h3>
+    <div class="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-7 gap-2">
+      <div *ngFor="let date of availableDates"
+           (click)="selectDate(date)"
+           class="text-center p-3 rounded-lg cursor-pointer"
+           [class.bg-primary]="isDateSelected(date)"
+           [class.text-white]="isDateSelected(date)"
+           [class.bg-neutral-light]="!isDateSelected(date)">
+        <div class="text-xs mb-1">{{ getWeekday(date) }}</div>
+        <div class="font-medium">{{ getDay(date) }}</div>
+        <div class="text-xs">{{ getMonth(date) }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Time Slot Selection -->
+  <div *ngIf="!isLoadingService && !isLoadingTimeSlots && selectedDate && !errorMessage">
+    <h3 class="text-md font-medium mb-3">Select Time</h3>
+
+    <!-- Loading Slots -->
+    <div *ngIf="isLoadingTimeSlots" class="flex justify-center p-4">
+      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+    </div>
+
+    <!-- Available Slots -->
+    <div *ngIf="!isLoadingTimeSlots && availableTimeSlots.length > 0" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+      <div *ngFor="let slot of availableTimeSlots"
+           (click)="selectTimeSlot(slot)"
+           class="text-center p-3 rounded-lg cursor-pointer"
+           [class.bg-primary]="selectedTimeSlot === slot"
+           [class.text-white]="selectedTimeSlot === slot"
+           [class.bg-neutral-light]="selectedTimeSlot !== slot">
+        {{ formatTime(slot) }}
+      </div>
+    </div>
+
+    <!-- No Available Slots -->
+    <div *ngIf="!isLoadingTimeSlots && availableTimeSlots.length === 0" class="text-center p-6 bg-neutral-light rounded-lg">
+      <span class="material-icons-outlined text-4xl text-neutral mb-2">event_busy</span>
+      <p class="text-neutral-dark mb-2">No available time slots for this date.</p>
+      <p class="text-neutral text-sm">Please select a different date or service.</p>
+    </div>
+  </div>
+
+  <!-- Next Button -->
+  <div class="mt-8 flex justify-end">
+    <button
+      [disabled]="!selectedDate || !selectedTimeSlot"
+      (click)="proceedToConfirmation()"
+      class="btn btn-primary"
+      [class.opacity-50]="!selectedDate || !selectedTimeSlot"
+      [class.cursor-not-allowed]="!selectedDate || !selectedTimeSlot">
+      Continue to Confirmation
+    </button>
+  </div>
+</div>

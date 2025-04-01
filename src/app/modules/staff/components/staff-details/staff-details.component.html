@@ -1,0 +1,256 @@
+<div class="space-y-6">
+  <!-- Page Title and Actions -->
+  <div class="flex items-center justify-between">
+    <div class="flex items-center space-x-2">
+      <button (click)="goBack()" class="text-neutral-dark hover:text-primary focus:outline-none">
+        <span class="material-icons-outlined">arrow_back</span>
+      </button>
+      <h1 class="text-2xl font-bold text-neutral-dark">Staff Details</h1>
+    </div>
+
+    <div class="flex items-center space-x-2">
+      <button
+        (click)="viewSchedule()"
+        class="flex items-center px-4 py-2 bg-white border border-neutral-light rounded-lg text-neutral-dark hover:bg-neutral-light">
+        <span class="material-icons-outlined mr-1 text-sm">schedule</span>
+        Schedule
+      </button>
+      <button
+        (click)="editStaff()"
+        class="flex items-center px-4 py-2 bg-white border border-neutral-light rounded-lg text-neutral-dark hover:bg-neutral-light">
+        <span class="material-icons-outlined mr-1 text-sm">edit</span>
+        Edit
+      </button>
+      <!-- Status Toggle Button -->
+      <button
+        (click)="toggleStaffStatus()"
+        *ngIf="staff"
+        class="flex items-center px-4 py-2 bg-white border rounded-lg"
+        [class.border-green-300]="!staff.isActive"
+        [class.text-green-600]="!staff.isActive"
+        [class.hover:bg-green-50]="!staff.isActive"
+        [class.border-red-300]="staff.isActive"
+        [class.text-red-600]="staff.isActive"
+        [class.hover:bg-red-50]="staff.isActive">
+        <span class="material-icons-outlined mr-1 text-sm">
+          {{ staff.isActive ? 'toggle_off' : 'toggle_on' }}
+        </span>
+        {{ staff.isActive ? 'Deactivate' : 'Activate' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="flex justify-center p-8">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="p-4 bg-red-100 border border-red-300 text-red-700 rounded-lg">
+    {{ errorMessage }}
+    <button (click)="loadStaff()" class="ml-2 text-primary hover:underline">Try Again</button>
+  </div>
+
+  <!-- Staff Details -->
+  <div *ngIf="staff && !isLoading">
+    <!-- Header with basic info -->
+    <div class="bg-white rounded-card shadow-card p-6 mb-6">
+      <div class="flex flex-col md:flex-row md:items-center gap-6">
+        <!-- Avatar -->
+        <div class="flex-shrink-0">
+          <div *ngIf="staff.avatar" class="h-24 w-24 rounded-full overflow-hidden">
+            <img [src]="staff.avatar" [alt]="getFullName()" class="h-full w-full object-cover">
+          </div>
+          <div *ngIf="!staff.avatar" class="h-24 w-24 rounded-full flex items-center justify-center"
+               [style.background-color]="staff.color">
+            <span class="text-white text-3xl font-medium">
+              {{ staff.firstName[0] }}{{ staff.lastName[0] }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Basic Info -->
+        <div class="flex-1">
+          <h2 class="text-2xl font-bold text-neutral-dark mb-1">{{ getFullName() }}</h2>
+          <div class="flex items-center mb-2">
+            <span class="px-2 py-1 text-xs font-medium rounded-full mr-2"
+                  [class.bg-green-100]="staff.isActive"
+                  [class.text-green-800]="staff.isActive"
+                  [class.bg-red-100]="!staff.isActive"
+                  [class.text-red-800]="!staff.isActive">
+              {{ staff.isActive ? 'Active' : 'Inactive' }}
+            </span>
+            <span class="text-sm text-neutral font-medium">{{ staff.position }}</span>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+            <div class="flex items-center">
+              <span class="material-icons-outlined text-neutral mr-2 text-sm">email</span>
+              <span>{{ staff.email }}</span>
+            </div>
+            <div class="flex items-center">
+              <span class="material-icons-outlined text-neutral mr-2 text-sm">phone</span>
+              <span>{{ staff.phone }}</span>
+            </div>
+            <div class="flex items-center col-span-full">
+              <span class="material-icons-outlined text-neutral mr-2 text-sm">event_available</span>
+              <span><strong>Working Days:</strong> {{ getWorkingDays() }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action buttons for large screens -->
+        <div class="hidden md:flex flex-col md:border-l md:border-neutral-light md:pl-6 space-y-2">
+          <button
+            (click)="viewSchedule()"
+            class="flex items-center px-4 py-2 bg-white border border-neutral-light rounded-lg text-neutral-dark hover:bg-neutral-light">
+            <span class="material-icons-outlined mr-1 text-sm">schedule</span>
+            Manage Schedule
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="border-b border-neutral-light mb-6">
+      <nav class="flex space-x-6">
+        <button
+          [class.text-primary]="activeTab === 'details'"
+          [class.border-primary]="activeTab === 'details'"
+          [class.font-medium]="activeTab === 'details'"
+          [class.text-neutral]="activeTab !== 'details'"
+          [class.border-transparent]="activeTab !== 'details'"
+          class="px-1 py-3 border-b-2 text-sm"
+          (click)="setActiveTab('details')">
+          Details
+        </button>
+        <button
+          [class.text-primary]="activeTab === 'schedule'"
+          [class.border-primary]="activeTab === 'schedule'"
+          [class.font-medium]="activeTab === 'schedule'"
+          [class.text-neutral]="activeTab !== 'schedule'"
+          [class.border-transparent]="activeTab !== 'schedule'"
+          class="px-1 py-3 border-b-2 text-sm"
+          (click)="setActiveTab('schedule')">
+          Schedule
+        </button>
+      </nav>
+    </div>
+
+    <!-- Tab Content -->
+    <!-- Details Tab -->
+    <div *ngIf="activeTab === 'details'" class="bg-white rounded-card shadow-card p-6">
+      <h3 class="text-lg font-medium text-neutral-dark mb-4">Professional Information</h3>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+        <div>
+          <p class="text-sm text-neutral mb-1">Position</p>
+          <p class="font-medium">{{ staff.position }}</p>
+        </div>
+
+        <div>
+          <p class="text-sm text-neutral mb-1">Color Label</p>
+          <div class="flex items-center">
+            <div class="w-6 h-6 rounded-full mr-2" [style.background-color]="staff.color"></div>
+            <p class="font-medium">{{ staff.color }}</p>
+          </div>
+        </div>
+
+        <div class="col-span-full">
+          <p class="text-sm text-neutral mb-1">Specialties</p>
+          <p class="font-medium">{{ getSpecialtiesList() }}</p>
+        </div>
+
+        <div class="col-span-full">
+          <p class="text-sm text-neutral mb-1">Account Status</p>
+          <p class="font-medium">{{ staff.isActive ? 'Active' : 'Inactive' }}</p>
+        </div>
+      </div>
+
+      <!-- Contact Information -->
+      <h3 class="text-lg font-medium text-neutral-dark mt-8 mb-4">Contact Information</h3>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+        <div>
+          <p class="text-sm text-neutral mb-1">Email</p>
+          <p class="font-medium">{{ staff.email }}</p>
+        </div>
+
+        <div>
+          <p class="text-sm text-neutral mb-1">Phone</p>
+          <p class="font-medium">{{ staff.phone }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Schedule Tab -->
+    <div *ngIf="activeTab === 'schedule'" class="bg-white rounded-card shadow-card p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-medium text-neutral-dark">Weekly Schedule</h3>
+        <button
+          (click)="viewSchedule()"
+          class="flex items-center px-4 py-2 bg-white border border-neutral-light rounded-lg text-neutral-dark hover:bg-neutral-light">
+          <span class="material-icons-outlined mr-1 text-sm">edit</span>
+          Edit Schedule
+        </button>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="min-w-full bg-white border border-neutral-light rounded-lg overflow-hidden">
+          <thead class="bg-neutral-light">
+          <tr>
+            <th class="px-4 py-2 text-left text-sm font-medium text-neutral-dark">Day</th>
+            <th class="px-4 py-2 text-left text-sm font-medium text-neutral-dark">Status</th>
+            <th class="px-4 py-2 text-left text-sm font-medium text-neutral-dark">Hours</th>
+            <th class="px-4 py-2 text-left text-sm font-medium text-neutral-dark">Breaks</th>
+          </tr>
+          </thead>
+          <tbody class="divide-y divide-neutral-light">
+          <tr *ngFor="let day of [0, 1, 2, 3, 4, 5, 6]">
+            <td class="px-4 py-3 text-sm font-medium">{{ staffService.getDayName(day) }}</td>
+            <td class="px-4 py-3 text-sm">
+                <span class="px-2 py-1 text-xs font-medium rounded-full"
+                      [class.bg-green-100]="getWorkHoursForDay(day)?.isWorking"
+                      [class.text-green-800]="getWorkHoursForDay(day)?.isWorking"
+                      [class.bg-red-100]="!getWorkHoursForDay(day)?.isWorking"
+                      [class.text-red-800]="!getWorkHoursForDay(day)?.isWorking">
+                  {{ getWorkHoursForDay(day)?.isWorking ? 'Working' : 'Off' }}
+                </span>
+            </td>
+            <td class="px-4 py-3 text-sm">
+                <span *ngIf="getWorkHoursForDay(day)?.isWorking">
+                  {{ formatTime(getWorkHoursForDay(day)?.startTime) }} - {{ formatTime(getWorkHoursForDay(day)?.endTime) }}
+                </span>
+              <span *ngIf="!getWorkHoursForDay(day)?.isWorking">-</span>
+            </td>
+            <td class="px-4 py-3 text-sm">
+              <div *ngIf="(getWorkHoursForDay(day)?.breaks ?? []).length">
+                <div *ngFor="let breakTime of getWorkHoursForDay(day)?.breaks" class="mb-1 last:mb-0">
+                  {{ formatTime(breakTime.startTime) }} - {{ formatTime(breakTime.endTime) }}
+                  <span *ngIf="breakTime.note" class="text-xs text-neutral ml-1">({{ breakTime.note }})</span>
+                </div>
+              </div>
+              <span *ngIf="!(getWorkHoursForDay(day)?.breaks ?? []).length">-</span>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+
+    <!-- Delete Button (Danger Zone) -->
+    <div class="mt-8 p-6 bg-red-50 border border-red-200 rounded-lg">
+      <h3 class="text-lg font-medium text-red-800 mb-2">Danger Zone</h3>
+      <p class="text-sm text-red-600 mb-4">
+        Deleting this staff member will permanently remove them from the system.
+        Any appointments assigned to them will need to be reassigned.
+      </p>
+      <button
+        (click)="deleteStaff()"
+        class="flex items-center px-4 py-2 bg-white border border-red-300 rounded-lg text-red-600 hover:bg-red-50">
+        <span class="material-icons-outlined mr-1 text-sm">delete</span>
+        Delete Staff Member
+      </button>
+    </div>
+  </div>
+</div>

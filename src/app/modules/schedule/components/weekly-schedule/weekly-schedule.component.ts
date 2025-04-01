@@ -1,11 +1,14 @@
+// src/app/modules/schedule/components/weekly-schedule/weekly-schedule.component.ts
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import {
-  ScheduleService,
+  ImprovedScheduleService,
   Staff,
   ScheduleEntry,
-  ScheduleSettings
-} from '../../../../core/services/schedule.service';
+  BusinessSettings
+} from '../../../../core/services/improved-schedule.service';
+import { NotificationService } from '../../../../core/services/notification.service';
+import { DateUtilService } from '../../../../core/services/date-util.service';
 
 interface WeekDay {
   date: Date;
@@ -22,19 +25,24 @@ interface WeekDay {
 })
 export class WeeklyScheduleComponent implements OnInit {
   selectedStaffId: string = '';
-  selectedWeekStart: Date = this.getStartOfWeek(new Date());
+  selectedWeekStart: Date = new Date();
   weekDays: WeekDay[] = [];
   staff: Staff[] = [];
   scheduleEntries: ScheduleEntry[] = [];
-  scheduleSettings: ScheduleSettings | null = null;
+  businessSettings: BusinessSettings | null = null;
 
   isLoading = true;
   errorMessage: string | null = null;
 
   constructor(
-    private scheduleService: ScheduleService,
-    private router: Router
-  ) {}
+    public scheduleService: ImprovedScheduleService,
+    private router: Router,
+    private notificationService: NotificationService,
+    private dateUtilService: DateUtilService
+  ) {
+    // Initialize selected week to start of current week
+    this.selectedWeekStart = this.scheduleService.getStartOfWeek(new Date());
+  }
 
   ngOnInit(): void {
     this.loadScheduleData();
@@ -44,15 +52,14 @@ export class WeeklyScheduleComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = null;
 
-    // Load schedule settings
-    this.scheduleService.getScheduleSettings().subscribe({
+    // Load business settings and staff sequentially to avoid Promise.all issues
+    this.scheduleService.getBusinessSettings().subscribe({
       next: (settings) => {
-        this.scheduleSettings = settings;
+        this.businessSettings = settings;
 
-        // Load staff
         this.scheduleService.getStaff().subscribe({
-          next: (staff) => {
-            this.staff = staff.filter(s => s.isActive);
+          next: (staffMembers) => {
+            this.staff = staffMembers.filter(s => s.isActive);
 
             // Select first staff member if none selected
             if (!this.selectedStaffId && this.staff.length > 0) {
@@ -68,14 +75,16 @@ export class WeeklyScheduleComponent implements OnInit {
           error: (error) => {
             this.errorMessage = 'Failed to load staff data.';
             this.isLoading = false;
-            console.error('Error loading staff:', error);
+            console.error('Error loading staff data:', error);
+            this.notificationService.error('Failed to load staff data. Please try again.');
           }
         });
       },
       error: (error) => {
-        this.errorMessage = 'Failed to load schedule settings.';
+        this.errorMessage = 'Failed to load business settings.';
         this.isLoading = false;
-        console.error('Error loading schedule settings:', error);
+        console.error('Error loading business settings:', error);
+        this.notificationService.error('Failed to load business settings. Please try again.');
       }
     });
   }
@@ -86,11 +95,12 @@ export class WeeklyScheduleComponent implements OnInit {
       return;
     }
 
-    const startDate = this.formatDateYYYYMMDD(this.weekDays[0].date);
-    const endDate = this.formatDateYYYYMMDD(this.weekDays[6].date);
+    const startDate = this.dateUtilService.formatDateForAPI(this.weekDays[0].date);
+    const endDate = this.dateUtilService.formatDateForAPI(this.weekDays[6].date);
 
     this.scheduleService.getStaffSchedule(this.selectedStaffId, startDate, endDate).subscribe({
       next: (entries) => {
+        console.log('Schedule entries:', entries);
         this.scheduleEntries = entries;
 
         // Assign entries to days
@@ -102,6 +112,7 @@ export class WeeklyScheduleComponent implements OnInit {
         this.errorMessage = 'Failed to load schedule entries.';
         this.isLoading = false;
         console.error('Error loading schedule entries:', error);
+        this.notificationService.error('Failed to load schedule entries. Please try again.');
       }
     });
   }
@@ -123,8 +134,8 @@ export class WeeklyScheduleComponent implements OnInit {
         date: date,
         dayOfWeek: dayOfWeek,
         isToday: isToday,
-        dayName: this.getDayName(dayOfWeek),
-        dateStr: this.formatDateYYYYMMDD(date),
+        dayName: this.dateUtilService.getDayName(dayOfWeek),
+        dateStr: this.dateUtilService.formatDateForAPI(date),
         entries: []
       });
     }
@@ -136,101 +147,137 @@ export class WeeklyScheduleComponent implements OnInit {
       day.entries = [];
     });
 
-    // Assign entries to the correct day
+    // Helper function to normalize date string formats
+    const normalizeDate = (dateStr: any): string => {
+      // Handle multiple date formats - convert to YYYY-MM-DD
+      if (!dateStr) return '';
+
+      // If it's already in YYYY-MM-DD format
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+        return dateStr;
+      }
+
+      // If it's an array or other format, try to convert it
+      try {
+        // If it's an array like [2023, 3, 15], join with hyphens
+        if (Array.isArray(dateStr)) {
+          return dateStr.slice(0, 3).
+            map(part => String(part).padStart(2, '0')).
+          join('-');
+        }
+
+        // Try to parse as date object
+        const date = new Date(dateStr);
+        if (!isNaN(date.getTime())) {
+          return this.dateUtilService.formatDateForAPI(date);
+        }
+      } catch (err) {
+        console.error('Error normalizing date:', dateStr, err);
+        this.notificationService.warning('There was an issue processing some dates in the schedule');
+      }
+
+      return dateStr; // Return original if nothing works
+    };
+
+    // Assign entries to the correct day - with better logging
+    let entriesAssigned = 0;
+    let entriesSkipped = 0;
+
     this.scheduleEntries.forEach(entry => {
-      const day = this.weekDays.find(d => d.dateStr === entry.date);
+      const entryDateStr = normalizeDate(entry.date);
+      console.log(`Entry date: ${entry.date}, normalized: ${entryDateStr}`);
+
+      // Try to find the matching day
+      const day = this.weekDays.find(d => {
+        console.log(`Comparing: day ${d.dateStr} with entry ${entryDateStr}`);
+        return d.dateStr === entryDateStr;
+      });
+
       if (day) {
+        console.log(`Found matching day for entry: ${entry.title}`);
         day.entries.push(entry);
+        entriesAssigned++;
+      } else {
+        console.warn(`No matching day found for entry date: ${entry.date}, normalized: ${entryDateStr}`);
+        console.log('Available days:', this.weekDays.map(d => d.dateStr));
+        entriesSkipped++;
       }
     });
 
     // Sort entries by start time
     this.weekDays.forEach(day => {
-      day.entries.sort((a, b) => a.startTime.localeCompare(b.startTime));
+      day.entries.sort((a, b) => {
+        if (!a.startTime) return -1;
+        if (!b.startTime) return 1;
+        return a.startTime.localeCompare(b.startTime);
+      });
     });
+
+    // Notify if entries were skipped
+    if (entriesSkipped > 0) {
+      this.notificationService.warning(`${entriesSkipped} appointments could not be displayed on the calendar`);
+    }
+
+    // Show success message if entries were loaded
+    if (entriesAssigned > 0) {
+      this.notificationService.success(`Successfully loaded ${entriesAssigned} appointments`);
+    } else if (this.scheduleEntries.length > 0 && entriesAssigned === 0) {
+      this.notificationService.error('Unable to display any appointments on the calendar');
+    }
   }
 
   onStaffChange(): void {
     this.loadWeeklySchedule();
+    // Notify user that staff selection has changed
+    const selectedStaff = this.staff.find(s => s.id === this.selectedStaffId);
+    if (selectedStaff) {
+      this.notificationService.info(`Viewing schedule for ${selectedStaff.firstName} ${selectedStaff.lastName}`);
+    }
   }
 
   changeWeek(offset: number): void {
     const newDate = new Date(this.selectedWeekStart);
     newDate.setDate(newDate.getDate() + (offset * 7));
-    this.selectedWeekStart = this.getStartOfWeek(newDate);
+    this.selectedWeekStart = this.scheduleService.getStartOfWeek(newDate);
     this.generateWeekDays();
     this.loadWeeklySchedule();
   }
 
   goToToday(): void {
-    this.selectedWeekStart = this.getStartOfWeek(new Date());
+    this.selectedWeekStart = this.scheduleService.getStartOfWeek(new Date());
     this.generateWeekDays();
     this.loadWeeklySchedule();
-  }
-
-  getStartOfWeek(date: Date): Date {
-    const result = new Date(date);
-    const day = result.getDay();
-
-    // Set to previous Sunday (or the current day if it's already Sunday)
-    result.setDate(result.getDate() - day);
-
-    // Reset time to start of day
-    result.setHours(0, 0, 0, 0);
-
-    return result;
-  }
-
-  formatTimeRange(startTime: string, endTime: string): string {
-    return `${this.formatTimeForDisplay(startTime)} - ${this.formatTimeForDisplay(endTime)}`;
-  }
-
-  formatTimeForDisplay(time: string): string {
-    const [hours, minutes] = time.split(':').map(Number);
-    const period = hours >= 12 ? 'PM' : 'AM';
-    const displayHours = hours % 12 || 12;
-    return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
-  }
-
-  getDayName(dayOfWeek: number): string {
-    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    return days[dayOfWeek];
-  }
-
-  formatDateYYYYMMDD(date: Date): string {
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  }
-
-  formatDateForDisplay(date: Date): string {
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric'
-    });
+    // Notify user that we've navigated to today
+    this.notificationService.info('Showing schedule for current week');
   }
 
   getWeekRangeDisplay(): string {
-    const startDisplay = this.selectedWeekStart.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric'
-    });
+    // Check if weekDays array is populated
+    if (!this.weekDays || this.weekDays.length < 7) {
+      return 'Loading...';
+    }
 
-    const endDate = new Date(this.selectedWeekStart);
-    endDate.setDate(endDate.getDate() + 6);
+    try {
+      const startDisplay = this.weekDays[0].date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric'
+      });
 
-    const endDisplay = endDate.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
+      const endDisplay = this.weekDays[6].date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      });
 
-    return `${startDisplay} - ${endDisplay}`;
+      return `${startDisplay} - ${endDisplay}`;
+    } catch (err) {
+      console.error('Error generating week range display:', err);
+      return 'Current Week';
+    }
   }
 
   getDayClass(day: WeekDay): string {
-    let classes = 'border border-neutral-light rounded-lg';
+    let classes = 'border border-neutral-light rounded-lg overflow-hidden';
 
     if (day.isToday) {
       classes += ' border-primary';
@@ -239,37 +286,14 @@ export class WeeklyScheduleComponent implements OnInit {
     return classes;
   }
 
-  getEntryTypeClass(type: string): string {
-    switch (type) {
-      case 'appointment':
-        return 'bg-primary-light text-primary';
-      case 'break':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'timeoff':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-neutral-light text-neutral-dark';
-    }
-  }
-
-  viewAppointment(entryId: string): void {
-    const entry = this.scheduleEntries.find(e => e.id === entryId);
-    if (entry && entry.appointmentId) {
-      this.router.navigate(['/dashboard/appointments', entry.appointmentId]);
-    }
-  }
-
-  createAppointment(): void {
-    this.router.navigate(['/dashboard/appointments/new']);
-  }
-
   isWorking(day: WeekDay): boolean {
-    if (!this.selectedStaffId || !this.scheduleSettings) {
+    if (!this.selectedStaffId || !this.businessSettings) {
       return false;
     }
 
-    // Check business days
-    if (!this.scheduleSettings.daysOpen[day.dayOfWeek]) {
+    // Check business days open
+    const daysOpen = this.scheduleService.daysOpenStringToArray(this.businessSettings.daysOpen);
+    if (!daysOpen[day.dayOfWeek]) {
       return false;
     }
 
@@ -279,7 +303,8 @@ export class WeeklyScheduleComponent implements OnInit {
       return false;
     }
 
-    return staff.workHours[day.dayOfWeek].isWorking;
+    const workHours = staff.workHours.find(wh => wh.dayOfWeek === day.dayOfWeek);
+    return workHours ? workHours.isWorking : false;
   }
 
   getWorkingHours(day: WeekDay): string {
@@ -292,11 +317,51 @@ export class WeeklyScheduleComponent implements OnInit {
       return 'Not working';
     }
 
-    const workHours = staff.workHours[day.dayOfWeek];
-    if (!workHours.isWorking) {
+    const workHours = staff.workHours.find(wh => wh.dayOfWeek === day.dayOfWeek);
+    if (!workHours || !workHours.isWorking || !workHours.startTime || !workHours.endTime) {
       return 'Not working';
     }
 
-    return `${this.formatTimeForDisplay(workHours.startTime)} - ${this.formatTimeForDisplay(workHours.endTime)}`;
+    try {
+      return `${this.formatTime(workHours.startTime)} - ${this.formatTime(workHours.endTime)}`;
+    } catch (err) {
+      console.error('Error formatting working hours:', err);
+      return 'Not working';
+    }
+  }
+
+  formatTimeRange(startTime: string, endTime: string): string {
+    if (!startTime || !endTime) return '';
+
+    try {
+      return `${this.formatTime(startTime)} - ${this.formatTime(endTime)}`;
+    } catch (err) {
+      console.error('Error formatting time range:', err);
+      return `${startTime} - ${endTime}`;
+    }
+  }
+
+  formatTime(timeString: any): string {
+    return this.dateUtilService.formatTime(timeString);
+  }
+
+  formatDateForDisplay(date: Date): string {
+    return this.dateUtilService.formatDateMedium(date);
+  }
+
+  viewAppointment(entryId: string): void {
+    const entry = this.scheduleEntries.find(e => e.id === entryId);
+    if (entry && entry.appointmentId) {
+      this.router.navigate(['/dashboard/appointments', entry.appointmentId]);
+    } else if (entry) {
+      this.notificationService.info(`This entry doesn't have an associated appointment.`);
+    } else {
+      this.notificationService.error(`Could not find the selected schedule entry.`);
+    }
+  }
+
+  createAppointment(): void {
+    this.router.navigate(['/dashboard/appointments/new']);
+    this.notificationService.info('Creating a new appointment');
   }
 }

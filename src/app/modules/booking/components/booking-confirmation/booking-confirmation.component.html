@@ -1,0 +1,101 @@
+<div>
+  <div class="flex items-start justify-between mb-6">
+    <div>
+      <h2 class="text-lg font-medium mb-1">Confirm Your Booking</h2>
+      <p class="text-neutral">Please review your appointment details</p>
+    </div>
+    <button
+      (click)="goBack()"
+      class="flex items-center text-primary hover:underline">
+      <span class="material-icons-outlined text-sm mr-1">arrow_back</span>
+      Change Time
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="flex justify-center p-8">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="p-4 bg-red-100 border border-red-300 text-red-700 rounded-lg mb-4">
+    {{ errorMessage }}
+    <button (click)="loadServiceDetails()" class="ml-2 text-primary hover:underline">Try Again</button>
+  </div>
+
+  <!-- Success Message -->
+  <div *ngIf="bookingSuccess" class="p-4 bg-green-100 border border-green-300 text-green-700 rounded-lg mb-4">
+    <div class="flex items-start">
+      <span class="material-icons-outlined mr-2">check_circle</span>
+      <div>
+        <p class="font-medium">Your appointment has been booked successfully!</p>
+        <p class="mt-2">
+          <button (click)="viewAppointments()" class="text-primary hover:underline">
+            View My Appointments
+          </button>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Appointment Details -->
+  <div *ngIf="!isLoading && selectedService && !bookingSuccess" class="mb-6">
+    <div class="bg-neutral-light rounded-lg p-4 mb-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <p class="text-sm text-neutral mb-1">Service</p>
+          <p class="font-medium">{{ selectedService.name }}</p>
+        </div>
+        <div>
+          <p class="text-sm text-neutral mb-1">Price</p>
+          <p class="font-medium">${{ selectedService.price.toFixed(2) }}</p>
+        </div>
+        <div>
+          <p class="text-sm text-neutral mb-1">Date</p>
+          <p class="font-medium">{{ formatDateLong(selectedDate) }}</p>
+        </div>
+        <div>
+          <p class="text-sm text-neutral mb-1">Time</p>
+          <p class="font-medium">{{ formatTime(selectedTime) }}</p>
+        </div>
+        <div>
+          <p class="text-sm text-neutral mb-1">Duration</p>
+          <p class="font-medium">{{ selectedService.duration }} minutes</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes Form -->
+    <form [formGroup]="bookingForm" (ngSubmit)="confirmBooking()">
+      <div class="mb-4">
+        <label for="notes" class="block text-sm font-medium text-neutral-dark mb-1">
+          Additional Notes (Optional)
+        </label>
+        <textarea
+          id="notes"
+          formControlName="notes"
+          rows="3"
+          class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+          placeholder="Any special requests or information for your appointment?"></textarea>
+      </div>
+
+      <div class="flex justify-end space-x-4">
+        <button
+          type="button"
+          (click)="cancelBooking()"
+          class="px-4 py-2 border border-neutral-light rounded-lg text-neutral-dark hover:bg-neutral-light">
+          Cancel
+        </button>
+        <button
+          type="submit"
+          class="btn btn-primary"
+          [disabled]="isSubmitting">
+              <span class="flex items-center">
+                <span *ngIf="isSubmitting" class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
+                {{ isSubmitting ? 'Confirming...' : 'Confirm Booking' }}
+              </span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

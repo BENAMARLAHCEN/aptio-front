@@ -1,3 +1,4 @@
+<!-- src/app/modules/appointments/components/appointment-details/appointment-details.component.html -->
 <div class="space-y-6">
   <!-- Page Title and Actions -->
   <div class="flex items-center justify-between">
@@ -47,7 +48,7 @@
             {{ appointment.status | titlecase }}
           </span>
           <p class="text-sm text-neutral">
-            Last updated {{ appointment.updatedAt | date:'MMM d, y, h:mm a' }}
+            Last updated: {{ getFormattedDate(appointment.updatedAt) }}
           </p>
         </div>
 
@@ -170,11 +171,13 @@
               </div>
               <div>
                 <p class="text-sm font-medium">Appointment Created</p>
-                <p class="text-xs text-neutral">{{ appointment.createdAt | date:'MMM d, y, h:mm a' }}</p>
+                <p class="text-xs text-neutral">
+                  {{ getFormattedDate(appointment.createdAt) }}
+                </p>
               </div>
             </div>
 
-            <div class="flex" *ngIf="appointment.updatedAt !== appointment.createdAt">
+            <div class="flex" *ngIf="areDifferentDates(appointment.updatedAt, appointment.createdAt)">
               <div class="flex-shrink-0 w-10">
                 <div class="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
                   <span class="material-icons-outlined text-sm text-green-600">update</span>
@@ -182,7 +185,9 @@
               </div>
               <div>
                 <p class="text-sm font-medium">Status Updated to {{ appointment.status | titlecase }}</p>
-                <p class="text-xs text-neutral">{{ appointment.updatedAt | date:'MMM d, y, h:mm a' }}</p>
+                <p class="text-xs text-neutral">
+                  {{ getFormattedDate(appointment.updatedAt) }}
+                </p>
               </div>
             </div>
           </div>

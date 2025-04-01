@@ -14,7 +14,7 @@ export interface TimeSlot {
 
 export interface WorkHours {
   id?: string;
-  dayOfWeek: number; // 0 = Sunday, 1 = Monday, etc.
+  dayOfWeek: number;
   isWorking: boolean;
   startTime?: string;
   endTime?: string;
@@ -48,8 +48,6 @@ export interface StaffFormData {
   isActive: boolean;
   workHours?: WorkHours[];
 }
-
-// Interface for API responses
 interface ApiStaff {
   id: string;
   userId: string;
@@ -75,8 +73,6 @@ export class StaffService {
     private http: HttpClient,
     private notificationService: NotificationService
   ) {}
-
-  // Get all staff members
   getStaff(): Observable<Staff[]> {
     return this.http.get<ApiStaff[]>(this.apiUrl).pipe(
       map(staff => staff.map(s => this.mapApiStaffToStaff(s))),
@@ -86,8 +82,6 @@ export class StaffService {
       })
     );
   }
-
-  // Get active staff members
   getActiveStaff(): Observable<Staff[]> {
     return this.http.get<ApiStaff[]>(`${this.apiUrl}?active=true`).pipe(
       map(staff => staff.map(s => this.mapApiStaffToStaff(s))),
@@ -97,8 +91,6 @@ export class StaffService {
       })
     );
   }
-
-  // Get staff by ID
   getStaffById(id: string): Observable<Staff> {
     return this.http.get<ApiStaff>(`${this.apiUrl}/${id}`).pipe(
       map(staff => this.mapApiStaffToStaff(staff)),
@@ -108,8 +100,6 @@ export class StaffService {
       })
     );
   }
-
-  // Get staff by specialty
   getStaffBySpecialty(specialty: string): Observable<Staff[]> {
     return this.http.get<ApiStaff[]>(`${this.apiUrl}?specialty=${specialty}`).pipe(
       map(staff => staff.map(s => this.mapApiStaffToStaff(s))),
@@ -119,10 +109,7 @@ export class StaffService {
       })
     );
   }
-
-  // Create new staff
   createStaff(staffData: StaffFormData): Observable<Staff> {
-    // Transform to API format
     const apiStaffData = {
       ...staffData,
       specialties: staffData.specialties || []
@@ -139,10 +126,7 @@ export class StaffService {
       })
     );
   }
-
-  // Update existing staff
   updateStaff(id: string, staffData: StaffFormData): Observable<Staff> {
-    // Transform to API format
     const apiStaffData = {
       ...staffData,
       specialties: staffData.specialties || []
@@ -159,8 +143,6 @@ export class StaffService {
       })
     );
   }
-
-  // Delete staff
   deleteStaff(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
       tap(() => {
@@ -172,8 +154,6 @@ export class StaffService {
       })
     );
   }
-
-  // Toggle staff active status
   toggleStaffStatus(id: string, active: boolean): Observable<Staff> {
     return this.http.patch<ApiStaff>(`${this.apiUrl}/${id}/status`, { active }).pipe(
       map(staff => this.mapApiStaffToStaff(staff)),
@@ -187,8 +167,6 @@ export class StaffService {
       })
     );
   }
-
-  // Update staff work hours
   updateWorkHours(id: string, workHours: WorkHours[]): Observable<Staff> {
     return this.http.put<ApiStaff>(`${this.apiUrl}/${id}/schedule`, { workHours }).pipe(
       map(staff => this.mapApiStaffToStaff(staff)),
@@ -201,8 +179,6 @@ export class StaffService {
       })
     );
   }
-
-  // Helper to transform API response to app model
   private mapApiStaffToStaff(apiStaff: ApiStaff): Staff {
     return {
       ...apiStaff,
@@ -210,13 +186,10 @@ export class StaffService {
       workHours: apiStaff.workHours || this.generateDefaultWorkHours()
     };
   }
-
-  // Generate default work hours for a new staff member
   generateDefaultWorkHours(): WorkHours[] {
     const workHours: WorkHours[] = [];
 
     for (let i = 0; i < 7; i++) {
-      // Default to working Monday-Friday (1-5)
       const isWorkingDay = i > 0 && i < 6;
 
       const dayHours: WorkHours = {
@@ -226,8 +199,6 @@ export class StaffService {
         endTime: isWorkingDay ? '17:00' : undefined,
         breaks: []
       };
-
-      // Add lunch break for working days
       if (isWorkingDay) {
         dayHours.breaks.push({
           startTime: '12:00',
@@ -241,14 +212,10 @@ export class StaffService {
 
     return workHours;
   }
-
-  // Get day name from day number
   getDayName(dayNumber: number): string {
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     return days[dayNumber];
   }
-
-  // Format time for display
   formatTime(time: any): string {
     if (!time) return '';
 

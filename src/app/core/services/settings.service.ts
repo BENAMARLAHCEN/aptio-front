@@ -1,4 +1,4 @@
-// src/app/core/services/settings.service.ts
+
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
@@ -9,13 +9,13 @@ import { NotificationService } from './notification.service';
 export interface BusinessSettings {
   id?: number;
   businessName: string;
-  businessHoursStart: string; // Format: HH:MM
-  businessHoursEnd: string; // Format: HH:MM
-  daysOpen: string; // 7-length string of 0/1, e.g., "0111110" means closed on Sun & Sat
-  defaultAppointmentDuration: number; // in minutes
-  timeSlotInterval: number; // in minutes
+  businessHoursStart: string;
+  businessHoursEnd: string;
+  daysOpen: string;
+  defaultAppointmentDuration: number;
+  timeSlotInterval: number;
   allowOverlappingAppointments: boolean;
-  bufferTimeBetweenAppointments: number; // in minutes
+  bufferTimeBetweenAppointments: number;
   address?: string;
   phone?: string;
   email?: string;

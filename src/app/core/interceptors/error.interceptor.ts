@@ -1,4 +1,4 @@
-// src/app/core/interceptors/error.interceptor.ts
+
 import { Injectable } from '@angular/core';
 import {
   HttpRequest,
@@ -22,10 +22,8 @@ export class ErrorInterceptor implements HttpInterceptor {
         let errorMessage = 'An unknown error occurred';
 
         if (error.error instanceof ErrorEvent) {
-          // Client-side error
           errorMessage = `Error: ${error.error.message}`;
         } else {
-          // Server-side error
           if (error.status === 0) {
             errorMessage = 'Unable to connect to the server. Please check your internet connection.';
           } else if (error.status === 404) {
@@ -40,8 +38,6 @@ export class ErrorInterceptor implements HttpInterceptor {
             errorMessage = `Server error: ${error.status} ${error.statusText || ''}`;
           }
         }
-
-        // Only show notification for non-401 errors as these are handled in auth interceptor
         if (error.status !== 401) {
           this.notificationService.error(errorMessage);
         }

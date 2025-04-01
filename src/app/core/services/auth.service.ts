@@ -1,4 +1,4 @@
-// src/app/core/services/auth.service.ts
+
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject, throwError } from 'rxjs';
@@ -67,7 +67,6 @@ export class AuthService {
     return this.http.post<AuthResponse>(`${this.apiUrl}/auth/authenticate`, request)
       .pipe(
         tap(response => {
-          // Store user details and JWT token in local storage
           localStorage.setItem('currentUser', JSON.stringify(response));
           localStorage.setItem('token', response.token);
           this.currentUserSubject.next(response);
@@ -84,7 +83,6 @@ export class AuthService {
     return this.http.post<AuthResponse>(`${this.apiUrl}/auth/register`, request)
       .pipe(
         tap(response => {
-          // Store user details and JWT token in local storage
           localStorage.setItem('currentUser', JSON.stringify(response));
           localStorage.setItem('token', response.token);
           this.currentUserSubject.next(response);
@@ -117,7 +115,6 @@ export class AuthService {
   }
 
   logout(): void {
-    // Remove user from local storage and reset the subject
     localStorage.removeItem('currentUser');
     localStorage.removeItem('token');
     this.currentUserSubject.next(null);

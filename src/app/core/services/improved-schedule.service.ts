@@ -8,13 +8,13 @@ import { NotificationService } from './notification.service';
 export interface BusinessSettings {
   id?: number;
   businessName: string;
-  businessHoursStart: string; // Format: HH:MM
-  businessHoursEnd: string; // Format: HH:MM
-  daysOpen: string; // 7-length string of 0/1, e.g., "0111110" means closed on Sun & Sat
-  defaultAppointmentDuration: number; // in minutes
-  timeSlotInterval: number; // in minutes
+  businessHoursStart: string;
+  businessHoursEnd: string;
+  daysOpen: string;
+  defaultAppointmentDuration: number;
+  timeSlotInterval: number;
   allowOverlappingAppointments: boolean;
-  bufferTimeBetweenAppointments: number; // in minutes
+  bufferTimeBetweenAppointments: number;
   address?: string;
   phone?: string;
   email?: string;
@@ -29,9 +29,9 @@ export interface ScheduleEntry {
   resourceName?: string;
   appointmentId?: string;
   title: string;
-  date: string; // YYYY-MM-DD format
-  startTime: string; // HH:MM format
-  endTime: string; // HH:MM format
+  date: string;
+  startTime: string;
+  endTime: string;
   notes?: string;
   type: 'APPOINTMENT' | 'BREAK' | 'TIMEOFF' | 'OTHER';
   status: 'SCHEDULED' | 'COMPLETED' | 'CANCELLED';
@@ -55,7 +55,7 @@ export interface Staff {
 
 export interface WorkHours {
   id?: string;
-  dayOfWeek: number; // 0 = Sunday, 1 = Monday, etc.
+  dayOfWeek: number;
   isWorking: boolean;
   startTime?: string;
   endTime?: string;
@@ -79,8 +79,6 @@ export class ImprovedScheduleService {
     private http: HttpClient,
     private notificationService: NotificationService
   ) {}
-
-  // Get business settings
   getBusinessSettings(): Observable<BusinessSettings> {
     return this.http.get<BusinessSettings>(`${this.apiUrl}/settings/business`).pipe(
       catchError(error => {
@@ -89,8 +87,6 @@ export class ImprovedScheduleService {
       })
     );
   }
-
-  // Update business settings
   updateBusinessSettings(settings: BusinessSettings): Observable<BusinessSettings> {
     return this.http.put<BusinessSettings>(`${this.apiUrl}/settings/business`, settings).pipe(
       tap(() => {
@@ -102,8 +98,6 @@ export class ImprovedScheduleService {
       })
     );
   }
-
-  // Get all staff
   getStaff(): Observable<Staff[]> {
     return this.http.get<Staff[]>(`${this.apiUrl}/staff?active=true`).pipe(
       catchError(error => {
@@ -112,8 +106,6 @@ export class ImprovedScheduleService {
       })
     );
   }
-
-  // Get staff member by ID
   getStaffById(id: string): Observable<Staff> {
     return this.http.get<Staff>(`${this.apiUrl}/staff/${id}`).pipe(
       catchError(error => {
@@ -122,8 +114,6 @@ export class ImprovedScheduleService {
       })
     );
   }
-
-  // Get schedule entries for a specific date range
   getScheduleEntries(startDate: string, endDate: string): Observable<ScheduleEntry[]> {
     return this.http.get<ScheduleEntry[]>(`${this.apiUrl}/schedule/range?startDate=${startDate}&endDate=${endDate}`).pipe(
       catchError(error => {
@@ -132,8 +122,6 @@ export class ImprovedScheduleService {
       })
     );
   }
-
-  // Get schedule entries for a specific staff member
   getStaffSchedule(staffId: string, startDate: string, endDate: string): Observable<ScheduleEntry[]> {
     return this.http.get<ScheduleEntry[]>(`${this.apiUrl}/schedule/staff/${staffId}?startDate=${startDate}&endDate=${endDate}`).pipe(
       catchError(error => {
@@ -142,8 +130,6 @@ export class ImprovedScheduleService {
       })
     );
   }
-
-  // Create a new schedule entry
   createScheduleEntry(entry: Partial<ScheduleEntry>): Observable<ScheduleEntry> {
     return this.http.post<ScheduleEntry>(`${this.apiUrl}/schedule`, entry).pipe(
       tap(() => {
@@ -155,8 +141,6 @@ export class ImprovedScheduleService {
       })
     );
   }
-
-  // Update an existing schedule entry
   updateScheduleEntry(id: string, entry: Partial<ScheduleEntry>): Observable<ScheduleEntry> {
     return this.http.put<ScheduleEntry>(`${this.apiUrl}/schedule/${id}`, entry).pipe(
       tap(() => {
@@ -168,8 +152,6 @@ export class ImprovedScheduleService {
       })
     );
   }
-
-  // Delete a schedule entry
   deleteScheduleEntry(id: string): Observable<any> {
     return this.http.delete(`${this.apiUrl}/schedule/${id}`).pipe(
       tap(() => {
@@ -181,8 +163,6 @@ export class ImprovedScheduleService {
       })
     );
   }
-
-  // Get available time slots for a specific date, service, and staff
   getAvailableTimeSlots(date: string, serviceId: string, staffId?: string): Observable<string[]> {
     let url = `${this.apiUrl}/appointments/available-slots?date=${date}&serviceId=${serviceId}`;
     if (staffId) {
@@ -195,8 +175,6 @@ export class ImprovedScheduleService {
       })
     );
   }
-
-  // Convert daysOpen string to array
   daysOpenStringToArray(daysString: string): boolean[] {
     const result: boolean[] = [];
     for (let i = 0; i < 7; i++) {
@@ -204,16 +182,12 @@ export class ImprovedScheduleService {
     }
     return result;
   }
-
-  // Format date as YYYY-MM-DD
   formatDateYYYYMMDD(date: Date): string {
     const year = date.getFullYear();
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
     const day = date.getDate().toString().padStart(2, '0');
     return `${year}-${month}-${day}`;
   }
-
-  // Parse time string (HH:MM) to minutes
   parseTimeToMinutes(time: any): number {
     try {
       return time[0] * 60 + time[1];
@@ -222,18 +196,14 @@ export class ImprovedScheduleService {
       return 0;
     }
   }
-
-  // Format minutes to time string (HH:MM)
   formatMinutesToTime(minutes: number): string {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
     return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
   }
-
-  // Format time for display (12-hour format)
   formatTimeForDisplay(time: any): string {
     if (!time) return '';
-    console.log('time:', time); // Debugging line is  (2) [18, 0]
+    console.log('time:', time);
     try {
       const [hours, minutes] = time.map(Number);
       const period = hours >= 12 ? 'PM' : 'AM';
@@ -241,11 +211,9 @@ export class ImprovedScheduleService {
       return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
     } catch (err) {
       console.error('Error formatting time:', time, err);
-      return time; // Return original if there's an error
+      return time;
     }
   }
-
-  // Get the start of the week (Sunday) for a given date
   getStartOfWeek(date: Date): Date {
     const result = new Date(date);
     const day = result.getDay();
@@ -253,14 +221,10 @@ export class ImprovedScheduleService {
     result.setHours(0, 0, 0, 0);
     return result;
   }
-
-  // Get day name from day of week number
   getDayName(dayOfWeek: number): string {
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     return days[dayOfWeek];
   }
-
-  // Get entry type class for styling
   getEntryTypeClass(type: string): string {
     switch (type.toUpperCase()) {
       case 'APPOINTMENT':

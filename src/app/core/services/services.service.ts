@@ -9,7 +9,7 @@ export interface Service {
   id: string;
   name: string;
   description: string;
-  duration: number; // in minutes
+  duration: number;
   price: number;
   category: string;
   active: boolean;
@@ -44,8 +44,6 @@ export class ServicesService {
     private http: HttpClient,
     private notificationService: NotificationService
   ) {}
-
-  // Get all services
   getServices(): Observable<Service[]> {
     return this.http.get<Service[]>(`${this.apiUrl}/services`)
       .pipe(
@@ -55,8 +53,6 @@ export class ServicesService {
         })
       );
   }
-
-  // Get service by ID
   getServiceById(id: string): Observable<Service> {
     return this.http.get<Service>(`${this.apiUrl}/services/${id}`)
       .pipe(
@@ -66,8 +62,6 @@ export class ServicesService {
         })
       );
   }
-
-  // Create new service
   createService(serviceData: ServiceFormData): Observable<Service> {
     return this.http.post<Service>(`${this.apiUrl}/services`, serviceData)
       .pipe(
@@ -80,8 +74,6 @@ export class ServicesService {
         })
       );
   }
-
-  // Update existing service
   updateService(id: string, serviceData: ServiceFormData): Observable<Service> {
     return this.http.put<Service>(`${this.apiUrl}/services/${id}`, serviceData)
       .pipe(
@@ -94,8 +86,6 @@ export class ServicesService {
         })
       );
   }
-
-  // Delete service
   deleteService(id: string): Observable<any> {
     return this.http.delete(`${this.apiUrl}/services/${id}`)
       .pipe(
@@ -108,8 +98,6 @@ export class ServicesService {
         })
       );
   }
-
-  // Toggle service active status
   toggleServiceStatus(id: string, active: boolean): Observable<Service> {
     return this.http.patch<Service>(`${this.apiUrl}/services/${id}/status`, { active })
       .pipe(
@@ -123,8 +111,6 @@ export class ServicesService {
         })
       );
   }
-
-  // Get services by category
   getServicesByCategory(category: string): Observable<Service[]> {
     return this.http.get<Service[]>(`${this.apiUrl}/services?category=${category}`)
       .pipe(
@@ -134,8 +120,6 @@ export class ServicesService {
         })
       );
   }
-
-  // Search services
   searchServices(query: string): Observable<Service[]> {
     return this.http.get<Service[]>(`${this.apiUrl}/services?search=${query}`)
       .pipe(
@@ -145,8 +129,6 @@ export class ServicesService {
         })
       );
   }
-
-  // Get all categories
   getCategories(): Observable<ServiceCategory[]> {
     return this.http.get<ServiceCategory[]>(`${this.apiUrl}/service-categories`)
       .pipe(
@@ -156,8 +138,6 @@ export class ServicesService {
         })
       );
   }
-
-  // Get category by ID
   getCategoryById(id: string): Observable<ServiceCategory> {
     return this.http.get<ServiceCategory>(`${this.apiUrl}/service-categories/${id}`)
       .pipe(
@@ -167,8 +147,6 @@ export class ServicesService {
         })
       );
   }
-
-  // Create new category
   createCategory(categoryData: Partial<ServiceCategory>): Observable<ServiceCategory> {
     return this.http.post<ServiceCategory>(`${this.apiUrl}/service-categories`, categoryData)
       .pipe(
@@ -181,8 +159,6 @@ export class ServicesService {
         })
       );
   }
-
-  // Update category
   updateCategory(id: string, categoryData: Partial<ServiceCategory>): Observable<ServiceCategory> {
     return this.http.put<ServiceCategory>(`${this.apiUrl}/service-categories/${id}`, categoryData)
       .pipe(
@@ -195,8 +171,6 @@ export class ServicesService {
         })
       );
   }
-
-  // Delete category
   deleteCategory(id: string): Observable<any> {
     return this.http.delete(`${this.apiUrl}/service-categories/${id}`)
       .pipe(
@@ -209,8 +183,6 @@ export class ServicesService {
         })
       );
   }
-
-  // Toggle category active status
   toggleCategoryStatus(id: string, active: boolean): Observable<ServiceCategory> {
     return this.http.patch<ServiceCategory>(`${this.apiUrl}/service-categories/${id}/status`, { active })
       .pipe(

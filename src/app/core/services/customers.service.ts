@@ -1,4 +1,4 @@
-// src/app/core/services/customers.service.ts
+
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
@@ -60,8 +60,6 @@ export class CustomersService {
     private http: HttpClient,
     private notificationService: NotificationService
   ) {}
-
-  // Get all customers
   getCustomers(): Observable<Customer[]> {
     return this.http.get<Customer[]>(`${this.apiUrl}/customers`)
       .pipe(
@@ -71,8 +69,6 @@ export class CustomersService {
         })
       );
   }
-
-  // Get customer by ID
   getCustomerById(id: string): Observable<Customer> {
     return this.http.get<Customer>(`${this.apiUrl}/customers/${id}`)
       .pipe(
@@ -82,8 +78,6 @@ export class CustomersService {
         })
       );
   }
-
-  // Create new customer
   createCustomer(customerData: CustomerFormData): Observable<Customer> {
     return this.http.post<Customer>(`${this.apiUrl}/customers`, customerData)
       .pipe(
@@ -96,8 +90,6 @@ export class CustomersService {
         })
       );
   }
-
-  // Update existing customer
   updateCustomer(id: string, customerData: Partial<CustomerFormData>): Observable<Customer> {
     return this.http.put<Customer>(`${this.apiUrl}/customers/${id}`, customerData)
       .pipe(
@@ -110,8 +102,6 @@ export class CustomersService {
         })
       );
   }
-
-  // Delete customer
   deleteCustomer(id: string): Observable<any> {
     return this.http.delete(`${this.apiUrl}/customers/${id}`)
       .pipe(
@@ -124,8 +114,6 @@ export class CustomersService {
         })
       );
   }
-
-  // Toggle customer active status
   toggleCustomerStatus(id: string, active: boolean): Observable<Customer> {
     return this.http.patch<Customer>(`${this.apiUrl}/customers/${id}/status`, { active })
       .pipe(
@@ -140,18 +128,6 @@ export class CustomersService {
       );
   }
 
-  // Search customers
-  searchCustomers(query: string): Observable<Customer[]> {
-    return this.http.get<Customer[]>(`${this.apiUrl}/customers/search?query=${query}`)
-      .pipe(
-        catchError(error => {
-          this.notificationService.error('Failed to search customers. Please try again.');
-          return throwError(() => error);
-        })
-      );
-  }
-
-  // Add a note to customer
   addCustomerNote(customerId: string, content: string): Observable<CustomerNote> {
     return this.http.post<CustomerNote>(`${this.apiUrl}/customers/${customerId}/notes`, { content })
       .pipe(
@@ -160,17 +136,6 @@ export class CustomersService {
         }),
         catchError(error => {
           this.notificationService.error(`Failed to add note. ${error.error?.message || 'Please try again.'}`);
-          return throwError(() => error);
-        })
-      );
-  }
-
-  // Get customer notes
-  getCustomerNotes(customerId: string): Observable<CustomerNote[]> {
-    return this.http.get<CustomerNote[]>(`${this.apiUrl}/customers/${customerId}/notes`)
-      .pipe(
-        catchError(error => {
-          this.notificationService.error('Failed to load customer notes. Please try again.');
           return throwError(() => error);
         })
       );

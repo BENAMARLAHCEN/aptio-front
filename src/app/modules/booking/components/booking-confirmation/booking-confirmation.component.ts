@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ServicesService, Service } from '../../../../core/services/services.service';
 import { AppointmentsService } from '../../../../core/services/appointments.service';
+import { DateUtilService } from '../../../../core/services/date-util.service';
 
 @Component({
   selector: 'app-booking-confirmation',
@@ -27,7 +28,8 @@ export class BookingConfirmationComponent implements OnInit {
     private router: Router,
     private fb: FormBuilder,
     private servicesService: ServicesService,
-    private appointmentsService: AppointmentsService
+    private appointmentsService: AppointmentsService,
+    private dateUtilService: DateUtilService
   ) {
     this.bookingForm = this.fb.group({
       notes: ['']
@@ -108,28 +110,11 @@ export class BookingConfirmationComponent implements OnInit {
   }
 
   formatDateLong(dateString: string | null): string {
-    if (!dateString) return '';
-
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+    return this.dateUtilService.formatDateLong(dateString);
   }
 
   formatTime(timeString: string | null): string {
-    if (!timeString) return '';
-
-    try {
-      const [hours, minutes] = timeString.split(':').map(Number);
-      const date = new Date();
-      date.setHours(hours, minutes);
-      return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-    } catch (error) {
-      return timeString;
-    }
+    return this.dateUtilService.formatTime(timeString);
   }
 
   goBack(): void {

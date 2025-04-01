@@ -2,6 +2,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AppointmentsService, Appointment } from '../../../../core/services/appointments.service';
+import { DateUtilService } from '../../../../core/services/date-util.service';
 
 @Component({
   selector: 'app-user-appointment-details',
@@ -16,9 +17,9 @@ export class UserAppointmentDetailsComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private appointmentsService: AppointmentsService
-  ) {
-  }
+    private appointmentsService: AppointmentsService,
+    private dateUtilService: DateUtilService
+  ) {}
 
   ngOnInit(): void {
     this.loadAppointment();
@@ -92,78 +93,19 @@ export class UserAppointmentDetailsComponent implements OnInit {
   }
 
   formatDate(dateString: any): string {
-    if (!dateString) return 'N/A';
-
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      });
-    } catch (error) {
-      return String(dateString);
-    }
+    return this.dateUtilService.formatDateMedium(dateString);
   }
 
   formatDateLong(dateString: string): string {
-    if (!dateString) return 'N/A';
-
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-    } catch (error) {
-      return dateString;
-    }
+    return this.dateUtilService.formatDateLong(dateString);
   }
 
   formatTime(time: any): string {
-    // If time is null or undefined
-    if (time == null) return 'N/A';
-
-    try {
-      if (typeof time === 'object') {
-        const date = new Date();
-        date.setHours(time[0]);
-        date.setMinutes(time[1]);
-        return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-      }
-      console.warn('Unrecognized time format:', time);
-      return String(time);
-    } catch (error) {
-      console.error('Error formatting time:', error, time);
-      return 'Invalid time';
-    }
+    return this.dateUtilService.formatTime(time);
   }
 
   formatEndTime(time: any, durationMinutes: number): string {
-    if (time == null) return 'N/A';
-
-    try {
-      let startDate = new Date();
-
-      if (typeof time === 'object') {
-        startDate.setHours(time[0]);
-        startDate.setMinutes(time[1]);
-      } else {
-        console.log('Unrecognized time format for end time:', time);
-        return String(time);
-      }
-
-      // Calculate end time
-      const endDate = new Date(startDate);
-      endDate.setMinutes(endDate.getMinutes() + durationMinutes);
-
-      return endDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-    } catch (error) {
-      console.error('Error formatting end time:', error, time);
-      return 'Invalid time';
-    }
+    return this.dateUtilService.calculateEndTime(time, durationMinutes);
   }
 
   getStatusClass(status: string): string {

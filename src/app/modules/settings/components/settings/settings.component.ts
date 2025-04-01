@@ -2,6 +2,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { SettingsService, BusinessSettings } from '../../../../core/services/settings.service';
+import { DateUtilService } from '../../../../core/services/date-util.service';
 
 @Component({
   selector: 'app-settings',
@@ -20,7 +21,8 @@ export class SettingsComponent implements OnInit {
 
   constructor(
     private settingsService: SettingsService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private dateUtilService: DateUtilService
   ) {}
 
   ngOnInit(): void {
@@ -170,5 +172,9 @@ export class SettingsComponent implements OnInit {
     if (confirm('Are you sure you want to reset all changes?')) {
       this.populateForm(this.businessSettings);
     }
+  }
+
+  formatTime(time: string): string {
+    return this.dateUtilService.formatTime(time);
   }
 }

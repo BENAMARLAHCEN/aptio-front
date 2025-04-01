@@ -333,4 +333,13 @@ export class DateUtilService {
     }
     return result;
   }
+
+  parseTime(timeString: any): number {
+    try {
+      const [hours, minutes] = timeString.split(':').map(Number);
+      return hours * 60 + minutes;
+    } catch (error) {
+      return 0;
+    }
+  }
 }

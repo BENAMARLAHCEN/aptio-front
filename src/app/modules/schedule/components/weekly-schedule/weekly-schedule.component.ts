@@ -8,6 +8,7 @@ import {
   BusinessSettings
 } from '../../../../core/services/improved-schedule.service';
 import { NotificationService } from '../../../../core/services/notification.service';
+import { DateUtilService } from '../../../../core/services/date-util.service';
 
 interface WeekDay {
   date: Date;
@@ -36,7 +37,8 @@ export class WeeklyScheduleComponent implements OnInit {
   constructor(
     public scheduleService: ImprovedScheduleService,
     private router: Router,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private dateUtilService: DateUtilService
   ) {
     // Initialize selected week to start of current week
     this.selectedWeekStart = this.scheduleService.getStartOfWeek(new Date());
@@ -93,8 +95,8 @@ export class WeeklyScheduleComponent implements OnInit {
       return;
     }
 
-    const startDate = this.scheduleService.formatDateYYYYMMDD(this.weekDays[0].date);
-    const endDate = this.scheduleService.formatDateYYYYMMDD(this.weekDays[6].date);
+    const startDate = this.dateUtilService.formatDateForAPI(this.weekDays[0].date);
+    const endDate = this.dateUtilService.formatDateForAPI(this.weekDays[6].date);
 
     this.scheduleService.getStaffSchedule(this.selectedStaffId, startDate, endDate).subscribe({
       next: (entries) => {
@@ -132,8 +134,8 @@ export class WeeklyScheduleComponent implements OnInit {
         date: date,
         dayOfWeek: dayOfWeek,
         isToday: isToday,
-        dayName: this.scheduleService.getDayName(dayOfWeek),
-        dateStr: this.scheduleService.formatDateYYYYMMDD(date),
+        dayName: this.dateUtilService.getDayName(dayOfWeek),
+        dateStr: this.dateUtilService.formatDateForAPI(date),
         entries: []
       });
     }
@@ -167,7 +169,7 @@ export class WeeklyScheduleComponent implements OnInit {
         // Try to parse as date object
         const date = new Date(dateStr);
         if (!isNaN(date.getTime())) {
-          return this.scheduleService.formatDateYYYYMMDD(date);
+          return this.dateUtilService.formatDateForAPI(date);
         }
       } catch (err) {
         console.error('Error normalizing date:', dateStr, err);
@@ -340,39 +342,11 @@ export class WeeklyScheduleComponent implements OnInit {
   }
 
   formatTime(timeString: any): string {
-    if (!timeString) return '';
-
-    try {
-      // Handle different time formats
-      if (Array.isArray(timeString)) {
-        // If it's an array like [14, 30]
-        const hours = timeString[0];
-        const minutes = timeString[1];
-
-        // Create a date object and format it
-        const date = new Date();
-        date.setHours(hours, minutes);
-        return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-      } else if (typeof timeString === 'string') {
-        // If it's a string like "14:30"
-        const [hours, minutes] = timeString.split(':').map(Number);
-        const date = new Date();
-        date.setHours(hours, minutes);
-        return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-      }
-
-      return String(timeString);
-    } catch (err) {
-      console.error('Error formatting time:', timeString, err);
-      return String(timeString || '');
-    }
+    return this.dateUtilService.formatTime(timeString);
   }
 
   formatDateForDisplay(date: Date): string {
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric'
-    });
+    return this.dateUtilService.formatDateMedium(date);
   }
 
   viewAppointment(entryId: string): void {

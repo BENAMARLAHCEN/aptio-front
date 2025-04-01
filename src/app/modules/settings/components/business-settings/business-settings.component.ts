@@ -2,6 +2,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { SettingsService, BusinessSettings } from '../../../../core/services/settings.service';
+import { DateUtilService } from '../../../../core/services/date-util.service';
 
 @Component({
   selector: 'app-business-settings',
@@ -65,7 +66,7 @@ import { SettingsService, BusinessSettings } from '../../../../core/services/set
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <p class="text-sm text-neutral mb-1">Hours of Operation</p>
-                <p class="font-medium">{{ settings.businessHoursStart }} - {{ settings.businessHoursEnd }}</p>
+                <p class="font-medium">{{ formatTime(settings.businessHoursStart) }} - {{ formatTime(settings.businessHoursEnd) }}</p>
               </div>
 
               <div>
@@ -124,7 +125,8 @@ export class BusinessSettingsComponent implements OnInit {
 
   constructor(
     private settingsService: SettingsService,
-    private router: Router
+    private router: Router,
+    private dateUtilService: DateUtilService
   ) {}
 
   ngOnInit(): void {
@@ -151,5 +153,9 @@ export class BusinessSettingsComponent implements OnInit {
 
   goToMainSettings(): void {
     this.router.navigate(['/dashboard/settings']);
+  }
+
+  formatTime(time: string): string {
+    return this.dateUtilService.formatTime(time);
   }
 }

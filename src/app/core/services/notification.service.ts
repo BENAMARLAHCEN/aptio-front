@@ -128,19 +128,6 @@ export class NotificationService {
   }
 
   /**
-   * Notify about successful data loading
-   * @param itemType Type of items loaded (e.g., 'appointments', 'customers')
-   * @param count Number of items loaded
-   */
-  loadedItems(itemType: string, count: number): void {
-    if (count === 0) {
-      this.info(`No ${itemType} found.`);
-    } else {
-      this.success(`Successfully loaded ${count} ${itemType}.`);
-    }
-  }
-
-  /**
    * Remove a notification by ID
    * @param id The ID of the notification to remove
    */

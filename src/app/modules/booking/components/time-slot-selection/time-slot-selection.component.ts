@@ -3,10 +3,11 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ServicesService, Service } from '../../../../core/services/services.service';
 import { AppointmentsService } from '../../../../core/services/appointments.service';
+import { DateUtilService } from '../../../../core/services/date-util.service';
 
 @Component({
   selector: 'app-time-slot-selection',
-    templateUrl: './time-slot-selection.component.html'
+  templateUrl: './time-slot-selection.component.html'
 })
 export class TimeSlotSelectionComponent implements OnInit {
   serviceId: string | null = null;
@@ -26,7 +27,8 @@ export class TimeSlotSelectionComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private servicesService: ServicesService,
-    private appointmentsService: AppointmentsService
+    private appointmentsService: AppointmentsService,
+    private dateUtilService: DateUtilService
   ) {}
 
   ngOnInit(): void {
@@ -86,7 +88,7 @@ export class TimeSlotSelectionComponent implements OnInit {
     this.isLoadingTimeSlots = true;
 
     // Format date as YYYY-MM-DD
-    const formattedDate = this.formatDate(this.selectedDate);
+    const formattedDate = this.dateUtilService.formatDateForAPI(this.selectedDate);
 
     this.appointmentsService.getAvailableTimeSlots(formattedDate, this.serviceId).subscribe({
       next: (timeSlots) => {
@@ -108,7 +110,7 @@ export class TimeSlotSelectionComponent implements OnInit {
   proceedToConfirmation(): void {
     if (!this.selectedDate || !this.selectedTimeSlot || !this.serviceId) return;
 
-    const formattedDate = this.formatDate(this.selectedDate);
+    const formattedDate = this.dateUtilService.formatDateForAPI(this.selectedDate);
     const encodedTime = encodeURIComponent(this.selectedTimeSlot);
 
     this.router.navigate(['/dashboard/booking/confirm', this.serviceId, formattedDate, encodedTime]);
@@ -120,7 +122,7 @@ export class TimeSlotSelectionComponent implements OnInit {
   }
 
   getWeekday(date: Date): string {
-    return date.toLocaleDateString('en-US', { weekday: 'short' });
+    return this.dateUtilService.getDayName(date.getDay());
   }
 
   getDay(date: Date): string {
@@ -128,25 +130,11 @@ export class TimeSlotSelectionComponent implements OnInit {
   }
 
   getMonth(date: Date): string {
-    return date.toLocaleDateString('en-US', { month: 'short' });
-  }
-
-  formatDate(date: Date): string {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+    return this.dateUtilService.getMonthName(date.getMonth());
   }
 
   formatTime(timeString: string): string {
-    try {
-      const [hours, minutes] = timeString.split(':').map(Number);
-      const date = new Date();
-      date.setHours(hours, minutes);
-      return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-    } catch (error) {
-      return timeString;
-    }
+    return this.dateUtilService.formatTime(timeString);
   }
 
   goBack(): void {

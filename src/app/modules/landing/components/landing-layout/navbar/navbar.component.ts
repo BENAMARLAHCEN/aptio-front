@@ -32,7 +32,9 @@ export class NavbarComponent {
   }
 
   dashboard(): void {
-    this.router.navigate(['/dashboard']);
+    // Use the getHomeRouteBasedOnRole method to navigate to the appropriate dashboard
+    const homeRoute = this.authService.getHomeRouteBasedOnRole();
+    this.router.navigate([homeRoute]);
   }
 
   logout(): void {
